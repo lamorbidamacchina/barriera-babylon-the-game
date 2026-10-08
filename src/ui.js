@@ -21,6 +21,12 @@ export function text(scene, x, y, str, opts = {}) {
     align,
     lineSpacing,
     wordWrap: wrap ? { width: wrap } : undefined,
+    // Fixed font metrics instead of measuring them at runtime: Safari on iPad
+    // measures this font differently and glyphs got clipped. Every glyph
+    // fits its size×size cell; the extra eighth is safety for descenders.
+    metrics: { ascent: size, descent: size / 8, fontSize: size + size / 8 },
+    // Room for the drop shadow, which Phaser doesn't count in the text size.
+    padding: shadow ? { right: 1, bottom: 1 } : undefined,
   });
   if (shadow) t.setShadow(1, 1, shadow, 0, false, true);
   if (Array.isArray(origin)) t.setOrigin(origin[0], origin[1]);

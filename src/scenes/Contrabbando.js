@@ -12,6 +12,8 @@ const COUNTER_Y = 236; // veggies pop up from behind the bar counter
 const HUD_H = 28;
 const TRAIL_MS = 110;
 const MAX_STRIKES = 3;
+const RANDOM_OTP_CHANCE = 0.5; // one surprise position check, or none
+const SCAN_SECONDS = 1; // how long a caught drone scans before asking the code
 const pick = Phaser.Utils.Array.GetRandom;
 const rand = Phaser.Math.FloatBetween;
 
@@ -44,6 +46,7 @@ export default class Contrabbando extends Phaser.Scene {
     this.beams = this.add.graphics().setDepth(5);
     this.drawCounter();
     this.fx = this.add.graphics().setDepth(30);
+    this.lockGfx = this.add.graphics().setDepth(35);
     this.trailGfx = this.add.graphics().setDepth(40);
     this.slowTint = this.add.rectangle(0, 0, WIDTH, HEIGHT, N.pink, 0.07).setOrigin(0).setDepth(45).setVisible(false);
     this.drawFranco();
@@ -52,10 +55,7 @@ export default class Contrabbando extends Phaser.Scene {
     this.drawHud();
     this.otp = new OtpCheck(this, (ok) => this.otpDone(ok));
 
-    this.input.on('pointerdown', (p) => this.strokeStart(p));
-    this.input.on('pointermove', (p) => this.strokeMove(p));
-    this.input.on('pointerup', () => this.strokeEnd());
-    this.input.on('pointerupoutside', () => this.strokeEnd());
+    this.listenForSwipes();
     this.input.keyboard.on('keydown', (e) => this.onKey(e));
 
     this.showIntro();
@@ -75,7 +75,10 @@ export default class Contrabbando extends Phaser.Scene {
     this.slowLeft = 0;
     this.frenzyLeft = 0;
     this.completed = false;
-    this.otpTimes = Array.from({ length: r.otp }, (_, i) => r.time * (0.3 + (0.5 * (i + rand(0.2, 0.8))) / r.otp));
+    // Maybe one surprise position check, between 20% and 80% of the time.
+    // (A player who finishes the recipe earlier just doesn't get it.)
+    this.otpTimes = Math.random() < RANDOM_OTP_CHANCE ? [r.time * rand(0.2, 0.8)] : [];
+    this.caughtBy = null;
   }
 
   drawKitchen() {
@@ -204,16 +207,17 @@ export default class Contrabbando extends Phaser.Scene {
   }
 
   addScore(n, x, y, label) {
-    this.score += n;
+    this.score = Math.max(0, this.score + n);
     this.scoreText.setText(`PUNTI ${String(this.score).padStart(6, '0')}`);
     if (x === undefined) return;
-    const t = text(this, x, y, label ?? `+${n}`, { color: C.ocraLight, origin: 0.5 }).setDepth(55);
+    const str = label ?? (n < 0 ? `${n}` : `+${n}`);
+    const t = text(this, x, y, str, { color: n < 0 ? C.red : C.ocraLight, origin: 0.5 }).setDepth(55);
     this.tweens.add({ targets: t, y: y - 18, duration: 700, onComplete: () => t.destroy() });
   }
 
-  banner(str, color = C.white, ms = 1100) {
+  banner(str, color = C.white, ms = 1100, y = 100) {
     this.lastBanner?.destroy();
-    const t = (this.lastBanner = text(this, WIDTH / 2, 100, str, { size: 16, color, origin: 0.5 }).setDepth(70));
+    const t = (this.lastBanner = text(this, WIDTH / 2, Math.round(y), str, { size: 16, color, origin: 0.5 }).setDepth(70));
     this.tweens.add({ targets: t, scale: { from: 0.5, to: 1 }, duration: 160, ease: 'Back.out' });
     this.time.delayedCall(ms, () => t.active && t.destroy());
     return t;
@@ -268,8 +272,11 @@ export default class Contrabbando extends Phaser.Scene {
     const order = o.add(text(this, X, P.y + 96, '', { color: C.white, wrap: 300, lineSpacing: 5 }));
     this.typeText(order, this.recipe.order);
 
-    o.add(text(this, WIDTH / 2, P.y + 168, 'TIENI PREMUTO E TRASCINA PER TAGLIARE', { color: C.chalkDim, origin: [0.5, 0] }));
+    o.add(text(this, WIDTH / 2, P.y + 148, 'TIENI PREMUTO E TRASCINA PER TAGLIARE', { color: C.chalkDim, origin: [0.5, 0] }));
+    o.add(text(this, WIDTH / 2, P.y + 159, 'FUORI RICETTA: -10 PUNTI', { color: '#e07a6a', origin: [0.5, 0] }));
+    o.add(text(this, WIDTH / 2, P.y + 170, 'DRONE TOCCATO = VERIFICA   SBAGLIATA = X   3 X = FINE', { color: '#e07a6a', origin: [0.5, 0] }));
     const go = o.add(text(this, WIDTH / 2, P.y + 186, 'CLICCA PER INIZIARE', { color: C.ocraLight, origin: [0.5, 0] }));
+    this.button(o, P.x + 12, P.y + 182, '< MENU', () => goTo(this, 'Menu'), 64);
     blink(this, go, 450);
 
     this.introClick = () => this.startPlay();
@@ -359,6 +366,36 @@ export default class Contrabbando extends Phaser.Scene {
 
   // ---------------------------------------------------------------- slicing
 
+  // Swipes are read straight from the browser's pointer events on the whole
+  // window, not through Phaser's pointers: on iOS, moves are only delivered
+  // to the element where the finger landed (so a swipe starting beside the
+  // canvas never reached Phaser), and a touch cancelled by the system could
+  // leave Phaser's pointer stuck "down". Buttons and menus still use Phaser.
+  listenForSwipes() {
+    const toGame = (e) => {
+      const r = this.game.canvas.getBoundingClientRect();
+      return { x: ((e.clientX - r.left) * WIDTH) / r.width, y: ((e.clientY - r.top) * HEIGHT) / r.height, isDown: true };
+    };
+    const down = (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      this.strokePointer = e.pointerId; // the newest finger always wins
+      this.strokeStart(toGame(e));
+    };
+    const move = (e) => {
+      if (e.pointerId === this.strokePointer) this.strokeMove(toGame(e));
+    };
+    const up = (e) => {
+      if (e.pointerId !== this.strokePointer) return;
+      this.strokePointer = null;
+      this.strokeEnd();
+    };
+    const handlers = { pointerdown: down, pointermove: move, pointerup: up, pointercancel: up };
+    for (const [ev, fn] of Object.entries(handlers)) window.addEventListener(ev, fn);
+    this.events.once('shutdown', () => {
+      for (const [ev, fn] of Object.entries(handlers)) window.removeEventListener(ev, fn);
+    });
+  }
+
   strokeStart(p) {
     if (this.state !== 'play') return;
     this.stroke = { combo: 0, lastX: p.x, lastY: p.y };
@@ -376,12 +413,13 @@ export default class Contrabbando extends Phaser.Scene {
       this.lastSwoosh = this.time.now;
     }
     this.trail.push({ x: p.x, y: p.y, t: this.time.now });
-    for (const o of this.objects) {
-      if (o.dead || o.debris) continue;
-      if (distToSegment(o.x, o.y, lastX, lastY, p.x, p.y) <= o.r) this.slice(o, Math.atan2(dy, dx));
-    }
     this.stroke.lastX = p.x;
     this.stroke.lastY = p.y;
+    for (const o of this.objects) {
+      if (o.dead || o.debris || o.locked) continue;
+      if (distToSegment(o.x, o.y, lastX, lastY, p.x, p.y) <= o.r) this.slice(o, Math.atan2(dy, dx));
+      if (!this.stroke) break; // a drone caught the blade: the swipe is over
+    }
   }
 
   strokeEnd() {
@@ -395,20 +433,28 @@ export default class Contrabbando extends Phaser.Scene {
   }
 
   slice(o, angle) {
-    o.dead = true;
-    if (this.stroke) this.stroke.combo += o.kind === 'veggie' ? 1 : 0;
-    this.splitInHalves(o, angle);
-
     if (o.kind === 'drone') {
-      this.droneHit(o);
+      this.droneHit(o); // drones can't be cut: they catch you instead
       return;
     }
+    o.dead = true;
+    this.splitInHalves(o, angle);
+
     if (o.kind === 'power') {
       this.activatePower(o.type);
       return;
     }
     sfx.slice(rand(0.85, 1.2));
     this.splash(o.x, o.y, VEGGIES[o.type].juice, o.img.width);
+    // Scoring: +15 for what the recipe still needs, +5 for a recipe
+    // ingredient already complete, -10 for anything not in the recipe.
+    if (!(o.type in this.remaining)) {
+      sfx.error();
+      this.addScore(-10, o.x, o.y - 10);
+      this.say(FRANCO.wrong, 0.35);
+      return;
+    }
+    if (this.stroke) this.stroke.combo++;
     const needed = this.remaining[o.type] > 0;
     if (needed) {
       this.remaining[o.type]--;
@@ -462,19 +508,35 @@ export default class Contrabbando extends Phaser.Scene {
 
   // ---------------------------------------------------------------- hazards & bonuses
 
+  // Touching a drone doesn't cut it: it stops, locks on and scans the kitchen,
+  // then asks you to confirm your position (OTP). Right code: no penalty, but
+  // the clock kept running. Wrong or late: an X. Then it flies off.
   droneHit(o) {
+    o.locked = true;
+    o.lockT = 0;
+    o.img.setTint(0xff7070);
+    this.state = 'caught';
+    this.caughtBy = o;
+    this.time.delayedCall(SCAN_SECONDS * 1000, () => {
+      if (this.state === 'caught') this.openOtp('drone');
+    });
+    this.strokeEnd(); // the blade is "caught": end this swipe
+    this.trail = [];
     sfx.alarm();
-    this.splash(o.x, o.y, [0xe0443a, 0xfff2b0, 0x6a707a], o.img.width);
-    this.cameras.main.shake(250, 0.012);
-    this.cameras.main.flash(200, 224, 68, 58);
-    this.banner('SCANSIONE!', C.red, 900);
+    this.cameras.main.shake(180, 0.008);
+    this.cameras.main.flash(150, 224, 68, 58);
+    // Banner above the drone (or below, if it's high), never covering it.
+    const by = o.y > 90 ? o.y - o.img.height / 2 - 20 : o.y + o.img.height / 2 + 20;
+    this.banner('SCANSIONE!', C.red, 1000, by);
     this.say(FRANCO.drone);
-    this.addStrike();
   }
 
   addStrike() {
     this.strikes++;
     this.strikeTexts.forEach((t, i) => t.setColor(i < this.strikes ? C.red : '#3a3f48'));
+    // Make the new X impossible to miss.
+    const x = this.strikeTexts[this.strikes - 1];
+    if (x) this.tweens.add({ targets: x, scale: { from: 3, to: 1 }, duration: 350, ease: 'Back.out' });
     if (this.strikes >= MAX_STRIKES) this.time.delayedCall(400, () => this.endRound('scanned'));
   }
 
@@ -510,10 +572,25 @@ export default class Contrabbando extends Phaser.Scene {
     }
   }
 
+  openOtp(reason) {
+    this.state = 'otp';
+    this.otpReason = reason;
+    this.strokeEnd();
+    this.trail = [];
+    this.otp.open(reason);
+  }
+
   otpDone(ok) {
     if (this.state !== 'otp') return;
     this.state = 'play';
-    if (ok) {
+    if (this.caughtBy) {
+      this.caughtBy.released = true; // the drone can leave now
+      this.caughtBy = null;
+    }
+    if (ok && this.otpReason === 'drone') {
+      sfx.confirm();
+      this.banner('POSIZIONE CONFERMATA', '#9be36b', 1000);
+    } else if (ok) {
       sfx.powerup();
       this.addScore(13, WIDTH / 2, 120, '+13 SOCIAL SCORE');
     } else {
@@ -575,9 +652,21 @@ export default class Contrabbando extends Phaser.Scene {
   update(time, delta) {
     const realDt = Math.min(delta, 50) / 1000;
     if (this.state === 'play') this.updateRules(realDt);
-    if (['play', 'end', 'ready'].includes(this.state)) this.updateWorld(realDt * this.timeScale, time);
+    if (this.state === 'caught' || this.state === 'otp') this.tickClockOnly(realDt);
+    if (['play', 'end', 'ready', 'caught'].includes(this.state)) this.updateWorld(realDt * this.timeScale, time);
     this.updateParticles(realDt);
     this.drawTrail();
+  }
+
+  // While a drone scans you or a check is open the world stops, the clock doesn't.
+  tickClockOnly(dt) {
+    if (this.completed) return;
+    this.timeLeft -= dt;
+    this.updateTime();
+    if (this.timeLeft <= 0) {
+      this.otp.abort();
+      this.endRound('time');
+    }
   }
 
   updateRules(dt) {
@@ -589,9 +678,7 @@ export default class Contrabbando extends Phaser.Scene {
 
     if (this.otpTimes.length && this.elapsed >= this.otpTimes[0]) {
       this.otpTimes.shift();
-      this.state = 'otp';
-      this.strokeEnd();
-      this.otp.open();
+      this.openOtp('random');
       return;
     }
 
@@ -626,9 +713,12 @@ export default class Contrabbando extends Phaser.Scene {
 
   updateWorld(dt, time) {
     this.beams.clear();
+    this.lockGfx.clear();
     for (const o of this.objects) {
       if (o.dead) continue;
-      if (o.kind === 'drone') {
+      if (o.kind === 'drone' && o.locked) {
+        this.updateLockedDrone(o, dt, time);
+      } else if (o.kind === 'drone') {
         o.x += o.vx * dt;
         o.y = o.baseY + Math.sin(o.phase + time / 400) * 5;
         // Searchlight down to the counter.
@@ -649,6 +739,46 @@ export default class Contrabbando extends Phaser.Scene {
       if (o.img.active) o.img.destroy();
       return false;
     });
+  }
+
+  // Caught drone: hovers in place scanning until the check is over, then
+  // escapes upwards.
+  updateLockedDrone(o, dt, time) {
+    o.lockT += dt;
+    if (!o.released) {
+      o.y = o.baseY + Math.sin(time / 60) * 1.5;
+      const g = this.lockGfx;
+      const eyeY = o.y + o.img.height / 2;
+      // Red scanning cone sweeping the kitchen, with a scanline running down.
+      const sweep = Math.sin(o.lockT * 9) * 50;
+      g.fillStyle(N.red, 0.22).fillTriangle(o.x, eyeY, o.x + sweep - 40, COUNTER_Y, o.x + sweep + 40, COUNTER_Y);
+      const k = (o.lockT * 3) % 1;
+      const ly = eyeY + (COUNTER_Y - eyeY) * k;
+      const half = 40 * k;
+      g.lineStyle(1, N.red, 0.9).lineBetween(o.x + sweep * k - half, ly, o.x + sweep * k + half, ly);
+      // Blinking lock-on brackets around the drone.
+      if (Math.floor(o.lockT * 8) % 2 === 0) {
+        const rx = o.img.width / 2 + 5;
+        const ry = o.img.height / 2 + 5;
+        g.lineStyle(1, N.red, 1);
+        for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+          g.lineBetween(o.x + sx * rx, o.y + sy * ry, o.x + sx * (rx - 5), o.y + sy * ry);
+          g.lineBetween(o.x + sx * rx, o.y + sy * ry, o.x + sx * rx, o.y + sy * (ry - 5));
+        }
+      }
+    } else {
+      // Off it goes, towards the closest side, climbing.
+      if (!o.escaping) {
+        o.escaping = true;
+        o.img.clearTint();
+        sfx.drone();
+      }
+      const dir = o.x < WIDTH / 2 ? -1 : 1;
+      o.x += dir * 260 * dt;
+      o.baseY -= 90 * dt;
+      o.y = o.baseY;
+      if (o.x < -40 || o.x > WIDTH + 40 || o.y < -30) o.dead = true;
+    }
   }
 
   updateParticles(dt) {
@@ -682,6 +812,9 @@ export default class Contrabbando extends Phaser.Scene {
   endRound(result) {
     if (this.state === 'end') return;
     this.state = 'end';
+    this.otp.abort();
+    if (this.caughtBy) this.caughtBy.released = true;
+    this.caughtBy = null;
     this.strokeEnd();
     this.trail = [];
     this.timeScale = 1;

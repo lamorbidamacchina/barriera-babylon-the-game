@@ -1,5 +1,7 @@
-// "Verifica di posizione obbligatoria": the game freezes and the player must
-// type the 4-digit code before the countdown ends, as Bea does every day.
+// Position check: the game freezes and the player must type the 4-digit code
+// before the countdown ends, as Bea does every day. Two flavours: the random
+// "verifica obbligatoria", and the one a drone starts when you touch it
+// (chapter 1: "Cittadino, la tua posizione non è stata confermata").
 import { WIDTH, HEIGHT, C, N } from '../../config.js';
 import { text, panel } from '../../ui.js';
 import { sfx } from '../../sfx.js';
@@ -13,6 +15,7 @@ export class OtpCheck {
     this.scene = scene;
     this.onDone = onDone;
     this.objects = [];
+    this.closed = true; // nothing open yet
   }
 
   add(obj) {
@@ -20,7 +23,7 @@ export class OtpCheck {
     return obj;
   }
 
-  open() {
+  open(reason = 'random') {
     const s = this.scene;
     this.code = String(Math.floor(1000 + Math.random() * 9000));
     this.entry = '';
@@ -32,9 +35,13 @@ export class OtpCheck {
     const g = this.add(s.add.graphics());
     panel(g, P.x, P.y, P.w, P.h, { fill: 0x1a0a0c, border: N.red });
 
-    this.add(text(s, WIDTH / 2, P.y + 10, 'VERIFICA DI POSIZIONE', { color: C.red, origin: [0.5, 0] }));
-    this.add(text(s, WIDTH / 2, P.y + 22, 'OBBLIGATORIA', { color: C.red, origin: [0.5, 0] }));
-    this.add(text(s, WIDTH / 2, P.y + 38, 'Cittadinanza Barriera attiva.', { color: C.chalkDim, origin: [0.5, 0] }));
+    const [l1, l2, l3] =
+      reason === 'drone'
+        ? ['CITTADINO, CONFERMA', 'LA TUA POSIZIONE', 'Il drone ti ha scansionato.']
+        : ['VERIFICA DI POSIZIONE', 'OBBLIGATORIA', 'Cittadinanza Barriera attiva.'];
+    this.add(text(s, WIDTH / 2, P.y + 10, l1, { color: C.red, origin: [0.5, 0] }));
+    this.add(text(s, WIDTH / 2, P.y + 22, l2, { color: C.red, origin: [0.5, 0] }));
+    this.add(text(s, WIDTH / 2, P.y + 38, l3, { color: C.chalkDim, origin: [0.5, 0] }));
     this.add(text(s, P.x + 16, P.y + 56, 'CODICE', { color: C.paper }));
     this.add(text(s, P.x + 72, P.y + 52, this.code, { size: 16, color: C.ocraLight }));
     this.countText = this.add(text(s, P.x + P.w - 16, P.y + 52, String(this.left), { size: 16, color: C.red, origin: [1, 0] }));
@@ -101,6 +108,16 @@ export class OtpCheck {
         });
       }
     }
+  }
+
+  // Closes at once without calling back (e.g. the round's time ran out).
+  abort() {
+    if (this.closed) return;
+    this.closed = true;
+    this.timer.remove();
+    this.scene.input.keyboard.off('keydown', this.onKey);
+    this.objects.forEach((o) => o.destroy());
+    this.objects = [];
   }
 
   close(success) {

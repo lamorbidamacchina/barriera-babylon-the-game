@@ -1,7 +1,6 @@
 // Levels: each recipe is an order from Mei Li.
 // spawnEvery: seconds between veggie waves; waveMax: veggies per wave;
-// droneEvery: seconds between drones (0 = none); otp: position checks;
-// powerups: whether bonus items can appear; size: sprite scale (1 = the size
+// droneEvery: seconds between drones (0 = none); powerups: whether bonus items can appear; size: sprite scale (1 = the size
 // of Fruit Ninja's first fruits), veggies shrink as levels get harder.
 export const RECIPES = [
   {
@@ -12,9 +11,8 @@ export const RECIPES = [
     spawnEvery: 1.5,
     waveMax: 2,
     droneEvery: 7,
-    otp: 0,
     powerups: false,
-    order: 'Primo ordine: minestrone. Zucchine e pomodori. Franco lancia, tu tagli. Droni NON si tagliano. Mai.',
+    order: 'Primo ordine: minestrone. Zucchine e pomodori. Franco lancia, tu tagli. Droni NON toccare: ti scansionano.',
   },
   {
     name: 'CAPONATA DI CONFINE',
@@ -24,7 +22,6 @@ export const RECIPES = [
     spawnEvery: 1.3,
     waveMax: 3,
     droneEvery: 5,
-    otp: 1,
     powerups: true,
     order: 'Caponata. Melanzane come Don Remo: grosse, viola, piene di peccato. Se sistema chiede codice, tu dai codice.',
   },
@@ -36,7 +33,6 @@ export const RECIPES = [
     spawnEvery: 1.2,
     waveMax: 3,
     droneEvery: 4,
-    otp: 1,
     powerups: true,
     order: 'Ribollita. Cavolo nero di contrabbando. Se drone vede, coprifuoco anche per minestra.',
   },
@@ -48,7 +44,6 @@ export const RECIPES = [
     spawnEvery: 1.1,
     waveMax: 4,
     droneEvery: 3.2,
-    otp: 2,
     powerups: true,
     order: 'Vellutata di zucca. Dura come Muro, ma si scioglie. Come Muro.',
   },
@@ -60,7 +55,6 @@ export const RECIPES = [
     spawnEvery: 0.9,
     waveMax: 4,
     droneEvery: 2.6,
-    otp: 1,
     powerups: true,
     order: 'Don Remo si sposa. Bomboniere utili e a chilometro zero: zucchine. Tante. Non chiedere.',
   },
@@ -74,6 +68,7 @@ export const FRANCO = {
   valzer: ['La musica, Gino!', 'Un giro di valzer e nessuno vede niente.'],
   laser: ['Vai Mei Li! Laser giocattolo, danni veri.'],
   attivatore: ['Roba di Gigi il Chimico. Non chiedere cosa c\'è dentro.'],
+  wrong: ['Quello non è in ricetta! Mei Li ci ammazza.', 'Spreco! A Barriera non si butta niente.', 'Ehi, quella non la paga nessuno.'],
 };
 
 export const MEI_END = {

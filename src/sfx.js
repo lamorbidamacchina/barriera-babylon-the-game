@@ -4,7 +4,11 @@
 let ctx = null;
 let master = null;
 let muted = false;
+let primed = false;
 
+// Must run inside a user gesture. On iOS only some events count as one
+// (touchend / pointerup / click, not touchstart), so main.js calls this on
+// all of them. Safe to call many times.
 export function unlockAudio() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -14,7 +18,16 @@ export function unlockAudio() {
     master.gain.value = muted ? 0 : 0.18;
     master.connect(ctx.destination);
   }
-  if (ctx.state === 'suspended') ctx.resume();
+  // 'interrupted' is iOS-only: after a call, Siri or switching app.
+  if (ctx.state !== 'running') ctx.resume().catch(() => {});
+  if (!primed) {
+    // Older iOS versions only unlock after a sound actually plays in the gesture.
+    const src = ctx.createBufferSource();
+    src.buffer = ctx.createBuffer(1, 1, 22050);
+    src.connect(ctx.destination);
+    src.start(0);
+    primed = true;
+  }
 }
 
 export function toggleMute() {
@@ -22,6 +35,8 @@ export function toggleMute() {
   if (master) master.gain.value = muted ? 0 : 0.18;
   return muted;
 }
+
+export const isMuted = () => muted;
 
 // One note: wave type, start/end frequency, duration, start offset, volume.
 function tone(type, f1, f2, dur, at = 0, vol = 1) {

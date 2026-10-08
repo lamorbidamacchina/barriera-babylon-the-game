@@ -59,6 +59,20 @@ export default class Menu extends Phaser.Scene {
 
     // Divider between the list and Mei Li's comment.
     for (let x = 30; x < WIDTH - 30; x += 6) g.fillStyle(N.chalkDim, 0.6).fillRect(x, 216, 3, 1);
+
+    // Back to the title screen (touch devices have no Esc key).
+    const back = text(this, 24, 24, '< ESCI', { color: C.chalkDim, shadow: '#0e1410' });
+    g.lineStyle(1, N.chalkDim, 0.6).strokeRect(19.5, 19.5, back.width + 10, back.height + 8);
+    this.add
+      .zone(14, 14, back.width + 20, back.height + 18)
+      .setOrigin(0)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerover', () => back.setColor(C.chalkHi))
+      .on('pointerout', () => back.setColor(C.chalkDim))
+      .on('pointerdown', () => {
+        sfx.confirm();
+        goTo(this, 'Title');
+      });
   }
 
   drawRow(game, i) {

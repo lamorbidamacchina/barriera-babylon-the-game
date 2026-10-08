@@ -164,8 +164,8 @@ export default class Title extends Phaser.Scene {
   drawTitle() {
     const t1 = text(this, WIDTH / 2, -40, 'BARRIERA', { size: 32, color: C.ocra, origin: 0.5, shadow: '#3a2408' });
     const t2 = text(this, WIDTH / 2, -40, 'BABYLON', { size: 32, color: C.white, origin: 0.5, shadow: '#2a3048' });
-    t1.setShadow(3, 3, '#1a1006', 0, false, true);
-    t2.setShadow(3, 3, '#0a0e18', 0, false, true);
+    t1.setShadow(3, 3, '#1a1006', 0, false, true).setPadding(0, 0, 3, 3);
+    t2.setShadow(3, 3, '#0a0e18', 0, false, true).setPadding(0, 0, 3, 3);
     this.tweens.add({ targets: t1, y: 46, duration: 900, ease: 'Bounce.out' });
     this.tweens.add({ targets: t2, y: 84, duration: 900, delay: 250, ease: 'Bounce.out' });
 

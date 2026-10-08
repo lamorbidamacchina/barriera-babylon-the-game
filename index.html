@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#05070c" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Barriera" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="icons/icon-192.png" />
     <title>Barriera Babylon — The Game</title>
   </head>
   <body>
@@ -12,6 +18,36 @@
       <div id="screen">
         <div id="crt" aria-hidden="true"></div>
       </div>
+
+      <div id="controls">
+        <button id="btn-sound" type="button" aria-label="Disattiva audio">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path class="speaker" d="M2 6h3l4-3v10l-4-3H2z" />
+            <path class="waves" d="M11 5.5q1.5 2.5 0 5M12.5 3.5q3 4.5 0 9" />
+            <path class="cross" d="M11 5.5l4 5M15 5.5l-4 5" />
+          </svg>
+        </button>
+        <button id="btn-fullscreen" type="button" aria-label="Schermo intero">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="hint" hidden>
+        <div class="box">
+          <p><strong>Schermo intero su iPhone</strong></p>
+          <p>Safari su iPhone non permette lo schermo intero alle pagine web.</p>
+          <p>Tocca <strong>Condividi</strong> e poi <strong>Aggiungi alla schermata Home</strong>: il gioco si aprirà a tutto schermo, come un'app.</p>
+          <button id="hint-ok" type="button">HO CAPITO</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="rotate" aria-live="polite">
+      <div class="phone" aria-hidden="true"><span></span></div>
+      <p>RUOTA IL DISPOSITIVO</p>
+      <p class="small">Barriera si gioca in orizzontale.</p>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>
