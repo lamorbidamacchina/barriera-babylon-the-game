@@ -11,6 +11,10 @@ npm run dev      # http://localhost:5173
 npm run build    # output in dist/
 ```
 
+## Online
+
+https://lamorbidamacchina.github.io/barriera-babylon-the-game/ — pubblicato da GitHub Actions a ogni push su `main`.
+
 ## Struttura
 
 - `src/main.js` — avvio Phaser, scaling a multipli interi, effetto CRT, tasti globali
