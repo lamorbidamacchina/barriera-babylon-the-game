@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { WIDTH, HEIGHT, C, N } from '../config.js';
 import { text, blink, goTo, fadeIn, droneTexture } from '../ui.js';
 import { sfx } from '../sfx.js';
+import { sprayTag } from '../graffiti.js';
 
 const WALL_Y = 222;
 
@@ -157,8 +158,18 @@ export default class Title extends Phaser.Scene {
       g.fillRect(x + 2, WALL_Y - 4, 1, 3);
     }
     // Teresa's tags.
-    text(this, 296, WALL_Y + 12, 'COMITATO CAOS', { color: C.pink, shadow: '#5a1838' });
-    text(this, 20, WALL_Y + 12, 'MURITE FUNGOIDE!', { color: '#9be36b', shadow: '#24401a' });
+    sprayTag(this, 300, WALL_Y + 2, 'COMITATO CAOS', { color: N.pink });
+    // A second writer: greener, more upright and jumpier, no crown.
+    sprayTag(this, 16, WALL_Y + 2, 'MURITE FUNGOIDE!', {
+      color: 0x7ad34f,
+      outline: 0x0b1a08,
+      slant: 0.12,
+      advance: 9.6,
+      bounce: 2,
+      swoosh: false,
+      crown: null,
+      drips: 10,
+    });
   }
 
   drawTitle() {
@@ -182,7 +193,9 @@ export default class Title extends Phaser.Scene {
 
   drawHud() {
     text(this, 8, 6, '1P 000000', { color: C.ocraLight });
-    text(this, WIDTH - 8, 6, 'SOCIAL SCORE 000013', { color: C.red, origin: [1, 0] });
+    // The score is the build number (see vite.config.js).
+    const build = String(__BUILD__).padStart(6, '0');
+    text(this, WIDTH - 8, 6, `SOCIAL SCORE ${build}`, { color: C.red, origin: [1, 0] });
     text(this, 8, HEIGHT - 12, '© 2026 BAR STELLA SOFT', { color: C.paper, shadow: '#2a2a28' });
     this.creditText = text(this, WIDTH - 8, HEIGHT - 12, 'CREDITI 00', { color: C.paper, origin: [1, 0], shadow: '#2a2a28' });
   }
