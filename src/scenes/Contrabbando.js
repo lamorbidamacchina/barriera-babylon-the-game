@@ -247,15 +247,14 @@ export default class Contrabbando extends Phaser.Scene {
     const unlocked = Math.min(this.progress.unlocked, RECIPES.length - 1);
     o.add(text(this, X, P.y + 12, `RICETTA ${this.level + 1}/${RECIPES.length}`, { color: C.chalkDim }));
     if (unlocked > 0) {
-      const arrow = (label, x, dir) => {
-        const a = o.add(text(this, x, P.y + 12, label, { color: C.ocraLight }));
-        a.setInteractive({ useHandCursor: true }).on('pointerdown', (p, lx, ly, e) => {
-          e.stopPropagation();
-          this.changeLevel(dir);
-        });
+      // Big enough to hit with a thumb; greyed out when there's nowhere to go.
+      const step = (label, x, dir, enabled) => {
+        if (enabled) return this.button(o, x, P.y + 6, label, () => this.changeLevel(dir), 44);
+        o.add(this.add.rectangle(x, P.y + 6, 44, 18, N.night).setOrigin(0).setStrokeStyle(1, N.night3));
+        o.add(text(this, x + 22, P.y + 11, label, { color: '#3a4560', origin: [0.5, 0], shadow: null }));
       };
-      if (this.level > 0) arrow('<', X + 108, -1);
-      if (this.level < unlocked) arrow('>', X + 124, 1);
+      step('<', P.x + P.w - 108, -1, this.level > 0);
+      step('>', P.x + P.w - 56, 1, this.level < unlocked);
     }
     o.add(text(this, X, P.y + 28, this.recipe.name, { color: C.ocraLight, wrap: 300 }));
 
@@ -274,7 +273,7 @@ export default class Contrabbando extends Phaser.Scene {
 
     o.add(text(this, WIDTH / 2, P.y + 148, 'TIENI PREMUTO E TRASCINA PER TAGLIARE', { color: C.chalkDim, origin: [0.5, 0] }));
     o.add(text(this, WIDTH / 2, P.y + 159, 'FUORI RICETTA: -10 PUNTI', { color: '#e07a6a', origin: [0.5, 0] }));
-    o.add(text(this, WIDTH / 2, P.y + 170, 'DRONE TOCCATO = VERIFICA   SBAGLIATA = X   3 X = FINE', { color: '#e07a6a', origin: [0.5, 0] }));
+    o.add(text(this, WIDTH / 2, P.y + 170, 'DRONE = VERIFICA   SBAGLIATA = X   3 X = FINE', { color: '#e07a6a', origin: [0.5, 0] }));
     const go = o.add(text(this, WIDTH / 2, P.y + 186, 'CLICCA PER INIZIARE', { color: C.ocraLight, origin: [0.5, 0] }));
     this.button(o, P.x + 12, P.y + 182, '< MENU', () => goTo(this, 'Menu'), 64);
     blink(this, go, 450);
