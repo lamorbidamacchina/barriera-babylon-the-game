@@ -34,11 +34,9 @@ const game = new Phaser.Game({
 // grow in half-CSS-pixel steps while every game pixel stays perfectly square.
 function fit() {
   const dpr = window.devicePixelRatio || 1;
-  const factor = Math.max(
-    1,
-    Math.floor(Math.min((innerWidth * dpr) / WIDTH, (innerHeight * dpr) / HEIGHT)),
-  );
-  const zoom = factor / dpr;
+  const room = Math.min((innerWidth * dpr) / WIDTH, (innerHeight * dpr) / HEIGHT);
+  // Below 1x (small phones) integer scaling is impossible: shrink to fit.
+  const zoom = (room >= 1 ? Math.floor(room) : room) / dpr;
   game.scale.setZoom(zoom);
   crtEl.style.setProperty('--px', `${zoom}px`);
 }
