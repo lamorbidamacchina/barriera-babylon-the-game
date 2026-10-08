@@ -1,0 +1,55 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #05070c;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+
+#screen {
+  position: relative;
+  line-height: 0;
+  box-shadow: 0 0 0 1px #1b2233, 0 0 60px rgba(0, 0, 0, 0.8);
+}
+
+#screen canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* CRT look: one dark scanline per game pixel row plus a soft vignette.
+   --px is the size of one game pixel in CSS px, set from main.js. */
+#crt {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 62%, rgba(0, 0, 0, 0.45) 100%),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(var(--px, 3px) * 0.6),
+      rgba(0, 0, 0, 0.22) calc(var(--px, 3px) * 0.6),
+      rgba(0, 0, 0, 0.22) var(--px, 3px)
+    );
+}
+
+#crt.off {
+  display: none;
+}

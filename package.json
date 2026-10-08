@@ -1,0 +1,20 @@
+{
+  "name": "barriera-babylon-the-game",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "pixelize": "node tools/pixelize.mjs"
+  },
+  "dependencies": {
+    "@fontsource/press-start-2p": "5.3.0",
+    "phaser": "4.2.1"
+  },
+  "devDependencies": {
+    "sharp": "0.35.5",
+    "vite": "8.3.0"
+  }
+}
