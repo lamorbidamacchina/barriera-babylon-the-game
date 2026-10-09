@@ -1,6 +1,6 @@
 // Levels: each recipe is an order from Mei Li.
 // spawnEvery: seconds between veggie waves; waveMax: veggies per wave;
-// droneEvery: seconds between drones (0 = none); powerups: whether bonus items can appear; size: sprite scale (1 = the size
+// droneEvery: seconds between drones (0 = none); otp: seconds to type the position code; powerups: whether bonus items can appear; size: sprite scale (1 = the size
 // of Fruit Ninja's first fruits), veggies shrink as levels get harder.
 export const RECIPES = [
   {
@@ -11,6 +11,7 @@ export const RECIPES = [
     spawnEvery: 1.5,
     waveMax: 2,
     droneEvery: 7,
+    otp: 8,
     powerups: false,
     order: 'Primo ordine: minestrone. Zucchine e pomodori. Franco lancia, tu tagli. Droni NON toccare: ti scansionano.',
   },
@@ -22,6 +23,7 @@ export const RECIPES = [
     spawnEvery: 1.3,
     waveMax: 3,
     droneEvery: 5,
+    otp: 7,
     powerups: true,
     order: 'Caponata. Melanzane come Don Remo: grosse, viola, piene di peccato. Se sistema chiede codice, tu dai codice.',
   },
@@ -33,6 +35,7 @@ export const RECIPES = [
     spawnEvery: 1.2,
     waveMax: 3,
     droneEvery: 4,
+    otp: 6,
     powerups: true,
     order: 'Ribollita. Cavolo nero di contrabbando. Se drone vede, coprifuoco anche per minestra.',
   },
@@ -44,6 +47,7 @@ export const RECIPES = [
     spawnEvery: 1.1,
     waveMax: 4,
     droneEvery: 3.2,
+    otp: 6,
     powerups: true,
     order: 'Vellutata di zucca. Dura come Muro, ma si scioglie. Come Muro.',
   },
@@ -55,6 +59,7 @@ export const RECIPES = [
     spawnEvery: 0.9,
     waveMax: 4,
     droneEvery: 2.6,
+    otp: 5,
     powerups: true,
     order: 'Don Remo si sposa. Bomboniere utili e a chilometro zero: zucchine. Tante. Non chiedere.',
   },
@@ -74,6 +79,7 @@ export const FRANCO = {
 export const MEI_END = {
   win: ['Piatto servito. Non male. Non bene. Non male.', 'Mangiabile. Per Barriera è stella Michelin.', 'Brava mano. Paga comunque il caffè.'],
   lose: ['Bruciato. Come la tua dignità.', 'Questo neanche Derossi mangia.', 'Soluzione temporanea: riprova.'],
-  scanned: ['Ti hanno scansionato. Adesso droni sanno ricetta.', 'Tre volte drone. Tu lavori per loro?'],
+  scanned: ['Ti hanno scansionato. Adesso droni sanno ricetta.', 'Quattro numeri. Neanche quattro numeri sai fare?', 'Codice sbagliato. Adesso schedati tutti. Brava.'],
+  wasted: ['Tre sbagli. Verdura non cresce su alberi.', 'Tu taglia tutto. Io paga tutto. No.', 'Spreco. Franco piange, io conto.'],
   final: 'Bomboniere pronte. Don Remo si sposa con zucchine. Barriera piange di gioia. Io no.',
 };

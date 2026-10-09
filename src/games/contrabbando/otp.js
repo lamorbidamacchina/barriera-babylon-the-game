@@ -1,5 +1,6 @@
 // Position check: the game freezes and the player must type the 4-digit code
-// before the countdown ends, as Bea does every day. Two flavours: the random
+// before the countdown ends (shorter on harder recipes), as Bea does every
+// day. Missing it ends the round. Two flavours: the random
 // "verifica obbligatoria", and the one a drone starts when you touch it
 // (chapter 1: "Cittadino, la tua posizione non è stata confermata").
 import { WIDTH, HEIGHT, C, N } from '../../config.js';
@@ -8,7 +9,6 @@ import { sfx } from '../../sfx.js';
 
 const P = { x: 112, y: 30, w: 256, h: 214 };
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '<'];
-const SECONDS = 10;
 
 export class OtpCheck {
   constructor(scene, onDone) {
@@ -23,11 +23,11 @@ export class OtpCheck {
     return obj;
   }
 
-  open(reason = 'random') {
+  open(reason = 'random', seconds = 8) {
     const s = this.scene;
     this.code = String(Math.floor(1000 + Math.random() * 9000));
     this.entry = '';
-    this.left = SECONDS;
+    this.left = seconds;
     this.closed = false;
 
     // Full-screen blocker so clicks don't reach the game underneath.
@@ -77,7 +77,7 @@ export class OtpCheck {
     sfx.alarm();
     this.timer = s.time.addEvent({
       delay: 1000,
-      repeat: SECONDS - 1,
+      repeat: seconds - 1,
       callback: () => {
         this.left--;
         this.countText.setText(String(this.left));

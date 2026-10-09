@@ -274,8 +274,8 @@ export default class Contrabbando extends Phaser.Scene {
     this.typeText(order, this.recipe.order);
 
     o.add(text(this, WIDTH / 2, P.y + 148, 'TIENI PREMUTO E TRASCINA PER TAGLIARE', { color: C.chalkDim, origin: [0.5, 0] }));
-    o.add(text(this, WIDTH / 2, P.y + 159, 'FUORI RICETTA: -10 PUNTI', { color: '#e07a6a', origin: [0.5, 0] }));
-    o.add(text(this, WIDTH / 2, P.y + 170, 'DRONE = VERIFICA   SBAGLIATA = X   3 X = FINE', { color: '#e07a6a', origin: [0.5, 0] }));
+    o.add(text(this, WIDTH / 2, P.y + 159, 'FUORI RICETTA: -10 PUNTI E UNA X   3 X = FINE', { color: '#e07a6a', origin: [0.5, 0] }));
+    o.add(text(this, WIDTH / 2, P.y + 170, `DRONE O VERIFICA: CODICE IN ${this.recipe.otp}s O FINE`, { color: '#e07a6a', origin: [0.5, 0] }));
     const go = o.add(text(this, WIDTH / 2, P.y + 186, 'CLICCA PER INIZIARE', { color: C.ocraLight, origin: [0.5, 0] }));
     this.button(o, P.x + 12, P.y + 182, '< MENU', () => goTo(this, 'Menu'), 64);
     blink(this, go, 450);
@@ -454,11 +454,12 @@ export default class Contrabbando extends Phaser.Scene {
     sfx.slice(rand(0.85, 1.2));
     this.splash(o.x, o.y, VEGGIES[o.type].juice, o.img.width);
     // Scoring: +15 for what the recipe still needs, +5 for a recipe
-    // ingredient already complete, -10 for anything not in the recipe.
+    // ingredient already complete, -10 and an X for anything not in the recipe.
     if (!(o.type in this.remaining)) {
       sfx.error();
       this.addScore(-10, o.x, o.y - 10);
       this.say(FRANCO.wrong, 0.35);
+      this.addStrike();
       return;
     }
     if (this.stroke) this.stroke.combo++;
@@ -517,7 +518,7 @@ export default class Contrabbando extends Phaser.Scene {
 
   // Touching a drone doesn't cut it: it stops, locks on and scans the kitchen,
   // then asks you to confirm your position (OTP). Right code: no penalty, but
-  // the clock kept running. Wrong or late: an X. Then it flies off.
+  // the clock kept running, and it flies off. Wrong or late: the round is over.
   droneHit(o) {
     o.locked = true;
     o.lockT = 0;
@@ -544,7 +545,7 @@ export default class Contrabbando extends Phaser.Scene {
     // Make the new X impossible to miss.
     const x = this.strikeTexts[this.strikes - 1];
     if (x) this.tweens.add({ targets: x, scale: { from: 3, to: 1 }, duration: 350, ease: 'Back.out' });
-    if (this.strikes >= MAX_STRIKES) this.time.delayedCall(400, () => this.endRound('scanned'));
+    if (this.strikes >= MAX_STRIKES) this.time.delayedCall(400, () => this.endRound('wasted'));
   }
 
   activatePower(type) {
@@ -584,7 +585,7 @@ export default class Contrabbando extends Phaser.Scene {
     this.otpReason = reason;
     this.strokeEnd();
     this.trail = [];
-    this.otp.open(reason);
+    this.otp.open(reason, this.recipe.otp);
   }
 
   otpDone(ok) {
@@ -603,7 +604,7 @@ export default class Contrabbando extends Phaser.Scene {
     } else {
       sfx.error();
       this.banner('CITTADINO IRREGOLARE', C.red, 1200);
-      this.addStrike();
+      this.endRound('scanned');
     }
   }
 
@@ -851,7 +852,7 @@ export default class Contrabbando extends Phaser.Scene {
     const P = { x: 60, y: 36, w: 360, h: 200 };
     panel(o.add(this.add.graphics()), P.x, P.y, P.w, P.h, { border: win ? N.ocra : N.red });
 
-    const title = win ? 'PIATTO SERVITO!' : result === 'scanned' ? 'SCANSIONATO!' : 'PIATTO BRUCIATO';
+    const title = win ? 'PIATTO SERVITO!' : { scanned: 'SCANSIONATO!', wasted: 'TROPPI SPRECHI' }[result] ?? 'PIATTO BRUCIATO';
     o.add(text(this, WIDTH / 2, P.y + 12, title, { size: 16, color: win ? C.ocraLight : C.red, origin: [0.5, 0] }));
     o.add(text(this, WIDTH / 2, P.y + 34, this.recipe.name, { color: C.chalkDim, origin: [0.5, 0] }));
 
@@ -872,7 +873,7 @@ export default class Contrabbando extends Phaser.Scene {
     const g = o.add(this.add.graphics());
     panel(g, P.x + 14, P.y + 52, 96, 96, { fill: N.black, alpha: 1 });
     o.add(this.add.image(P.x + 14, P.y + 52, 'mei-li-96').setOrigin(0));
-    const line = win && last ? MEI_END.final : pick(win ? MEI_END.win : result === 'scanned' ? MEI_END.scanned : MEI_END.lose);
+    const line = win && last ? MEI_END.final : pick(win ? MEI_END.win : MEI_END[result] ?? MEI_END.lose);
     o.add(text(this, P.x + 120, P.y + 118, line, { color: C.white, wrap: P.w - 136, lineSpacing: 4 }));
 
     const next = () => this.scene.restart({ level: this.level + 1 });
