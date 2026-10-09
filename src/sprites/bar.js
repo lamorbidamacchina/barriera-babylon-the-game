@@ -176,3 +176,109 @@ export function drawDuckPoster(p) {
   tape(p, 1, 0);
   tape(p, w - 7, 0);
 }
+
+function star(p, cx, cy, c) {
+  p.rect(cx - 2, cy, 5, 1, c);
+  p.rect(cx - 1, cy - 1, 3, 3, c);
+  p.set(cx, cy - 2, c);
+  p.set(cx - 1, cy + 2, c);
+  p.set(cx + 1, cy + 2, c);
+}
+
+// OST Barriera, the popular culture club: black laurel wreath, heavy OST, red
+// "Barriera" and a red star, on white.
+export function drawOstPoster(p) {
+  const { w, h } = POSTER;
+  const ink = 0x141414;
+  const red = 0xc8202a;
+  p.rect(0, 0, w, h, 0xf4f2ec);
+  // Wreath: leaves along two arcs, open at the top, clear of the lettering.
+  for (let a = 0.5; a < 2.9; a += 0.3) {
+    for (const side of [-1, 1]) {
+      const x = 24 + side * Math.sin(a) * 21;
+      const y = 21 - Math.cos(a) * 17;
+      p.ellipse(x, y, 1.3, 1.3, ink);
+      p.set(Math.round(x + side), Math.round(y - 2), ink);
+    }
+  }
+  miniTextCentered(p, 'OST', w / 2, 9, ink, 2);
+  // The star inside the O.
+  p.rect(19, 11, 2, 6, 0xf4f2ec);
+  p.set(19, 13, ink);
+  p.set(20, 14, ink);
+  miniTextCentered(p, 'BARRIERA', w / 2, 22, red);
+  star(p, 24, 31, red);
+  miniTextCentered(p, 'TORINO', w / 2, 41, ink);
+  tear(p, w, h, 3);
+  tape(p, 1, 0);
+  tape(p, w - 7, 0);
+}
+
+// Casseta Popular / Circolo Risorgimento: coral CP over teal CR with a star,
+// and the yearly Pastasciutta Antifascista.
+export function drawCassetaPoster(p) {
+  const { w, h } = POSTER;
+  const coral = 0xe8505a;
+  const teal = 0x1f8a8a;
+  p.rect(0, 0, w, h, 0xf8f6f0);
+  miniText(p, 'CP', 3, 3, coral, 2);
+  miniText(p, 'CR', 3, 14, teal, 2);
+  star(p, 10, 29, coral);
+  miniText(p, 'CASSETA', 21, 3, coral);
+  miniText(p, 'POPULAR', 21, 9, coral);
+  miniText(p, 'CIRCOLO', 21, 15, teal);
+  miniText(p, 'RISORG.', 21, 21, teal);
+  // A plate of pasta al pomodoro.
+  p.ellipse(24, 31, 10, 2.5, 0xd8d8d0);
+  p.ellipse(24, 29.5, 6, 2.2, 0xf0c860);
+  p.ellipse(24, 29, 3, 1.2, 0xd8402a);
+  p.set(26, 28, 0x4a9a3a);
+  miniTextCentered(p, 'PASTASCIUTTA', w / 2, 35, coral);
+  miniTextCentered(p, 'ANTIFASCISTA', w / 2, 41, teal);
+  tear(p, w, h, 2);
+  tape(p, 1, 0);
+  tape(p, w - 7, 0);
+}
+
+// Bagni Pubblici di via Aglie': a pipe and a shower raining colored drops on
+// a light blue house.
+export function drawBagniPoster(p) {
+  const { w, h } = POSTER;
+  const grey = 0x9a9a9a;
+  p.rect(0, 0, w, h, 0xf8f8f6);
+  p.rect(12, 4, 34, 2, grey);
+  p.rect(10, 4, 3, 4, grey);
+  p.rect(7, 8, 9, 2, 0x7a7a7a);
+  p.rect(9, 7, 5, 1, 0x7a7a7a);
+  const drops = [0xc8202a, 0xe87a20, 0xf0c020, 0x8a3a8a, 0xe8505a];
+  for (let row = 0; row < 4; row++) {
+    for (let i = 0; i <= row + 1; i++) {
+      const x = 11 - (row + 1) * 1.5 + i * 3;
+      const y = 12 + row * 3;
+      p.rect(x, y, 1, 2, drops[(row + i) % drops.length]);
+    }
+  }
+  p.rect(3, 23, 17, 7, 0x8ad0e8);
+  p.rect(3, 23, 17, 1, 0x5a9ab0);
+  for (let i = 0; i < 4; i++) {
+    p.rect(5 + i * 4, 25, 2, 2, i % 2 ? 0xffffff : 0xc8202a);
+  }
+  p.rect(16, 27, 2, 3, 0x3a6a80);
+  miniText(p, 'BAGNI', 24, 13, 0x5a5a5a);
+  miniText(p, 'PUBBL.', 23, 19, 0x5a5a5a);
+  miniTextCentered(p, "VIA AGLIE'", w / 2, 34, 0x5a5a5a);
+  miniTextCentered(p, 'DOCCE LIBERE', w / 2, 41, 0x1f8a8a);
+  tear(p, w, h, 2);
+  tape(p, 1, 0);
+  tape(p, w - 7, 0);
+}
+
+// Every poster the bar can show; the scene picks three at random.
+export const POSTERS = {
+  nerorgasmo: drawPunkPoster,
+  baltea: drawBalteaPoster,
+  'anatra-zoppa': drawDuckPoster,
+  'ost-barriera': drawOstPoster,
+  'casseta-popular': drawCassetaPoster,
+  'bagni-pubblici': drawBagniPoster,
+};

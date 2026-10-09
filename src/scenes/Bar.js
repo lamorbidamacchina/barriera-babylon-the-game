@@ -3,7 +3,7 @@ import { WIDTH, HEIGHT, C, N } from '../config.js';
 import { text, blink, panel, goTo, fadeIn, makeTexture, droneTexture } from '../ui.js';
 import { sfx } from '../sfx.js';
 import { Painter } from '../painter.js';
-import { YARN, POSTER, drawYarn, drawPunkPoster, drawBalteaPoster, drawDuckPoster } from '../sprites/bar.js';
+import { YARN, POSTER, POSTERS, drawYarn } from '../sprites/bar.js';
 import { GREETINGS, QUOTES, INVITE } from '../data/meili.js';
 
 const BOX = { x: 192, y: 112, w: 272, h: 84 };
@@ -82,15 +82,12 @@ export default class Bar extends Phaser.Scene {
     this.add.image(409, 195, 'yarn').setOrigin(0);
 
     // Posters stuck on the front of the counter, under Mei Li.
-    const posters = [
-      ['nerorgasmo', drawPunkPoster, 20, 220],
-      ['baltea', drawBalteaPoster, 84, 221],
-      ['anatra-zoppa', drawDuckPoster, 148, 220],
-    ];
-    for (const [name, draw, x, y] of posters) {
-      sprite(`poster-${name}`, POSTER, draw);
-      this.add.image(x, y, `poster-${name}`).setOrigin(0);
-    }
+    // Three of them, different every visit.
+    const names = Phaser.Utils.Array.Shuffle(Object.keys(POSTERS)).slice(0, 3);
+    names.forEach((name, i) => {
+      sprite(`poster-${name}`, POSTER, POSTERS[name]);
+      this.add.image(20 + i * 64, 220 + (i % 2), `poster-${name}`).setOrigin(0);
+    });
 
     // Neon sign, with a cheap glow and an unreliable transformer.
     const glow = [];
