@@ -346,8 +346,9 @@ export default class Contrabbando extends Phaser.Scene {
     this.strokeEnd();
     const o = (this.pauseUi = this.overlay());
     o.add(text(this, WIDTH / 2, 90, 'PAUSA', { size: 16, color: C.white, origin: 0.5 }));
-    this.button(o, WIDTH / 2 - 70, 130, 'CONTINUA', () => this.resume());
-    this.button(o, WIDTH / 2 + 10, 130, 'MENU', () => goTo(this, 'Menu'));
+    // CONTINUA is 64px of text: 80px buttons leave it room inside the border.
+    this.button(o, WIDTH / 2 - 85, 130, 'CONTINUA', () => this.resume(), 80);
+    this.button(o, WIDTH / 2 + 5, 130, 'MENU', () => goTo(this, 'Menu'), 80);
   }
 
   resume() {
