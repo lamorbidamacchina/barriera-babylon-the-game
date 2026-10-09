@@ -7,6 +7,7 @@ import { refreshRecords, getRecord, beatsRecord, onRecords, submitRecord, cleanN
 import { VEGGIES, POWERUPS, createTextures, vegKey, iconKey, droneKey, powerKey } from '../games/contrabbando/textures.js';
 import { RECIPES, FRANCO, MEI_END, MEI_RECORD } from '../games/contrabbando/recipes.js';
 import { OtpCheck } from '../games/contrabbando/otp.js';
+import { POINTS, sliceScore, addPoints, comboBonus, timeBonus, isComplete, pickVeggieType } from '../games/contrabbando/rules.js';
 
 const GRAVITY = 300; // px/s²
 const COUNTER_Y = 236; // veggies pop up from behind the bar counter
@@ -210,7 +211,7 @@ export default class Contrabbando extends Phaser.Scene {
   }
 
   addScore(n, x, y, label) {
-    this.score = Math.max(0, this.score + n);
+    this.score = addPoints(this.score, n);
     this.scoreText.setText(`PUNTI ${String(this.score).padStart(6, '0')}`);
     if (x === undefined) return;
     const str = label ?? (n < 0 ? `${n}` : `+${n}`);
@@ -454,8 +455,8 @@ export default class Contrabbando extends Phaser.Scene {
   strokeEnd() {
     const s = this.stroke;
     this.stroke = null;
-    if (!s || s.combo < 3 || this.state !== 'play') return;
-    const bonus = s.combo * 10;
+    const bonus = s ? comboBonus(s.combo) : 0;
+    if (!bonus || this.state !== 'play') return;
     this.addScore(bonus, s.lastX, s.lastY - 12, `COMBO x${s.combo} +${bonus}`);
     sfx.combo(s.combo);
     this.say(FRANCO.combo, 0.6);
@@ -475,23 +476,21 @@ export default class Contrabbando extends Phaser.Scene {
     }
     sfx.slice(rand(0.85, 1.2));
     this.splash(o.x, o.y, VEGGIES[o.type].juice, o.img.width);
-    // Scoring: +15 for what the recipe still needs, +5 for a recipe
-    // ingredient already complete, -10 and an X for anything not in the recipe.
-    if (!(o.type in this.remaining)) {
+    const { points, strike, needed } = sliceScore(o.type, this.remaining);
+    if (strike) {
       sfx.error();
-      this.addScore(-10, o.x, o.y - 10);
+      this.addScore(points, o.x, o.y - 10);
       this.say(FRANCO.wrong, 0.35);
       this.addStrike();
       return;
     }
     if (this.stroke) this.stroke.combo++;
-    const needed = this.remaining[o.type] > 0;
     if (needed) {
       this.remaining[o.type]--;
       this.updateGoals();
     }
-    this.addScore(needed ? 15 : 5, o.x, o.y - 10);
-    if (!this.completed && Object.values(this.remaining).every((n) => n <= 0)) {
+    this.addScore(points, o.x, o.y - 10);
+    if (!this.completed && isComplete(this.remaining)) {
       this.completed = true; // stop clock and checks, let the last juice fly
       this.time.delayedCall(350, () => this.endRound('win'));
     }
@@ -583,7 +582,7 @@ export default class Contrabbando extends Phaser.Scene {
         d.dead = true;
         this.splitInHalves(d, Math.PI / 2);
         this.splash(d.x, d.y, [0xe0443a, 0xfff2b0], d.img.width);
-        this.addScore(25, d.x, d.y - 10);
+        this.addScore(POINTS.laseredDrone, d.x, d.y - 10);
       }
       this.time.delayedCall(150, () => this.fx.clear());
     } else if (type === 'valzer') {
@@ -633,9 +632,7 @@ export default class Contrabbando extends Phaser.Scene {
   // ---------------------------------------------------------------- spawning
 
   spawnVeggie(onlyNeeded = false) {
-    const needed = Object.keys(this.remaining).filter((k) => this.remaining[k] > 0);
-    const decoys = Object.keys(VEGGIES).filter((k) => !(k in this.remaining));
-    const type = needed.length && (onlyNeeded || Math.random() >= this.recipe.decoys) ? pick(needed) : pick(decoys.length ? decoys : needed);
+    const type = pickVeggieType(this.remaining, this.recipe.decoys, onlyNeeded);
     this.launch('veggie', type, vegKey(type, this.recipe.size));
   }
 
@@ -854,8 +851,8 @@ export default class Contrabbando extends Phaser.Scene {
 
     // Losing loses everything: no score, no record, only a finished dish counts.
     const win = result === 'win';
-    const timeBonus = win ? Math.ceil(Math.max(0, this.timeLeft)) * 5 : 0;
-    const total = this.score + timeBonus;
+    const bonus = timeBonus(win, this.timeLeft);
+    const total = this.score + bonus;
     const record = win && total > (this.progress.best[this.level] ?? 0);
     const barriera = win && beatsRecord(GAME_ID, this.level, total);
     if (win) {
@@ -869,7 +866,7 @@ export default class Contrabbando extends Phaser.Scene {
     else sfx.lose();
     if (result === 'time') this.banner('TEMPO SCADUTO', C.red, 1000);
     this.time.delayedCall(900, () => {
-      const results = (named) => this.showResults(result, timeBonus, total, record, named);
+      const results = (named) => this.showResults(result, bonus, total, record, named);
       if (barriera) this.askNickname(total, results);
       else results(false);
     });
@@ -922,7 +919,7 @@ export default class Contrabbando extends Phaser.Scene {
     this.button(o, cx + 6, P.y + 100, 'SALTA', () => finish(null), 64);
   }
 
-  showResults(result, timeBonus, total, record, barriera) {
+  showResults(result, bonus, total, record, barriera) {
     const win = result === 'win';
     const last = this.level === RECIPES.length - 1;
     const o = this.overlay();
@@ -936,7 +933,7 @@ export default class Contrabbando extends Phaser.Scene {
     if (win) {
       const rows = [
         ['PUNTI', this.score],
-        ['BONUS TEMPO', timeBonus],
+        ['BONUS TEMPO', bonus],
         ['TOTALE', total],
       ];
       rows.forEach(([k, v], i) => {
