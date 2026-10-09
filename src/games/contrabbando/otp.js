@@ -3,12 +3,14 @@
 // day. Missing it ends the round. Two flavours: the random
 // "verifica obbligatoria", and the one a drone starts when you touch it
 // (chapter 1: "Cittadino, la tua posizione non è stata confermata").
+// On harder recipes the keypad digits come shuffled, like a bank's.
+import Phaser from 'phaser';
 import { WIDTH, HEIGHT, C, N } from '../../config.js';
 import { text, panel } from '../../ui.js';
 import { sfx } from '../../sfx.js';
 
 const P = { x: 112, y: 30, w: 256, h: 214 };
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '<'];
+const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
 
 export class OtpCheck {
   constructor(scene, onDone) {
@@ -23,7 +25,7 @@ export class OtpCheck {
     return obj;
   }
 
-  open(reason = 'random', seconds = 8) {
+  open(reason = 'random', seconds = 8, shuffle = false) {
     const s = this.scene;
     this.code = String(Math.floor(1000 + Math.random() * 9000));
     this.entry = '';
@@ -47,13 +49,15 @@ export class OtpCheck {
     this.countText = this.add(text(s, P.x + P.w - 16, P.y + 52, String(this.left), { size: 16, color: C.red, origin: [1, 0] }));
     this.entryText = this.add(text(s, WIDTH / 2, P.y + 78, '____', { size: 16, color: C.white, origin: [0.5, 0] }));
 
-    // Keypad, 3x4.
+    // Keypad, 3x4: nine digits, then C, the last digit, <.
+    const d = shuffle ? Phaser.Utils.Array.Shuffle([...DIGITS]) : DIGITS;
+    const keys = [...d.slice(0, 9), 'C', d[9], '<'];
     const bw = 40;
     const bh = 18;
     const gap = 6;
     const x0 = WIDTH / 2 - (bw * 3 + gap * 2) / 2;
     const y0 = P.y + 104;
-    KEYS.forEach((k, i) => {
+    keys.forEach((k, i) => {
       const x = x0 + (i % 3) * (bw + gap);
       const y = y0 + Math.floor(i / 3) * (bh + gap);
       const bg = this.add(s.add.rectangle(x, y, bw, bh, 0x2a1418).setOrigin(0).setStrokeStyle(1, N.red, 0.7));

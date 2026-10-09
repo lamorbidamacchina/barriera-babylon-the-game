@@ -2,7 +2,7 @@
 // spawnEvery: seconds between veggie waves; waveMax: veggies per wave;
 // decoys: share of veggies NOT in the recipe, to make you think before cutting;
 // droneEvery: seconds between drones (0 = none); otp: seconds to type the
-// position code; powerups: bonus items that can appear; size: sprite scale
+// position code; shuffleKeys: OTP keypad digits in random order; powerups: bonus items that can appear; size: sprite scale
 // (1 = the size of Fruit Ninja's first fruits), veggies shrink as levels get harder.
 export const RECIPES = [
   {
@@ -41,6 +41,7 @@ export const RECIPES = [
     decoys: 0.35,
     droneEvery: 4,
     otp: 6,
+    shuffleKeys: true,
     powerups: ['laser', 'valzer', 'attivatore'],
     order: 'Ribollita. Cavolo nero di contrabbando. Se drone vede, coprifuoco anche per minestra.',
   },
@@ -54,6 +55,7 @@ export const RECIPES = [
     decoys: 0.4,
     droneEvery: 3.2,
     otp: 6,
+    shuffleKeys: true,
     powerups: ['laser', 'valzer', 'attivatore'],
     order: 'Vellutata di zucca. Dura come Muro, ma si scioglie. Come Muro.',
   },
@@ -67,6 +69,7 @@ export const RECIPES = [
     decoys: 0.6,
     droneEvery: 2.6,
     otp: 5,
+    shuffleKeys: true,
     powerups: ['laser', 'valzer'], // no attivatore: its burst of zucchine would finish the order
     order: 'Don Remo si sposa. Bomboniere utili e a chilometro zero: zucchine. Tante. Non chiedere.',
   },
@@ -85,8 +88,8 @@ export const FRANCO = {
 
 export const MEI_END = {
   win: ['Piatto servito. Non male. Non bene. Non male.', 'Mangiabile. Per Barriera è stella Michelin.', 'Brava mano. Paga comunque il caffè.'],
-  lose: ['Bruciato. Come la tua dignità.', 'Questo neanche Derossi mangia.', 'Soluzione temporanea: riprova.'],
-  scanned: ['Ti hanno scansionato. Adesso droni sanno ricetta.', 'Quattro numeri. Neanche quattro numeri sai fare?', 'Codice sbagliato. Adesso schedati tutti. Brava.'],
-  wasted: ['Tre sbagli. Verdura non cresce su alberi.', 'Tu taglia tutto. Io paga tutto. No.', 'Spreco. Franco piange, io conto.'],
+  lose: ['Bruciato. Come la tua dignità.', 'Questo neanche Derossi mangia.', 'Soluzione temporanea: riprova.', 'Hai la faccia da una che ha visto l\'aldilà.', 'Se muori, io vendo i tuoi ferri da maglia su Vinted.'],
+  scanned: ['Ti hanno scansionato. Adesso droni sanno ricetta.', 'Quattro numeri. Neanche quattro numeri sai fare?', 'Codice sbagliato. Adesso schedati tutti. Brava.', 'Se muori, io vendo i tuoi ferri da maglia su Vinted.'],
+  wasted: ['Tre sbagli. Verdura non cresce su alberi.', 'Tu taglia tutto. Io paga tutto. No.', 'Spreco. Franco piange, io conto.', 'Se muori, io vendo i tuoi ferri da maglia su Vinted.'],
   final: 'Bomboniere pronte. Don Remo si sposa con zucchine. Barriera piange di gioia. Io no.',
 };

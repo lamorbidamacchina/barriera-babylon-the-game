@@ -585,7 +585,7 @@ export default class Contrabbando extends Phaser.Scene {
     this.otpReason = reason;
     this.strokeEnd();
     this.trail = [];
-    this.otp.open(reason, this.recipe.otp);
+    this.otp.open(reason, this.recipe.otp, this.recipe.shuffleKeys);
   }
 
   otpDone(ok) {
@@ -830,15 +830,17 @@ export default class Contrabbando extends Phaser.Scene {
     this.slowTint.setVisible(false);
     this.waltz?.remove();
 
+    // Losing loses everything: no score, no record, only a finished dish counts.
     const win = result === 'win';
     const timeBonus = win ? Math.ceil(Math.max(0, this.timeLeft)) * 5 : 0;
     const total = this.score + timeBonus;
-    const prevBest = this.progress.best[this.level] ?? 0;
-    const record = total > prevBest;
-    if (record) this.progress.best[this.level] = total;
-    if (win) this.progress.unlocked = Math.max(this.progress.unlocked, this.level + 1);
-    this.save.contrabbando = this.progress;
-    writeSave(this.save);
+    const record = win && total > (this.progress.best[this.level] ?? 0);
+    if (win) {
+      if (record) this.progress.best[this.level] = total;
+      this.progress.unlocked = Math.max(this.progress.unlocked, this.level + 1);
+      this.save.contrabbando = this.progress;
+      writeSave(this.save);
+    }
 
     if (win) sfx.win();
     else sfx.lose();
@@ -857,15 +859,17 @@ export default class Contrabbando extends Phaser.Scene {
     o.add(text(this, WIDTH / 2, P.y + 12, title, { size: 16, color: win ? C.ocraLight : C.red, origin: [0.5, 0] }));
     o.add(text(this, WIDTH / 2, P.y + 34, this.recipe.name, { color: C.chalkDim, origin: [0.5, 0] }));
 
-    const rows = [
-      ['PUNTI', this.score],
-      ['BONUS TEMPO', timeBonus],
-      ['TOTALE', total],
-    ];
-    rows.forEach(([k, v], i) => {
-      o.add(text(this, P.x + 120, P.y + 56 + i * 14, k, { color: C.paper }));
-      o.add(text(this, P.x + P.w - 20, P.y + 56 + i * 14, String(v), { color: i === 2 ? C.ocraLight : C.white, origin: [1, 0] }));
-    });
+    if (win) {
+      const rows = [
+        ['PUNTI', this.score],
+        ['BONUS TEMPO', timeBonus],
+        ['TOTALE', total],
+      ];
+      rows.forEach(([k, v], i) => {
+        o.add(text(this, P.x + 120, P.y + 56 + i * 14, k, { color: C.paper }));
+        o.add(text(this, P.x + P.w - 20, P.y + 56 + i * 14, String(v), { color: i === 2 ? C.ocraLight : C.white, origin: [1, 0] }));
+      });
+    }
     if (record) {
       const r = o.add(text(this, P.x + P.w - 20, P.y + 100, 'NUOVO RECORD!', { color: C.pink, origin: [1, 0] }));
       blink(this, r, 300);
@@ -875,7 +879,7 @@ export default class Contrabbando extends Phaser.Scene {
     panel(g, P.x + 14, P.y + 52, 96, 96, { fill: N.black, alpha: 1 });
     o.add(this.add.image(P.x + 14, P.y + 52, 'mei-li-96').setOrigin(0));
     const line = win && last ? MEI_END.final : pick(win ? MEI_END.win : MEI_END[result] ?? MEI_END.lose);
-    o.add(text(this, P.x + 120, P.y + 118, line, { color: C.white, wrap: P.w - 136, lineSpacing: 4 }));
+    o.add(text(this, P.x + 120, P.y + (win ? 118 : 60), line, { color: C.white, wrap: P.w - 136, lineSpacing: 4 }));
 
     const next = () => this.scene.restart({ level: this.level + 1 });
     const retry = () => this.scene.restart({ level: this.level });
