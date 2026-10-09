@@ -612,7 +612,8 @@ export default class Contrabbando extends Phaser.Scene {
 
   spawnVeggie(onlyNeeded = false) {
     const needed = Object.keys(this.remaining).filter((k) => this.remaining[k] > 0);
-    const type = needed.length && (onlyNeeded || Math.random() < 0.65) ? pick(needed) : pick(Object.keys(VEGGIES));
+    const decoys = Object.keys(VEGGIES).filter((k) => !(k in this.remaining));
+    const type = needed.length && (onlyNeeded || Math.random() >= this.recipe.decoys) ? pick(needed) : pick(decoys.length ? decoys : needed);
     this.launch('veggie', type, vegKey(type, this.recipe.size));
   }
 
@@ -635,8 +636,8 @@ export default class Contrabbando extends Phaser.Scene {
     const n = Phaser.Math.Between(1, r.waveMax);
     for (let i = 0; i < n; i++) {
       const hasPower = this.objects.some((o) => o.kind === 'power' && !o.dead);
-      if (r.powerups && !hasPower && i === 0 && Math.random() < 0.1) {
-        const type = pick(Object.keys(POWERUPS));
+      if (r.powerups.length && !hasPower && i === 0 && Math.random() < 0.1) {
+        const type = pick(r.powerups);
         this.launch('power', type, powerKey(type, this.recipe.size));
       } else {
         this.spawnVeggie();

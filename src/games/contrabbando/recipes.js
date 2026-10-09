@@ -1,7 +1,9 @@
 // Levels: each recipe is an order from Mei Li.
 // spawnEvery: seconds between veggie waves; waveMax: veggies per wave;
-// droneEvery: seconds between drones (0 = none); otp: seconds to type the position code; powerups: whether bonus items can appear; size: sprite scale (1 = the size
-// of Fruit Ninja's first fruits), veggies shrink as levels get harder.
+// decoys: share of veggies NOT in the recipe, to make you think before cutting;
+// droneEvery: seconds between drones (0 = none); otp: seconds to type the
+// position code; powerups: bonus items that can appear; size: sprite scale
+// (1 = the size of Fruit Ninja's first fruits), veggies shrink as levels get harder.
 export const RECIPES = [
   {
     name: 'MINESTRONE DELLA RESISTENZA',
@@ -10,9 +12,10 @@ export const RECIPES = [
     time: 50,
     spawnEvery: 1.5,
     waveMax: 2,
+    decoys: 0.2,
     droneEvery: 7,
     otp: 8,
-    powerups: false,
+    powerups: [],
     order: 'Primo ordine: minestrone. Zucchine e pomodori. Franco lancia, tu tagli. Droni NON toccare: ti scansionano.',
   },
   {
@@ -22,9 +25,10 @@ export const RECIPES = [
     time: 55,
     spawnEvery: 1.3,
     waveMax: 3,
+    decoys: 0.2,
     droneEvery: 5,
     otp: 7,
-    powerups: true,
+    powerups: ['laser', 'valzer', 'attivatore'],
     order: 'Caponata. Melanzane come Don Remo: grosse, viola, piene di peccato. Se sistema chiede codice, tu dai codice.',
   },
   {
@@ -34,21 +38,23 @@ export const RECIPES = [
     time: 60,
     spawnEvery: 1.2,
     waveMax: 3,
+    decoys: 0.35,
     droneEvery: 4,
     otp: 6,
-    powerups: true,
+    powerups: ['laser', 'valzer', 'attivatore'],
     order: 'Ribollita. Cavolo nero di contrabbando. Se drone vede, coprifuoco anche per minestra.',
   },
   {
     name: 'VELLUTATA DEL MURO',
-    size: 0.72,
+    size: 0.58,
     needs: { zucca: 7, zucchina: 6, bietola: 4 },
     time: 60,
     spawnEvery: 1.1,
     waveMax: 4,
+    decoys: 0.4,
     droneEvery: 3.2,
     otp: 6,
-    powerups: true,
+    powerups: ['laser', 'valzer', 'attivatore'],
     order: 'Vellutata di zucca. Dura come Muro, ma si scioglie. Come Muro.',
   },
   {
@@ -58,9 +64,10 @@ export const RECIPES = [
     time: 55,
     spawnEvery: 0.9,
     waveMax: 4,
+    decoys: 0.6,
     droneEvery: 2.6,
     otp: 5,
-    powerups: true,
+    powerups: ['laser', 'valzer'], // no attivatore: its burst of zucchine would finish the order
     order: 'Don Remo si sposa. Bomboniere utili e a chilometro zero: zucchine. Tante. Non chiedere.',
   },
 ];
