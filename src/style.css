@@ -174,7 +174,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 16px;
+    padding: max(48px, env(safe-area-inset-top)) 16px 16px;
     background: #05070c;
     color: #e8c06a;
     font: 14px/1.6 'Press Start 2P', monospace;
@@ -184,6 +184,32 @@ body {
 
 #rotate p {
   margin: 0;
+}
+
+/* Same logo as the title screen, pinned to the top; the rest stays centered
+   in the space below. */
+#rotate .title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  margin: 0 0 auto;
+  font-size: min(32px, 9vw);
+  font-weight: normal;
+  line-height: 1;
+}
+
+#rotate .t1 {
+  color: #c9963a;
+  text-shadow: 0.1em 0.1em 0 #1a1006;
+}
+
+#rotate .t2 {
+  color: #f4f1e8;
+  text-shadow: 0.1em 0.1em 0 #0a0e18;
+}
+
+#rotate .small {
+  margin-bottom: auto;
 }
 
 #rotate .small {
