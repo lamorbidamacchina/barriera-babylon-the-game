@@ -18,6 +18,7 @@ Target: computer e iPad (mouse, tastiera, touch); telefono in orizzontale "best 
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # output in dist/
+npm test         # test automatici (Vitest); anche in CI, prima del deploy
 ```
 
 ## Online
@@ -75,6 +76,7 @@ Target: computer and iPad (mouse, keyboard, touch); landscape phones are "best e
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # output in dist/
+npm test         # test automatici (Vitest); anche in CI, prima del deploy
 ```
 
 ### Online

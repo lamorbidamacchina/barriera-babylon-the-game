@@ -14,6 +14,8 @@ description: Add a new minigame to Barriera Babylon (Muro Panic, Il nodo nei fer
 | Scene class (`export default class MuroPanic extends Phaser.Scene`, key `'MuroPanic'`) | `src/scenes/MuroPanic.js` |
 | Levels and tuning constants, with a header comment explaining every field | `src/games/<id>/levels.js` (Contrabbando calls them `recipes.js`) |
 | Sprites drawn in code | `src/games/<id>/textures.js` (see the `pixel-sprite` skill) |
+| Game rules without Phaser (scoring, what spawns, win/lose checks), so they can be tested | `src/games/<id>/rules.js` |
+| Tests, next to the file they cover: `rules.test.js`, level invariants in `levels.test.js`, sprites in `textures.test.js` (copy the Contrabbando ones; `test/` has helpers for storage and Code.gs) | `src/games/<id>/*.test.js` |
 | Character lines (Mei Li, the Comitato Caos kids...) | `src/games/<id>/lines.js` or next to the levels (see the `lore-voice` skill) |
 | Menu entry: set `scene: 'MuroPanic'` and `available: true` | `src/data/games.js` |
 | Import the scene and add it to `scene: [...]` | `src/main.js` |
@@ -86,7 +88,7 @@ Target computer and iPad in landscape; phone is best effort.
 
 ## 6. Done means
 
-1. `npm run build` passes.
+1. `npm test` and `npm run build` pass. Add the new game to `MAX_SCORE` in `tools/leaderboard/Code.gs` with a real cap, and check its levels stay under it (see the Contrabbando `recipes.test.js`).
 2. Play it with the `playtest` skill: full loop intro → play → pause → win and lose → retry → next → menu, on desktop and iPad-landscape sizes, with no console errors.
 3. Menu: the entry is no longer greyed out, and `mei` in `games.js` reads well on the chalkboard.
 4. README controls table updated.

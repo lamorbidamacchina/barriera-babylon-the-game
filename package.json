@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview --host",
     "pixelize": "node tools/pixelize.mjs",
-    "sprites": "node tools/sprite-preview.mjs"
+    "sprites": "node tools/sprite-preview.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@fontsource/press-start-2p": "5.3.0",
@@ -16,6 +18,7 @@
   },
   "devDependencies": {
     "sharp": "0.35.5",
-    "vite": "8.3.0"
+    "vite": "8.3.0",
+    "vitest": "5.0.3"
   }
 }
