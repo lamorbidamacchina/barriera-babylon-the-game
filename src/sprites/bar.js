@@ -268,6 +268,81 @@ export function drawBagniPoster(p) {
   tape(p, w - 7, 0);
 }
 
+// Enoteca Prunotto, as its shop front: two white signs, red VINI and red STOCK
+// with blue LIQUORI, over orange-and-cream striped awnings; stickers on the
+// wall, a barrel, and a handwritten note on the door.
+export function drawPrunottoPoster(p) {
+  const { w, h } = POSTER;
+  const red = 0xc8202a;
+  const blue = 0x2a5aa8;
+  const frame = 0x3a3028;
+  const sign = 0xf6f4ee;
+  // Stone wall.
+  p.rect(0, 0, w, h, 0xd8ccb4);
+  for (let y = 3; y < h; y += 4) {
+    for (let x = (y % 8 === 3 ? 0 : 5); x < w; x += 10) p.rect(x, y, 4, 1, 0xc8bca2);
+  }
+  miniTextCentered(p, 'ENOTECA', w / 2, 2, 0x6a5a48);
+  miniTextCentered(p, 'PRUNOTTO', w / 2, 8, 0x2a1a10);
+
+  // The signs.
+  const board = (x, y, bw, bh) => {
+    p.rect(x, y, bw, bh, frame);
+    p.rect(x + 1, y + 1, bw - 2, bh - 2, sign);
+  };
+  board(1, 15, 17, 9);
+  miniText(p, 'VINI', 2, 17, red);
+  board(19, 15, 28, 13);
+  miniTextCentered(p, 'STOCK', 33, 17, red);
+  // LIQUORI is smaller on the real sign: here its I's are one pixel wide.
+  let lx = 22;
+  for (const ch of 'LIQUORI') {
+    if (ch === 'I') {
+      p.rect(lx, 22, 1, 5, blue);
+      lx += 2;
+    } else {
+      miniText(p, ch, lx, 22, blue);
+      lx += 4;
+    }
+  }
+
+  // Striped awnings, the right one under the taller sign.
+  const awning = (x, y, aw, ah) => {
+    for (let j = 0; j < ah; j++) {
+      for (let i = 0; i < aw; i++) p.set(x + i, y + j, ((i + j) >> 1) % 2 ? 0xf4ead8 : 0xe0884a);
+    }
+    p.rect(x, y + ah, aw, 1, 0xb05a28);
+  };
+  awning(1, 25, 17, 5);
+  awning(19, 29, 28, 4);
+
+  // Shop windows full of bottles.
+  const bottles = [0x3a6a2a, 0x8a1a2a, 0xe0b040, 0x6a2a6a, 0xd8d0b8];
+  const window = (x, y, ww, wh) => {
+    p.rect(x, y, ww, wh, 0x2a2420);
+    for (let row = y + 1; row < y + wh - 1; row += 4) {
+      p.rect(x, row + 3, ww, 1, 0x5a4a38);
+      for (let i = x + 1; i < x + ww - 1; i += 2) p.rect(i, row + 1, 1, 2, bottles[(i + row) % bottles.length]);
+    }
+  };
+  window(2, 31, 15, 17);
+  window(20, 34, 26, 14);
+
+  // Stickers between the windows.
+  const stickers = [0xc8202a, 0x2a5aa8, 0xf0c020, 0x1f8a8a, 0xffffff];
+  for (let i = 0; i < 9; i++) p.set(18 + (i % 2), 31 + i * 2, stickers[i % stickers.length]);
+
+  // Handwritten note taped on the door.
+  p.rect(5, 37, 39, 11, 0xfaf8f0);
+  miniText(p, 'SI CHIUDE', 7, 38, 0x1a2a6a);
+  miniText(p, 'ALLE 8', 13, 43, 0x1a2a6a);
+  p.rect(22, 36, 4, 2, 0xd8d0a8);
+
+  tear(p, w, h, 2);
+  tape(p, 1, 0);
+  tape(p, w - 7, 0);
+}
+
 // Every poster the bar can show; the scene picks three at random.
 export const POSTERS = {
   nerorgasmo: drawPunkPoster,
@@ -276,6 +351,7 @@ export const POSTERS = {
   'ost-barriera': drawOstPoster,
   'casseta-popular': drawCassetaPoster,
   'bagni-pubblici': drawBagniPoster,
+  prunotto: drawPrunottoPoster,
 };
 
 // Bag of scaldatelli: clear plastic, crimped top, a paper label, and golden
