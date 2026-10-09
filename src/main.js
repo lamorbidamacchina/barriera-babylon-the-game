@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
-import '@fontsource/press-start-2p/latin-400.css';
-import '@fontsource/press-start-2p/latin-ext-400.css';
+import latinFont from '@fontsource/press-start-2p/files/press-start-2p-latin-400-normal.woff2';
+import latinExtFont from '@fontsource/press-start-2p/files/press-start-2p-latin-ext-400-normal.woff2';
 import './style.css';
 
 import { WIDTH, HEIGHT, FONT, C } from './config.js';
@@ -17,8 +17,22 @@ const stageEl = document.getElementById('stage');
 const screenEl = document.getElementById('screen');
 const crtEl = document.getElementById('crt');
 
-// Canvas text needs the web font loaded before the first frame is drawn.
-await document.fonts.load(`8px ${FONT}`);
+// The game font, registered here with its unicode ranges. Fontsource's
+// per-subset CSS files declare both subsets with no range, so the two faces
+// collide and iOS Safari picked the latin-ext one, which has no A-Z: the
+// canvas fell back to Times. Canvas text also needs both files loaded before
+// the first frame is drawn, so wait for them.
+const FONT_RANGES = [
+  [latinFont, 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD'],
+  [latinExtFont, 'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF'],
+];
+await Promise.all(
+  FONT_RANGES.map(([url, unicodeRange]) => {
+    const face = new FontFace(FONT.replaceAll('"', ''), `url(${url}) format('woff2')`, { unicodeRange });
+    document.fonts.add(face);
+    return face.load();
+  }),
+);
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
