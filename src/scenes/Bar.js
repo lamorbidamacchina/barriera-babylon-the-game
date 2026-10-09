@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { WIDTH, HEIGHT, C, N } from '../config.js';
 import { text, blink, panel, goTo, fadeIn, makeTexture, droneTexture } from '../ui.js';
 import { sfx } from '../sfx.js';
+import { Painter } from '../painter.js';
+import { YARN, POSTER, drawYarn, drawPunkPoster, drawBalteaPoster, drawDuckPoster } from '../sprites/bar.js';
 import { GREETINGS, QUOTES, INVITE } from '../data/meili.js';
 
 const BOX = { x: 192, y: 112, w: 272, h: 84 };
@@ -70,9 +72,25 @@ export default class Bar extends Phaser.Scene {
     g.fillStyle(0xe9e4d8, 1).fillRect(220, 204, 14, 10).fillRect(234, 206, 3, 5);
     g.fillStyle(0xd8d0c0, 1).fillRect(216, 213, 22, 2);
     g.fillStyle(0x3a2414, 1).fillRect(221, 204, 12, 2);
-    g.fillStyle(0xb03a5a, 1).fillCircle(420, 207, 8);
-    g.fillStyle(0xd85a7a, 1).fillRect(415, 202, 6, 1).fillRect(414, 206, 10, 1).fillRect(416, 210, 8, 1);
-    g.lineStyle(1, 0xc0c0c0, 1).lineBetween(410, 196, 432, 212).lineBetween(430, 194, 412, 213);
+    const sprite = (key, { w, h }, draw) =>
+      makeTexture(this, key, w, h, (tg) => {
+        const p = new Painter(w, h);
+        draw(p);
+        p.toGraphics(tg);
+      });
+    sprite('yarn', YARN, drawYarn);
+    this.add.image(409, 195, 'yarn').setOrigin(0);
+
+    // Posters stuck on the front of the counter, under Mei Li.
+    const posters = [
+      ['nerorgasmo', drawPunkPoster, 20, 220],
+      ['baltea', drawBalteaPoster, 84, 221],
+      ['anatra-zoppa', drawDuckPoster, 148, 220],
+    ];
+    for (const [name, draw, x, y] of posters) {
+      sprite(`poster-${name}`, POSTER, draw);
+      this.add.image(x, y, `poster-${name}`).setOrigin(0);
+    }
 
     // Neon sign, with a cheap glow and an unreliable transformer.
     const glow = [];
