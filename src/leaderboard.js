@@ -9,7 +9,7 @@ const ENDPOINT = 'https://script.google.com/macros/s/AKfycbywCMQx6oQ10iugHzDAeDa
 
 const CACHE_KEY = 'barriera-babylon-records';
 const REFRESH_MS = 30_000; // don't ask again more often than this
-const TIMEOUT_MS = 10_000; // Apps Script can take a few seconds to wake up
+const TIMEOUT_MS = 20_000; // Apps Script often takes 5-10 s; nobody waits for it
 
 export const NICKNAME_MAX = 12;
 

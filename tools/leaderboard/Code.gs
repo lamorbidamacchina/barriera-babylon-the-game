@@ -1,3 +1,6 @@
+/** @OnlyCurrentDoc */
+// ^ the script can only open the Sheet it belongs to, not the owner's other files.
+
 // Barriera Babylon leaderboard: a Google Sheet behind an Apps Script web app.
 // Not part of the build: paste it into the Sheet's Apps Script editor (see the
 // README, "Classifica"). The game reads and writes it from src/leaderboard.js.
@@ -5,13 +8,22 @@
 // GET  → { contrabbando: { "0": { nickname, score }, ... }, ... }  best per level
 // POST → body (text/plain, JSON) { game, level, nickname, score }; returns the same as GET
 //
-// Every submission is a row (time, game, level, nickname, score); the best per
-// level is the highest score, the earliest on a tie. Deleting a row in the
-// Sheet removes it from the leaderboard within CACHE_SECONDS.
+// The web app URL is public (it's in the game's code), so anyone can POST to
+// it. To keep the Sheet small whatever they send: one row per level, replaced
+// only when the record is beaten, scores capped per game, and a daily limit on
+// writes. Fixing a fake record = editing (or deleting) its row in the Sheet;
+// the change shows in the game within CACHE_SECONDS.
 
-var GAMES = ['contrabbando', 'muro', 'ferri', 'ruspe'];
+// Highest believable score per game. A fake record can't go above it, so a
+// real player can always beat it. Raise it if a game's scoring changes.
+var MAX_SCORE = {
+  contrabbando: 20000, // ~15 per vegetable + combos + 5 per second left
+  muro: 1000000, // not out yet: set a real cap when the game is ready
+  ferri: 1000000,
+  ruspe: 1000000,
+};
 var MAX_LEVEL = 50;
-var MAX_SCORE = 1000000;
+var MAX_WRITES_PER_DAY = 300; // all games together; real records are a few a day
 var NICKNAME = /^[A-Z0-9 _.\-!']{1,12}$/; // same rule as cleanNickname() in the game
 var SHEET = 'records';
 var CACHE_SECONDS = 600;
@@ -38,21 +50,50 @@ function doPost(e) {
   }
   var nickname = String(r.nickname || '').trim().toUpperCase();
   var valid =
-    GAMES.indexOf(r.game) >= 0 &&
+    MAX_SCORE.hasOwnProperty(r.game) &&
     Number.isInteger(r.level) && r.level >= 0 && r.level < MAX_LEVEL &&
-    Number.isInteger(r.score) && r.score > 0 && r.score <= MAX_SCORE &&
+    Number.isInteger(r.score) && r.score > 0 && r.score <= MAX_SCORE[r.game] &&
     NICKNAME.test(nickname);
   if (!valid) return json({ error: 'invalid' });
 
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET).appendRow([new Date(), r.game, r.level, nickname, r.score]);
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET);
+    var rows = sheet.getDataRange().getValues();
+    var at = -1; // sheet row of this level's record, 1-based
+    var current = 0;
+    for (var i = 1; i < rows.length; i++) {
+      if (rows[i][1] === r.game && Number(rows[i][2]) === r.level) {
+        var score = Number(rows[i][4]);
+        if (at < 0 || score > current) {
+          at = i + 1;
+          current = score;
+        }
+      }
+    }
+    // Not a record (someone beat it in the meantime): just answer with the
+    // up-to-date records. Strictly greater: on a tie the first one keeps it.
+    if (r.score <= current || !countWrite()) return json(best());
+
+    var row = [new Date(), r.game, r.level, nickname, r.score];
+    if (at > 0) sheet.getRange(at, 1, 1, 5).setValues([row]);
+    else sheet.appendRow(row);
     CacheService.getScriptCache().remove('best');
   } finally {
     lock.releaseLock();
   }
   return json(best());
+}
+
+// Counts today's writes; false once the daily limit is reached.
+function countWrite() {
+  var props = PropertiesService.getScriptProperties();
+  var today = Utilities.formatDate(new Date(), 'Europe/Rome', 'yyyy-MM-dd');
+  var count = props.getProperty('writes-day') === today ? Number(props.getProperty('writes-count')) : 0;
+  if (count >= MAX_WRITES_PER_DAY) return false;
+  props.setProperties({ 'writes-day': today, 'writes-count': String(count + 1) });
+  return true;
 }
 
 function best() {
@@ -66,7 +107,6 @@ function best() {
     var game = row[1], level = row[2], nickname = String(row[3]), score = Number(row[4]);
     if (!game || !(score > 0)) return;
     var g = (out[game] = out[game] || {});
-    // Rows are in time order: strictly greater keeps the first to reach a score.
     if (!g[level] || score > g[level].score) g[level] = { nickname: nickname, score: score };
   });
   cache.put('best', JSON.stringify(out), CACHE_SECONDS);
