@@ -3,7 +3,7 @@ import { WIDTH, HEIGHT, C, N } from '../config.js';
 import { text, blink, panel, goTo, fadeIn, makeTexture, droneTexture } from '../ui.js';
 import { sfx } from '../sfx.js';
 import { Painter } from '../painter.js';
-import { YARN, POSTER, POSTERS, SCALDATELLI, drawYarn, drawScaldatelli } from '../sprites/bar.js';
+import { YARN, POSTER, POSTERS, TAPE, drawTape, SCALDATELLI, drawYarn, drawScaldatelli } from '../sprites/bar.js';
 import { GREETINGS, QUOTES, INVITE } from '../data/meili.js';
 
 const BOX = { x: 192, y: 112, w: 272, h: 84 };
@@ -90,9 +90,15 @@ export default class Bar extends Phaser.Scene {
     // Posters stuck on the front of the counter, under Mei Li.
     // Three of them, different every visit.
     const names = Phaser.Utils.Array.Shuffle(Object.keys(POSTERS)).slice(0, 3);
+    sprite('tape', TAPE, drawTape);
     names.forEach((name, i) => {
       sprite(`poster-${name}`, POSTER, POSTERS[name]);
-      this.add.image(20 + i * 64, 220 + (i % 2), `poster-${name}`).setOrigin(0);
+      const x = 20 + i * 64;
+      const y = 220 + (i % 2);
+      this.add.image(x, y, `poster-${name}`).setOrigin(0);
+      // Tape sticking out of the top corners, sideways and a bit above.
+      this.add.image(x - 3, y - 1, 'tape').setOrigin(0);
+      this.add.image(x + POSTER.w - TAPE.w + 3, y - 1, 'tape').setOrigin(0).setFlipY(true);
     });
 
     // Neon sign, with a cheap glow and an unreliable transformer.
@@ -111,6 +117,7 @@ export default class Bar extends Phaser.Scene {
       },
     });
     text(this, 284, 40, "CAFFE' 1,00  VINO 2,00", { color: C.paper, origin: [0.5, 0] }).setAlpha(0.7);
+    text(this, 284, 52, 'CHIACCHIERE GRATIS', { color: C.paper, origin: [0.5, 0] }).setAlpha(0.7);
   }
 
   // A window on the street: every so often a drone comes to peek, and Mei Li

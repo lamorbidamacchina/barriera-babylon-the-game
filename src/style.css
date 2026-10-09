@@ -174,7 +174,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: max(48px, env(safe-area-inset-top)) 16px 16px;
+    padding: max(12vh, 64px, env(safe-area-inset-top) + 32px) 16px 16px;
     background: #05070c;
     color: #e8c06a;
     font: 14px/1.6 'Press Start 2P', monospace;

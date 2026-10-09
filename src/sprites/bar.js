@@ -60,12 +60,17 @@ export function drawYarn(p) {
 // Posters stuck on the front of the counter, under Mei Li.
 export const POSTER = { w: 48, h: 48 };
 
-// Scotch tape on the corners and a torn corner: posters are stuck on in a hurry.
-function tape(p, x, y) {
-  p.rect(x, y, 6, 3, 0xd8d0a8);
-  p.set(x, y, 0xbfb690);
-  p.set(x + 5, y + 2, 0xbfb690);
+// A strip of scotch tape: the scene sticks two on the top corners of every
+// poster, half on the poster and half on the counter, so they read as tape.
+export const TAPE = { w: 8, h: 3 };
+
+export function drawTape(p) {
+  p.rect(0, 0, TAPE.w, TAPE.h, 0xd8d0a8);
+  p.set(0, 0, 0xbfb690);
+  p.set(TAPE.w - 1, TAPE.h - 1, 0xbfb690);
 }
+
+// A torn corner: posters are stuck on in a hurry.
 function tear(p, w, h, size) {
   for (let i = 0; i < size; i++) for (let j = 0; j < size - i; j++) p.set(w - 1 - j, h - 1 - i, null);
 }
@@ -94,8 +99,6 @@ export function drawPunkPoster(p) {
   miniTextCentered(p, 'LIVE!', w / 2, 34, 0xff4fa3);
   miniTextCentered(p, 'SAB 23:00', w / 2, 41, 0xf0ece0);
   tear(p, w, h, 5);
-  tape(p, 1, 0);
-  tape(p, w - 7, 0);
 }
 
 // Flyer of the Baltea, the NGO round the corner: green header and a bowl of
@@ -122,8 +125,6 @@ export function drawBalteaPoster(p) {
   miniTextCentered(p, 'HUMMUS', w / 2, 34, 0x3a2a1a);
   miniTextCentered(p, '100% VEGANO', w / 2, 40, 0x4f7f3a);
   tear(p, w, h, 3);
-  tape(p, 1, 0);
-  tape(p, w - 7, 0);
 }
 
 // Anatra Zoppa's grand reopening: a duck in shades with a leg in plaster.
@@ -168,8 +169,6 @@ export function drawDuckPoster(p) {
   miniTextCentered(p, 'GRAND', w / 2, 34, 0xff4fa3);
   miniTextCentered(p, 'REOPENING!', w / 2, 40, 0x141414);
   tear(p, w, h, 3);
-  tape(p, 1, 0);
-  tape(p, w - 7, 0);
 }
 
 function star(p, cx, cy, c) {
@@ -205,8 +204,6 @@ export function drawOstPoster(p) {
   star(p, 24, 31, red);
   miniTextCentered(p, 'TORINO', w / 2, 41, ink);
   tear(p, w, h, 3);
-  tape(p, 1, 0);
-  tape(p, w - 7, 0);
 }
 
 // Casseta Popular / Circolo Risorgimento: coral CP over teal CR with a star,
@@ -231,8 +228,6 @@ export function drawCassetaPoster(p) {
   miniTextCentered(p, 'PASTASCIUTTA', w / 2, 35, coral);
   miniTextCentered(p, 'ANTIFASCISTA', w / 2, 41, teal);
   tear(p, w, h, 2);
-  tape(p, 1, 0);
-  tape(p, w - 7, 0);
 }
 
 // Bagni Pubblici di via Aglie': a pipe and a shower raining colored drops on
@@ -264,8 +259,6 @@ export function drawBagniPoster(p) {
   miniTextCentered(p, "VIA AGLIE'", w / 2, 34, 0x5a5a5a);
   miniTextCentered(p, 'DOCCE LIBERE', w / 2, 41, 0x1f8a8a);
   tear(p, w, h, 2);
-  tape(p, 1, 0);
-  tape(p, w - 7, 0);
 }
 
 // Enoteca Prunotto, as its shop front: two white signs, red VINI and red STOCK
@@ -339,8 +332,6 @@ export function drawPrunottoPoster(p) {
   p.rect(22, 36, 4, 2, 0xd8d0a8);
 
   tear(p, w, h, 2);
-  tape(p, 1, 0);
-  tape(p, w - 7, 0);
 }
 
 // Every poster the bar can show; the scene picks three at random.
