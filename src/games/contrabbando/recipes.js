@@ -53,7 +53,7 @@ export const RECIPES = [
   },
   {
     name: 'BOMBONIERE PER DON REMO',
-    size: 0.65,
+    size: 0.44,
     needs: { zucchina: 20 },
     time: 55,
     spawnEvery: 0.9,

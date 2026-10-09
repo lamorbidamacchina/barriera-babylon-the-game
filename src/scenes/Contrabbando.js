@@ -625,8 +625,8 @@ export default class Contrabbando extends Phaser.Scene {
     const vx = (rand(120, WIDTH - 120) - x) / flight;
     const img = this.add.image(x, y, texture).setDepth(10);
     // Hit circle between the short and the long side (objects spin), plus
-    // some slack for fingers.
-    const r = (img.width + img.height) / 4 + 5;
+    // some slack for fingers that shrinks with the sprites on later recipes.
+    const r = (img.width + img.height) / 4 + 5 * this.recipe.size;
     this.objects.push({ kind, type, img, tex: texture, x, y, vx, vy, r, spin: rand(-3, 3) });
   }
 
