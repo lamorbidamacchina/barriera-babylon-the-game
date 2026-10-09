@@ -6,6 +6,7 @@ import './style.css';
 import { WIDTH, HEIGHT, FONT, C } from './config.js';
 import { unlockAudio, toggleMute, isMuted } from './sfx.js';
 import { initDebug } from './debug.js';
+import { refreshRecords } from './leaderboard.js';
 import Boot from './scenes/Boot.js';
 import Title from './scenes/Title.js';
 import Bar from './scenes/Bar.js';
@@ -38,12 +39,16 @@ const game = new Phaser.Game({
 
 if (import.meta.env.DEV) window.game = game;
 initDebug(game); // only with ?debug in the URL
+refreshRecords(); // in the background, ready by the time a level starts
 
 // ------------------------------------------------------------------ scaling
 
 // Integer scaling in *device* pixels: on a Retina iPad (dpr 2) the game can
 // grow in half-CSS-pixel steps while every game pixel stays perfectly square.
 function fit() {
+  // The on-screen keyboard shrinks the visual viewport: keep the game as it is
+  // while the player types, iOS scrolls the field into view by itself.
+  if (document.activeElement?.classList.contains('game-input')) return;
   const dpr = window.devicePixelRatio || 1;
   const w = window.visualViewport?.width ?? innerWidth;
   const h = window.visualViewport?.height ?? innerHeight;
@@ -63,6 +68,10 @@ for (const ev of ['resize', 'orientationchange', 'fullscreenchange', 'webkitfull
   document.addEventListener(ev, fit);
 }
 window.visualViewport?.addEventListener('resize', fit);
+document.addEventListener('focusout', () => {
+  window.scrollTo(0, 0); // iOS leaves the page scrolled after the keyboard closes
+  requestAnimationFrame(fit);
+});
 window.visualViewport?.addEventListener('scroll', () => game.scale.updateBounds());
 
 // ------------------------------------------------------------------ orientation

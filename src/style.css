@@ -244,3 +244,38 @@ body {
   50% { transform: rotate(-90deg); }
   85% { transform: rotate(-90deg); }
 }
+
+/* Text field over the canvas (textInput() in ui.js). Sizes are in em of the
+   font size, which ui.js sets to one game pixel × 8. */
+.game-input {
+  position: absolute;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+  box-sizing: content-box;
+  height: 1em;
+  margin: 0;
+  padding: 0.5em;
+  border: 0.125em solid #c9963a;
+  border-radius: 0;
+  outline: none;
+  background: #05070c;
+  color: #f4f1e8;
+  caret-color: #ff4fa3;
+  font-family: 'Press Start 2P', monospace;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  -webkit-user-select: text; /* iOS won't type into a field that can't be selected */
+  user-select: text;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.game-input::placeholder {
+  color: #8f968c;
+  opacity: 1;
+}
+
+.game-input:focus {
+  border-color: #e8c06a;
+}

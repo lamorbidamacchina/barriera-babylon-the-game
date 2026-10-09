@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
 import { WIDTH, HEIGHT, C, N } from '../config.js';
-import { text, blink, panel, goTo, fadeIn, makeTexture } from '../ui.js';
+import { text, blink, panel, goTo, fadeIn, makeTexture, textInput } from '../ui.js';
 import { sfx } from '../sfx.js';
 import { loadSave, writeSave } from '../save.js';
+import { refreshRecords, getRecord, beatsRecord, onRecords, submitRecord, cleanNickname, NICKNAME_MAX } from '../leaderboard.js';
 import { VEGGIES, POWERUPS, createTextures, vegKey, iconKey, droneKey, powerKey } from '../games/contrabbando/textures.js';
-import { RECIPES, FRANCO, MEI_END } from '../games/contrabbando/recipes.js';
+import { RECIPES, FRANCO, MEI_END, MEI_RECORD } from '../games/contrabbando/recipes.js';
 import { OtpCheck } from '../games/contrabbando/otp.js';
 
 const GRAVITY = 300; // px/s²
@@ -14,6 +15,7 @@ const TRAIL_MS = 110;
 const MAX_STRIKES = 3;
 const RANDOM_OTP_CHANCE = 0.5; // one surprise position check, or none
 const SCAN_SECONDS = 1; // how long a caught drone scans before asking the code
+const GAME_ID = 'contrabbando'; // in the save and in the Barriera records
 const pick = Phaser.Utils.Array.GetRandom;
 const rand = Phaser.Math.FloatBetween;
 
@@ -27,12 +29,13 @@ export default class Contrabbando extends Phaser.Scene {
 
   init(data) {
     this.save = loadSave();
-    this.progress = this.save.contrabbando ?? { unlocked: 0, best: {} };
+    this.progress = this.save[GAME_ID] ?? { unlocked: 0, best: {} };
     this.level = Phaser.Math.Clamp(data?.level ?? this.progress.unlocked, 0, RECIPES.length - 1);
   }
 
   create() {
     fadeIn(this);
+    refreshRecords();
     createTextures(this, RECIPES[this.level].size);
 
     this.state = 'intro';
@@ -241,7 +244,7 @@ export default class Contrabbando extends Phaser.Scene {
     const g = o.add(this.add.graphics());
     panel(g, P.x + 12, P.y + 14, 96, 96, { fill: N.black, alpha: 1 });
     o.add(this.add.image(P.x + 12, P.y + 14, 'mei-li-96').setOrigin(0));
-    o.add(text(this, P.x + 60, P.y + 116, 'MEI LI', { color: C.ocraLight, origin: [0.5, 0] }));
+    this.drawBarrieraRecord(o, P.x + 60, P.y + 116);
 
     const X = P.x + 124;
     const unlocked = Math.min(this.progress.unlocked, RECIPES.length - 1);
@@ -268,7 +271,7 @@ export default class Contrabbando extends Phaser.Scene {
       x += icon.width + 44;
     }
     const best = this.progress.best[this.level];
-    o.add(text(this, X, P.y + 78, `TEMPO ${this.recipe.time}s${best ? `   RECORD ${best}` : ''}`, { color: C.chalkDim }));
+    o.add(text(this, X, P.y + 78, `TEMPO ${this.recipe.time}s${best ? `   TUO RECORD ${best}` : ''}`, { color: C.chalkDim }));
 
     const order = o.add(text(this, X, P.y + 96, '', { color: C.white, wrap: 300, lineSpacing: 5 }));
     this.typeText(order, this.recipe.order);
@@ -282,6 +285,25 @@ export default class Contrabbando extends Phaser.Scene {
 
     this.introClick = () => this.startPlay();
     this.time.delayedCall(250, () => this.input.once('pointerdown', this.introClick));
+  }
+
+  // Under Mei Li's portrait: who holds the Barriera record of this level.
+  // Redrawn in place when fresher records arrive while the intro is open.
+  drawBarrieraRecord(o, cx, y) {
+    const lines = [0, 11, 22].map((dy, i) =>
+      o.add(text(this, cx, y + dy, '', { color: [C.ocraLight, C.white, C.ocraLight][i], origin: [0.5, 0] })),
+    );
+    const show = () => {
+      if (!lines[0].active) return;
+      const r = getRecord(GAME_ID, this.level);
+      // Unknown (offline on the first launch): just her name, as before.
+      const rows = r === undefined ? ['MEI LI', '', ''] : r ? ['RECORD', r.nickname, String(r.score)] : ['RECORD', 'LIBERO!', ''];
+      lines.forEach((t, i) => t.setText(rows[i]));
+      lines[0].setColor(r === undefined ? C.ocraLight : C.pink);
+    };
+    show();
+    const off = onRecords(show);
+    this.events.once('shutdown', off);
   }
 
   typeText(t, str) {
@@ -835,20 +857,72 @@ export default class Contrabbando extends Phaser.Scene {
     const timeBonus = win ? Math.ceil(Math.max(0, this.timeLeft)) * 5 : 0;
     const total = this.score + timeBonus;
     const record = win && total > (this.progress.best[this.level] ?? 0);
+    const barriera = win && beatsRecord(GAME_ID, this.level, total);
     if (win) {
       if (record) this.progress.best[this.level] = total;
       this.progress.unlocked = Math.max(this.progress.unlocked, this.level + 1);
-      this.save.contrabbando = this.progress;
+      this.save[GAME_ID] = this.progress;
       writeSave(this.save);
     }
 
     if (win) sfx.win();
     else sfx.lose();
     if (result === 'time') this.banner('TEMPO SCADUTO', C.red, 1000);
-    this.time.delayedCall(900, () => this.showResults(result, timeBonus, total, record));
+    this.time.delayedCall(900, () => {
+      const results = (named) => this.showResults(result, timeBonus, total, record, named);
+      if (barriera) this.askNickname(total, results);
+      else results(false);
+    });
   }
 
-  showResults(result, timeBonus, total, record) {
+  // New Barriera record: Mei Li asks for a name for the chalkboard, prefilled
+  // with the last one used (this is also how a player changes it). The record
+  // goes online in the background; skipping keeps it on this device only.
+  askNickname(total, done) {
+    const o = this.overlay();
+    // High on the screen: on a phone the keyboard covers the bottom half.
+    const P = { x: 60, y: 20, w: 360, h: 128 };
+    panel(o.add(this.add.graphics()), P.x, P.y, P.w, P.h, { border: N.pink });
+    const g = o.add(this.add.graphics());
+    panel(g, P.x + 14, P.y + 16, 96, 96, { fill: N.black, alpha: 1 });
+    o.add(this.add.image(P.x + 14, P.y + 16, 'mei-li-96').setOrigin(0));
+
+    const X = P.x + 122;
+    const cx = X + (P.w - 136) / 2;
+    const title = o.add(text(this, cx, P.y + 14, 'RECORD DI BARRIERA!', { color: C.pink, origin: [0.5, 0] }));
+    blink(this, title, 300);
+    o.add(text(this, cx, P.y + 26, String(total), { color: C.ocraLight, origin: [0.5, 0] }));
+    const line = o.add(text(this, X, P.y + 42, '', { color: C.white, wrap: P.w - 136, lineSpacing: 4 }));
+    this.typeText(line, pick(MEI_RECORD));
+
+    let asking = true;
+    const finish = (name) => {
+      if (!asking) return;
+      asking = false;
+      const nickname = cleanNickname(name ?? '').trim();
+      field.remove();
+      o.close();
+      if (nickname) {
+        this.save.nickname = nickname;
+        writeSave(this.save);
+        navigator.storage?.persist?.().catch(() => {}); // fewer evictions, where the browser agrees
+        submitRecord(GAME_ID, this.level, nickname, total);
+      }
+      done(!!nickname);
+    };
+    const field = textInput(this, cx, P.y + 82, {
+      maxLength: NICKNAME_MAX,
+      value: this.save.nickname ?? '',
+      placeholder: 'NOME',
+      filter: cleanNickname,
+      onEnter: (v) => v.trim() && finish(v),
+      onEscape: () => finish(null),
+    });
+    this.button(o, cx - 70, P.y + 100, 'OK', () => field.value().trim() && finish(field.value()), 64);
+    this.button(o, cx + 6, P.y + 100, 'SALTA', () => finish(null), 64);
+  }
+
+  showResults(result, timeBonus, total, record, barriera) {
     const win = result === 'win';
     const last = this.level === RECIPES.length - 1;
     const o = this.overlay();
@@ -870,8 +944,9 @@ export default class Contrabbando extends Phaser.Scene {
         o.add(text(this, P.x + P.w - 20, P.y + 56 + i * 14, String(v), { color: i === 2 ? C.ocraLight : C.white, origin: [1, 0] }));
       });
     }
-    if (record) {
-      const r = o.add(text(this, P.x + P.w - 20, P.y + 100, 'NUOVO RECORD!', { color: C.pink, origin: [1, 0] }));
+    if (record || barriera) {
+      const label = barriera ? 'RECORD DI BARRIERA!' : 'NUOVO RECORD!';
+      const r = o.add(text(this, P.x + P.w - 20, P.y + 100, label, { color: C.pink, origin: [1, 0] }));
       blink(this, r, 300);
     }
 

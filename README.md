@@ -24,6 +24,19 @@ npm run build    # output in dist/
 
 https://lamorbidamacchina.github.io/barriera-babylon-the-game/ — pubblicato da GitHub Actions a ogni push su `main`.
 
+## Classifica
+
+I record di Barriera (il miglior punteggio di ogni livello, con il nickname) stanno in un Google Sheet, letto e scritto da uno script Apps Script. Il gioco non lo aspetta mai: scarica i record in background, tiene gli ultimi sul dispositivo e invia i nuovi senza bloccare. Senza URL configurato la classifica è spenta.
+
+Configurazione (una volta sola):
+
+1. Nuovo Google Sheet → **Estensioni → Apps Script**, incolla `tools/leaderboard/Code.gs`, salva.
+2. Nell'editor scegli la funzione `setup` ed esegui (crea il foglio `records`; chiede le autorizzazioni).
+3. **Esegui il deployment → Nuovo deployment → App web**: esegui come *Me*, accesso *Chiunque*. Copia l'URL `.../exec`.
+4. Incollalo in `ENDPOINT` in `src/leaderboard.js` e pubblica.
+
+Ogni invio è una riga del foglio (cancellarla la toglie dalla classifica entro 10 minuti). Dopo una modifica a `Code.gs`: **Gestisci deployment → Modifica → Nuova versione**, così l'URL resta lo stesso.
+
 ## Struttura
 
 - `src/main.js` — avvio Phaser, scaling a multipli interi, effetto CRT, tasti globali

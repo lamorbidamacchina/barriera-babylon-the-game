@@ -3,6 +3,7 @@ import { WIDTH, HEIGHT, C, N } from '../config.js';
 import { text, blink, goTo, fadeIn } from '../ui.js';
 import { sfx } from '../sfx.js';
 import { GAMES } from '../data/games.js';
+import { refreshRecords } from '../leaderboard.js';
 
 const LIST_X = 40;
 const LIST_Y = 62;
@@ -17,6 +18,7 @@ export default class Menu extends Phaser.Scene {
 
   create() {
     fadeIn(this);
+    refreshRecords();
     this.index = 0;
 
     this.drawBoard();

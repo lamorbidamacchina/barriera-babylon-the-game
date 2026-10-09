@@ -86,6 +86,13 @@ export const FRANCO = {
   wrong: ['Quello non è in ricetta! Mei Li ci ammazza.', 'Spreco! A Barriera non si butta niente.', 'Ehi, quella non la paga nessuno.'],
 };
 
+// When a dish beats the Barriera record: she asks a name for the chalkboard.
+export const MEI_RECORD = [
+  'Nessuno in Barriera taglia meglio. Nome? Io scrivo su lavagna.',
+  'Record di Barriera. Dimmi nome, così tutti invidiano.',
+  'Mai visto mani così. Come ti chiami? Per lavagna.',
+];
+
 export const MEI_END = {
   win: ['Piatto servito. Non male. Non bene. Non male.', 'Mangiabile. Per Barriera è stella Michelin.', 'Brava mano. Paga comunque il caffè.'],
   lose: ['Bruciato. Come la tua dignità.', 'Questo neanche Derossi mangia.', 'Soluzione temporanea: riprova.', 'Hai la faccia da una che ha visto l\'aldilà.', 'Se muori, io vendo i tuoi ferri da maglia su Vinted.'],

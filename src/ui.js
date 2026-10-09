@@ -84,3 +84,53 @@ export function droneTexture(scene) {
     g.fillStyle(N.droneLight, 1).fillRect(8, 8, 2, 1);
   });
 }
+
+// A real HTML text field over the canvas, centered on (x, y) in game pixels:
+// the only way to get the on-screen keyboard on iPad and iPhone. Its font is
+// the game font at the game's scale, so it looks drawn on the canvas. iOS opens
+// the keyboard only when the player taps it; on a computer it takes the focus.
+// Removed with the scene, or by calling remove().
+export function textInput(scene, x, y, { maxLength = 12, value = '', placeholder = '', filter = (s) => s, onEnter, onEscape } = {}) {
+  const canvas = scene.game.canvas;
+  const el = document.createElement('input');
+  Object.assign(el, { type: 'text', value, placeholder, maxLength, enterKeyHint: 'done', spellcheck: false, autocomplete: 'off' });
+  el.setAttribute('autocapitalize', 'characters');
+  el.setAttribute('autocorrect', 'off');
+  el.className = 'game-input';
+  el.style.width = `${maxLength + 1}em`;
+  canvas.parentElement.appendChild(el);
+
+  // Follows the canvas when the game is rescaled (window resize, rotation).
+  const place = () => {
+    const scale = canvas.getBoundingClientRect().width / scene.scale.width;
+    el.style.fontSize = `${8 * scale}px`;
+    el.style.left = `${canvas.offsetLeft + x * scale}px`;
+    el.style.top = `${canvas.offsetTop + y * scale}px`;
+  };
+  place();
+  scene.scale.on('resize', place);
+  window.addEventListener('resize', place);
+
+  el.addEventListener('input', () => {
+    const clean = filter(el.value);
+    if (clean !== el.value) el.value = clean;
+  });
+  // Typing must not reach the game or the global keys (F, M, F2).
+  el.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') onEnter?.(el.value);
+    if (e.key === 'Escape') onEscape?.();
+  });
+  el.addEventListener('keyup', (e) => e.stopPropagation());
+  if (!matchMedia('(pointer: coarse)').matches) el.focus();
+
+  const remove = () => {
+    if (!el.isConnected) return;
+    el.blur();
+    el.remove();
+    scene.scale.off('resize', place);
+    window.removeEventListener('resize', place);
+  };
+  scene.events.once('shutdown', remove);
+  return { el, remove, value: () => el.value };
+}
