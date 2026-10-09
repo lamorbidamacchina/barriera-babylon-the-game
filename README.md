@@ -76,7 +76,7 @@ Target: computer and iPad (mouse, keyboard, touch); landscape phones are "best e
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # output in dist/
-npm test         # test automatici (Vitest); anche in CI, prima del deploy
+npm test         # automated tests (Vitest); also run in CI, before the deploy
 ```
 
 ### Online

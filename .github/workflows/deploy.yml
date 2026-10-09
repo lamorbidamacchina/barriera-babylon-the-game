@@ -18,17 +18,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # full history: the build number is the commit count
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.0.0 # not v7 yet: it points to v7.1.0, out on 2026-10-08
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm test # a failing test stops the deploy
       - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
@@ -40,4 +40,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
