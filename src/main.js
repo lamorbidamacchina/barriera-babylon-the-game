@@ -74,6 +74,27 @@ document.addEventListener('focusout', () => {
 });
 window.visualViewport?.addEventListener('scroll', () => game.scale.updateBounds());
 
+// ------------------------------------------------------------------ lost graphics
+
+// iOS frees the GPU memory of a home screen app left in the background: the
+// WebGL context is lost and the canvas stays black when the app comes back.
+// There's nothing to recover, so reload as soon as the page is visible again.
+// Not twice in a row within a minute, in case the context is lost at startup.
+const RELOADED_FOR_GPU = 'reloaded-for-lost-context';
+game.events.once(Phaser.Core.Events.READY, () => {
+  game.canvas.addEventListener('webglcontextlost', () => {
+    try {
+      if (Date.now() - Number(sessionStorage.getItem(RELOADED_FOR_GPU)) < 60_000) return;
+      sessionStorage.setItem(RELOADED_FOR_GPU, String(Date.now()));
+    } catch {
+      // storage blocked: reload anyway
+    }
+    const reload = () => document.visibilityState === 'visible' && location.reload();
+    if (document.visibilityState === 'visible') reload();
+    else document.addEventListener('visibilitychange', reload);
+  });
+});
+
 // ------------------------------------------------------------------ orientation
 
 // Landscape only on phones and tablets: style.css shows the "rotate" screen
