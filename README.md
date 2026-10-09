@@ -1,6 +1,15 @@
 # Barriera Babylon — The Game
 
-Raccolta di minigiochi 8/16 bit ispirati al romanzo *Barriera Babylon*.
+Un gioco per browser in stile 8/16 bit: una raccolta di minigiochi ispirati al romanzo *Barriera Babylon* (Golem Edizioni).
+
+Il romanzo è ambientato in una Barriera di Milano (Torino) di un futuro molto vicino, tra droni, coprifuoco e un codice OTP con cui confermare ogni giorno la propria posizione. I clienti del Bar Stella di Mei Li e i bambini del Comitato Caos rispondono al cantiere del "Muro" con battute, sabotaggi e caos organizzato.
+
+Nel gioco si parte dal Bar Stella: Mei Li assegna i lavori e ogni lavoro è un minigioco. Il primo è *Il contrabbando di Zio Franco*: tagliare al volo la verdura giusta per le ricette di Mei Li, senza toccare i droni. Altri minigiochi sono in arrivo.
+
+- Gioca online: [lamorbidamacchina.github.io/barriera-babylon-the-game](https://lamorbidamacchina.github.io/barriera-babylon-the-game/)
+- Il sito del romanzo, con il test "chi sei tu dentro Barriera?": [barrierababylon.it](https://barrierababylon.it)
+- Per acquistare il libro: [Barriera Babylon su golemedizioni.it](https://www.golemedizioni.it/prodotto/barriera-babylon/)
+
 Target: computer e iPad (mouse, tastiera, touch); telefono in orizzontale "best effort".
 
 ## Avvio
