@@ -1,6 +1,6 @@
-# Barriera Babylon — The Game
+# Barriera Babylon: The Game
 
-Un gioco per browser in stile 8/16 bit: una raccolta di minigiochi ispirati al romanzo *Barriera Babylon* (Golem Edizioni).
+Una raccolta di minigiochi per browser in stile retro, ispirati al romanzo *Barriera Babylon* (Golem Edizioni).
 
 Il romanzo è ambientato in una Barriera di Milano (Torino) di un futuro molto vicino, tra droni, coprifuoco e un codice OTP con cui confermare ogni giorno la propria posizione. I clienti del Bar Stella di Mei Li e i bambini del Comitato Caos rispondono al cantiere del "Muro" con battute, sabotaggi e caos organizzato.
 
@@ -47,3 +47,55 @@ Risoluzione interna 480×270, font Press Start 2P (in MAIUSCOLO usare `CAFFE'` i
 | F | schermo intero |
 | M | audio on/off |
 | F2 | effetto CRT on/off |
+
+---
+
+## English
+
+A collection of retro-style browser minigames, inspired by the novel *Barriera Babylon* (Golem Edizioni).
+
+The novel is set in Barriera di Milano, a neighbourhood of Turin, in the very near future: drones, a curfew, and an OTP code to confirm your position every day. The regulars of Mei Li's Bar Stella and the kids of the Comitato Caos answer the building site of the "Muro" (the Wall) with jokes, sabotage and organised chaos.
+
+The game starts at the Bar Stella: Mei Li hands out jobs, and each job is a minigame. The first one is *Il contrabbando di Zio Franco* (Uncle Franco's smuggling): slice the right vegetables in mid-air for Mei Li's recipes, without touching the drones. More minigames are on the way. The game itself is in Italian.
+
+- Play online: [lamorbidamacchina.github.io/barriera-babylon-the-game](https://lamorbidamacchina.github.io/barriera-babylon-the-game/)
+- The novel's website, with the "who are you in Barriera?" quiz (in Italian): [barrierababylon.it](https://barrierababylon.it)
+- To buy the book: [Barriera Babylon on golemedizioni.it](https://www.golemedizioni.it/prodotto/barriera-babylon/)
+
+Target: computer and iPad (mouse, keyboard, touch); landscape phones are "best effort".
+
+### Getting started
+
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # output in dist/
+```
+
+### Online
+
+https://lamorbidamacchina.github.io/barriera-babylon-the-game/ — published by GitHub Actions on every push to `main`.
+
+### Structure
+
+- `src/main.js` — Phaser startup, integer scaling, CRT effect, global keys
+- `src/scenes/` — `Title` (coin/start) → `Bar` (Mei Li) → `Menu` (chalkboard) → minigames
+- `src/data/` — Mei Li's lines, list of games
+- `src/sfx.js` — synthesised chiptune sound effects (no audio files)
+- `art/source/` — original promotional illustrations
+- `tools/pixelize.mjs` — turns them into pixel-art portraits (`npm run pixelize`)
+
+Internal resolution 480×270, font Press Start 2P (in UPPERCASE text write `CAFFE'` instead of `CAFFÈ`: the font draws accented capitals like lowercase).
+
+### Controls
+
+| Key | Action |
+|---|---|
+| click / tap / any key | insert coin, then start |
+| arrows, Enter, Esc | menu navigation |
+| mouse held / finger + drag | slice (Contrabbando) |
+| P or Esc | pause |
+| digits, Backspace | OTP check code |
+| F | fullscreen |
+| M | sound on/off |
+| F2 | CRT effect on/off |
