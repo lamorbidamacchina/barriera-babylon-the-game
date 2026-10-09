@@ -4,7 +4,8 @@
 // ones received are kept on the device, and submissions are fire-and-forget.
 // Every failure is silent: the game just shows what it knows, or nothing.
 
-// Apps Script web app URL (README, "Classifica"). Empty: no online records.
+// Apps Script web app URL (setup steps at the top of tools/leaderboard/Code.gs).
+// Empty: no online records.
 const ENDPOINT = 'https://script.google.com/macros/s/AKfycbywCMQx6oQ10iugHzDAeDaCuhg2fb-37tZscWSbL-LNNpSCxWWFFtsxjzMfgpQj41_w-w/exec';
 
 const CACHE_KEY = 'barriera-babylon-records';

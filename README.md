@@ -26,16 +26,7 @@ https://lamorbidamacchina.github.io/barriera-babylon-the-game/ — pubblicato da
 
 ## Classifica
 
-I record di Barriera (il miglior punteggio di ogni livello, con il nickname) stanno in un Google Sheet, letto e scritto da uno script Apps Script. Il gioco non lo aspetta mai: scarica i record in background, tiene gli ultimi sul dispositivo e invia i nuovi senza bloccare. Senza URL configurato la classifica è spenta.
-
-Configurazione (una volta sola):
-
-1. Nuovo Google Sheet → **Estensioni → Apps Script**, incolla `tools/leaderboard/Code.gs`, salva.
-2. Nell'editor scegli la funzione `setup` ed esegui (crea il foglio `records`; chiede le autorizzazioni).
-3. **Esegui il deployment → Nuovo deployment → App web**: esegui come *Me*, accesso *Chiunque*. Copia l'URL `.../exec`.
-4. Incollalo in `ENDPOINT` in `src/leaderboard.js` e pubblica.
-
-L'URL è pubblico (è nel codice del gioco), quindi lo script si protegge da solo: una riga per livello, sovrascritta solo da un record migliore; punteggio massimo credibile per gioco (`MAX_SCORE`); al massimo 300 scritture al giorno; accesso solo a questo foglio. Un record falso si corregge modificando o cancellando la sua riga (il gioco lo vede entro 10 minuti). Dopo una modifica a `Code.gs`: **Gestisci deployment → Modifica → Nuova versione**, così l'URL resta lo stesso.
+I record di Barriera (miglior punteggio per livello, con il nickname) stanno in un Google Sheet con uno script Apps Script, `tools/leaderboard/Code.gs`: le istruzioni sono all'inizio del file. Senza URL in `src/leaderboard.js` la classifica è spenta e il gioco funziona lo stesso.
 
 ## Struttura
 
@@ -92,16 +83,7 @@ https://lamorbidamacchina.github.io/barriera-babylon-the-game/ — published by 
 
 ### Leaderboard
 
-The Barriera records (best score of each level, with the player's nickname) live in a Google Sheet, read and written by an Apps Script web app. The game never waits for it: records are fetched in the background, the last ones are kept on the device, and new ones are sent without blocking. With no URL configured the leaderboard is off.
-
-One-time setup:
-
-1. New Google Sheet → **Extensions → Apps Script**, paste `tools/leaderboard/Code.gs`, save.
-2. Pick the `setup` function in the editor and run it (creates the `records` sheet; asks for permissions).
-3. **Deploy → New deployment → Web app**: execute as *Me*, access *Anyone*. Copy the `.../exec` URL.
-4. Paste it into `ENDPOINT` in `src/leaderboard.js` and publish.
-
-The URL is public (it's in the game's code), so the script protects itself: one row per level, overwritten only by a better record; a believable maximum score per game (`MAX_SCORE`); at most 300 writes a day; access to this Sheet only. A fake record is fixed by editing or deleting its row (the game sees it within 10 minutes). After changing `Code.gs`: **Manage deployments → Edit → New version**, so the URL stays the same.
+The Barriera records (best score per level, with the player's nickname) live in a Google Sheet behind an Apps Script, `tools/leaderboard/Code.gs`: setup steps are at the top of that file. With no URL in `src/leaderboard.js` the leaderboard is off and the game works anyway.
 
 ### Structure
 

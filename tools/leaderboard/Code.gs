@@ -2,8 +2,14 @@
 // ^ the script can only open the Sheet it belongs to, not the owner's other files.
 
 // Barriera Babylon leaderboard: a Google Sheet behind an Apps Script web app.
-// Not part of the build: paste it into the Sheet's Apps Script editor (see the
-// README, "Classifica"). The game reads and writes it from src/leaderboard.js.
+// Not part of the build. The game reads and writes it from src/leaderboard.js.
+//
+// Setup, once:
+// 1. New Google Sheet → Extensions → Apps Script, paste this file, save.
+// 2. Run `setup` from the editor (creates the `records` sheet; asks for permissions).
+// 3. Deploy → New deployment → Web app: execute as Me, access Anyone. Copy the /exec URL.
+// 4. Paste it into ENDPOINT in src/leaderboard.js and publish the game.
+// After changing this file: Manage deployments → Edit → New version (same URL).
 //
 // GET  → { contrabbando: { "0": { nickname, score }, ... }, ... }  best per level
 // POST → body (text/plain, JSON) { game, level, nickname, score }; returns the same as GET
