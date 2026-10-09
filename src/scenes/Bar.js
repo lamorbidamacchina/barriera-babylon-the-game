@@ -3,7 +3,7 @@ import { WIDTH, HEIGHT, C, N } from '../config.js';
 import { text, blink, panel, goTo, fadeIn, makeTexture, droneTexture } from '../ui.js';
 import { sfx } from '../sfx.js';
 import { Painter } from '../painter.js';
-import { YARN, POSTER, POSTERS, drawYarn } from '../sprites/bar.js';
+import { YARN, POSTER, POSTERS, SCALDATELLI, drawYarn, drawScaldatelli } from '../sprites/bar.js';
 import { GREETINGS, QUOTES, INVITE } from '../data/meili.js';
 
 const BOX = { x: 192, y: 112, w: 272, h: 84 };
@@ -68,10 +68,11 @@ export default class Bar extends Phaser.Scene {
     g.fillStyle(N.woodDark, 1).fillRect(0, 228, WIDTH, HEIGHT - 228);
     for (let x = 12; x < WIDTH; x += 40) g.fillStyle(0x2e1c0f, 1).fillRect(x, 232, 24, HEIGHT - 240);
 
-    // Cup of "cicoria deluxe", and a ball of yarn with needles (foreshadowing).
-    g.fillStyle(0xe9e4d8, 1).fillRect(220, 204, 14, 10).fillRect(234, 206, 3, 5);
-    g.fillStyle(0xd8d0c0, 1).fillRect(216, 213, 22, 2);
-    g.fillStyle(0x3a2414, 1).fillRect(221, 204, 12, 2);
+    // Cup of "cicoria deluxe", a bag of scaldatelli, and a ball of yarn with
+    // needles (foreshadowing).
+    g.fillStyle(0xe9e4d8, 1).fillRect(260, 204, 14, 10).fillRect(274, 206, 3, 5);
+    g.fillStyle(0xd8d0c0, 1).fillRect(256, 213, 22, 2);
+    g.fillStyle(0x3a2414, 1).fillRect(261, 204, 12, 2);
     const sprite = (key, { w, h }, draw) =>
       makeTexture(this, key, w, h, (tg) => {
         const p = new Painter(w, h);
@@ -80,6 +81,11 @@ export default class Bar extends Phaser.Scene {
       });
     sprite('yarn', YARN, drawYarn);
     this.add.image(409, 195, 'yarn').setOrigin(0);
+    // Two bags of scaldatelli under the dialogue box: the back one a bit
+    // higher and darker, the front one lower and overlapping it.
+    sprite('scaldatelli', SCALDATELLI, drawScaldatelli);
+    this.add.image(206, 197, 'scaldatelli').setOrigin(0).setTint(0xc8c8c8);
+    this.add.image(217, 200, 'scaldatelli').setOrigin(0);
 
     // Posters stuck on the front of the counter, under Mei Li.
     // Three of them, different every visit.

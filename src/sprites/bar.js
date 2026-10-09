@@ -98,8 +98,8 @@ export function drawPunkPoster(p) {
   tape(p, w - 7, 0);
 }
 
-// Flyer of the Baltea, the NGO round the corner: green header, a bowl of
-// hummus, and a regular's red marker review.
+// Flyer of the Baltea, the NGO round the corner: green header and a bowl of
+// hummus with a fly on it.
 export function drawBalteaPoster(p) {
   const { w, h } = POSTER;
   p.rect(0, 0, w, h, 0xf2ead0);
@@ -121,11 +121,6 @@ export function drawBalteaPoster(p) {
   p.set(bx + 8, 18, 0xa0a8b0);
   miniTextCentered(p, 'HUMMUS', w / 2, 34, 0x3a2a1a);
   miniTextCentered(p, '100% VEGANO', w / 2, 40, 0x4f7f3a);
-  // "BLEAH" scrawled across it in red marker, slanted.
-  [...'BLEAH'].forEach((ch, i) => {
-    miniText(p, ch, 26 + i * 4, 30 - i * 2, 0x7a1010);
-    miniText(p, ch, 25 + i * 4, 29 - i * 2, 0xff3030);
-  });
   tear(p, w, h, 3);
   tape(p, 1, 0);
   tape(p, w - 7, 0);
@@ -282,3 +277,34 @@ export const POSTERS = {
   'casseta-popular': drawCassetaPoster,
   'bagni-pubblici': drawBagniPoster,
 };
+
+// Bag of scaldatelli: clear plastic, crimped top, a paper label, and golden
+// rings piled inside. Short, to fit between the dialogue box and the counter.
+export const SCALDATELLI = { w: 16, h: 18 };
+
+export function drawScaldatelli(p) {
+  const plastic = 0xdde6ea;
+  const gold = 0xe0a850;
+  const toast = 0x9a5a20;
+  const crumb = 0xf4d088;
+  // Bag body, narrowing towards the crimped top.
+  p.rect(1, 6, 14, 11, plastic);
+  p.rect(2, 3, 12, 3, plastic);
+  // Rings piled inside: darker rim, golden ring, a hole you can see through.
+  const ring = (x, y) => {
+    p.ellipse(x, y, 3.2, 2.6, toast, { over: true });
+    p.ellipse(x, y, 2.6, 2, gold, { over: true });
+    p.rect(x - 0.5, y - 0.5, 1, 1, toast, { over: true });
+    p.set(Math.floor(x - 2), Math.floor(y - 1), crumb);
+  };
+  for (const [x, y] of [[4, 8], [11, 7.5], [7.5, 10.5], [3.5, 13.5], [12, 12.5], [8, 15]]) ring(x, y);
+  // Small paper label.
+  p.rect(9, 9, 4, 3, 0xf8f6f0);
+  p.rect(9, 9, 4, 1, 0xc8202a);
+  // Plastic shine down the left side.
+  p.rect(2, 5, 1, 10, 0xffffff, { over: true });
+  // Crimped top.
+  p.rect(2, 0, 12, 3, 0xf0f4f6);
+  for (let x = 2; x < 14; x += 2) p.set(x, 2, 0xb8c0c4);
+  p.outline(0x3a3020);
+}
