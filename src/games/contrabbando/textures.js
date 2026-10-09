@@ -28,7 +28,7 @@ export const droneKey = (size) => `drone@${Math.round(size * 100)}`;
 export const powerKey = (type, size) => `pw-${type}@${Math.round(size * 100)}`;
 
 // Each painter works in a w×h box; shapes keep a 1px margin for the outline.
-const draw = {
+export const draw = {
   zucchina(p, w, h) {
     const pal = { base: 0x2f6b2a, dark: 0x1c4419, light: 0x4f8f3e, hl: 0xb8e08a };
     const m = shaded(pal, w / 2, h / 2, w / 2 - 1, h / 2 - 1);
