@@ -248,9 +248,11 @@ export default class Contrabbando extends Phaser.Scene {
     o.add(text(this, X, P.y + 12, `RICETTA ${this.level + 1}/${RECIPES.length}`, { color: C.chalkDim }));
     if (unlocked > 0) {
       // Big enough to hit with a thumb; greyed out when there's nowhere to go.
+      // A greyed arrow still swallows the tap: a near miss must not start the game.
       const step = (label, x, dir, enabled) => {
         if (enabled) return this.button(o, x, P.y + 6, label, () => this.changeLevel(dir), 44);
-        o.add(this.add.rectangle(x, P.y + 6, 44, 18, N.night).setOrigin(0).setStrokeStyle(1, N.night3));
+        const bg = o.add(this.add.rectangle(x, P.y + 6, 44, 18, N.night).setOrigin(0).setStrokeStyle(1, N.night3));
+        bg.setInteractive(this.hitArea(44, 18)).on('pointerdown', (p, lx, ly, e) => e.stopPropagation());
         o.add(text(this, x + 22, P.y + 11, label, { color: '#3a4560', origin: [0.5, 0], shadow: null }));
       };
       step('<', P.x + P.w - 108, -1, this.level > 0);
@@ -334,7 +336,7 @@ export default class Contrabbando extends Phaser.Scene {
   button(o, x, y, label, onClick, w = 60) {
     const bg = o.add(this.add.rectangle(x, y, w, 18, N.night2).setOrigin(0).setStrokeStyle(1, N.ocra));
     o.add(text(this, x + w / 2, y + 5, label, { color: C.ocraLight, origin: [0.5, 0] }));
-    bg.setInteractive({ useHandCursor: true });
+    bg.setInteractive({ ...this.hitArea(w, 18), useHandCursor: true });
     bg.on('pointerover', () => bg.setFillStyle(N.night3));
     bg.on('pointerout', () => bg.setFillStyle(N.night2));
     bg.on('pointerdown', (p, lx, ly, e) => {
@@ -343,6 +345,12 @@ export default class Contrabbando extends Phaser.Scene {
       onClick();
     });
     return bg;
+  }
+
+  // Buttons are tiny on a phone (the game shrinks below 1x), and on the intro a
+  // tap that misses one starts the game: hits count a few pixels outside.
+  hitArea(w, h, padX = 4, padY = 8) {
+    return { hitArea: new Phaser.Geom.Rectangle(-padX, -padY, w + padX * 2, h + padY * 2), hitAreaCallback: Phaser.Geom.Rectangle.Contains };
   }
 
   onKey(e) {
