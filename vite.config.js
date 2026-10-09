@@ -15,6 +15,16 @@ export default defineConfig({
   define: {
     __BUILD__: JSON.stringify(build),
   },
+  plugins: [
+    {
+      // dist/version.json: the game polls it to notice a newer deploy (main.js).
+      name: 'version-json',
+      apply: 'build',
+      generateBundle() {
+        this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ build }) });
+      },
+    },
+  ],
   build: {
     target: 'es2022', // main.js uses top-level await to wait for the font
     chunkSizeWarningLimit: 1600, // Phaser alone is ~1.2 MB minified

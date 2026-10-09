@@ -80,6 +80,37 @@ game.events.once(Phaser.Core.Events.POST_STEP, syncOrientation);
 // Phaser wakes the loop by itself when the tab becomes visible again.
 game.events.on(Phaser.Core.Events.VISIBLE, syncOrientation);
 
+// ------------------------------------------------------------------ updates
+
+// GitHub Pages lets browsers keep index.html for 10 minutes, and iOS resumes a
+// home screen app instead of relaunching it: both keep an old build running.
+// version.json is never cached, so ask it for the latest build number; if it's
+// newer, refresh the cached index.html and reload. On resume only from the
+// title screen or the menu, never in the middle of a game.
+const RELOADED_FOR = 'reloaded-for-build';
+
+async function checkForUpdate() {
+  if (import.meta.env.DEV) return;
+  try {
+    const res = await fetch('version.json', { cache: 'no-store' });
+    const { build } = await res.json();
+    // Tried once already for this build and still old: don't loop.
+    if (!(build > __BUILD__) || sessionStorage.getItem(RELOADED_FOR) === String(build)) return;
+    sessionStorage.setItem(RELOADED_FOR, String(build));
+    await fetch('./', { cache: 'reload' });
+    location.reload();
+  } catch {
+    // offline or storage blocked: keep playing this build
+  }
+}
+
+checkForUpdate();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  const scenes = game.scene.getScenes(true).map((s) => s.scene.key);
+  if (scenes.every((key) => key === 'Title' || key === 'Menu')) checkForUpdate();
+});
+
 // ------------------------------------------------------------------ audio
 
 // iOS unlocks audio only on some gesture events: try on all of them.
