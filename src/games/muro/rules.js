@@ -107,6 +107,28 @@ export function nearestEdge(g, x, y) {
   return { x, y };
 }
 
+// One step of a patrol ("ronda") along the edge, keeping the Muro on one
+// side: hand 1 goes clockwise, -1 anticlockwise. It turns towards the Muro
+// when it can, else goes straight, else turns away, else goes back.
+// p = { x, y, dx, dy, hand }; returns the patrol after the step.
+export function patrolStep(g, p) {
+  const { dx, dy, hand } = p;
+  const side = [-dy * hand, dx * hand];
+  for (const [ox, oy] of [side, [dx, dy], [-side[0], -side[1]], [-dx, -dy]]) {
+    if (isEdge(g, p.x + ox, p.y + oy)) return { ...p, x: p.x + ox, y: p.y + oy, dx: ox, dy: oy };
+  }
+  return p;
+}
+
+// A drone turning towards a target: the new heading, at most maxTurn
+// radians away from the current one.
+export function steer(angle, target, maxTurn) {
+  let diff = (target - angle) % (2 * Math.PI);
+  if (diff > Math.PI) diff -= 2 * Math.PI;
+  if (diff < -Math.PI) diff += 2 * Math.PI;
+  return angle + Math.max(-maxTurn, Math.min(maxTurn, diff));
+}
+
 // A drone touched the line: it goes back to being Muro.
 export function clearTrail(g) {
   for (let i = 0; i < g.cells.length; i++) if (g.cells[i] === TRAIL) g.cells[i] = WALL;

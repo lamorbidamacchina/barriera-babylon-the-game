@@ -5,18 +5,20 @@ import { sfx } from '../sfx.js';
 import { loadSave, writeSave } from '../save.js';
 import { LEVELS, ROSANNA } from '../games/muro/levels.js';
 import { createView } from '../games/muro/views.js';
-import { createTextures, wallPattern, CURSOR_KEY } from '../games/muro/textures.js';
-import { WALL, FREE, TRAIL, makeGrid, cellAt, isEdge, canEnter, closeTrail, clearTrail, percentDown, cutPoints, endBonus, nearestEdge } from '../games/muro/rules.js';
+import { createTextures, wallPattern, CURSOR_KEY, rondaKey } from '../games/muro/textures.js';
+import { WALL, FREE, TRAIL, makeGrid, cellAt, isEdge, canEnter, closeTrail, clearTrail, percentDown, cutPoints, endBonus, nearestEdge, patrolStep, steer } from '../games/muro/rules.js';
 
 const HUD_H = 28;
 const CELL = 4; // px per cell of Muro
 const COLS = 120;
-const ROWS = 60;
-const FX = 0; // top-left corner of the field
-const FY = 30;
+const ROWS = 58; // 232px: the cursor and the patrols on the top and bottom rows stay
+const FX = 0; //   clear of the HUD and of the screen's edge
+const FY = 32; // top-left corner of the field
+const VIEW_CROP = 8; // the pictures are 240px tall: their top rows of sky don't show
 const SPEED = 20; // cells per second, walking or drawing
 const LIVES = 3;
-const SAFE_SECONDS = 1.5; // after losing a life, drones can't hit you
+const SAFE_SECONDS = 1.5; // after losing a life, nothing can hit you
+const WANDER = 0.6; // radians per second a drone drifts by when not chasing
 const STICK_DEAD = 5; // joystick: px of drag before it moves
 const STICK_MAX = 22; // joystick: the base follows a finger dragged further
 const GRAVITY = 420;
@@ -50,7 +52,7 @@ export default class MuroPanic extends Phaser.Scene {
 
     this.state = 'intro';
     this.add.rectangle(0, 0, WIDTH, HEIGHT, N.black).setOrigin(0);
-    this.add.image(FX, FY, createView(this, this.lv.view)).setOrigin(0);
+    this.add.image(FX, FY - VIEW_CROP, createView(this, this.lv.view)).setOrigin(0).setCrop(0, VIEW_CROP, COLS * CELL, ROWS * CELL);
     this.setupField();
     this.trailGfx = this.add.graphics().setDepth(3);
     this.player = this.add.image(0, 0, CURSOR_KEY).setDepth(5);
@@ -95,18 +97,38 @@ export default class MuroPanic extends Phaser.Scene {
     this.stick = null; // { id, ox, oy, x, y } while a finger steers
     this.debris = [];
     this.drones = this.lv.drones.map((d) => this.makeDrone(d));
+    this.patrols = this.lv.patrols.map((p, i) => this.makePatrol(p, i));
     this.redrawWall();
     this.placePlayer();
   }
 
-  makeDrone({ speed, size }) {
+  // Drones start in the upper part of the field, away from the player.
+  makeDrone({ speed, size, chase }) {
     const img = this.add.image(0, 0, 'drone').setScale(size).setDepth(6);
     const a = (Phaser.Math.Between(0, 3) * Math.PI) / 2 + rand(0.35, 1.2);
-    const d = { img, hw: 9 * size, hh: 5 * size, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, phase: rand(0, 6) };
-    d.x = rand(FX + 80, FX + COLS * CELL - 80);
-    d.y = rand(FY + 50, FY + ROWS * CELL - 50);
+    const d = { img, hw: 9 * size, hh: 5 * size, a, speed, chase, phase: rand(0, 6) };
+    d.x = rand(FX + 60, FX + COLS * CELL - 60);
+    d.y = rand(FY + 40, FY + ROWS * CELL - 90);
     img.setPosition(Math.round(d.x), Math.round(d.y));
     return d;
+  }
+
+  // Patrols start on the top frame, the first two running in opposite
+  // directions, a third one on the left side.
+  makePatrol({ speed }, i) {
+    const starts = [
+      { x: Math.floor(COLS / 2), y: 0, dx: -1, dy: 0, hand: -1 },
+      { x: Math.floor(COLS / 2), y: 0, dx: 1, dy: 0, hand: 1 },
+      { x: 0, y: Math.floor(ROWS / 2), dx: 0, dy: -1, hand: 1 },
+    ];
+    const p = { ...starts[i % starts.length], speed, acc: 0 };
+    p.img = this.add.image(0, 0, rondaKey('red')).setDepth(7);
+    this.placePatrol(p);
+    return p;
+  }
+
+  placePatrol(p) {
+    p.img.setPosition(FX + p.x * CELL + CELL / 2, FY + p.y * CELL + CELL / 2);
   }
 
   drawHud() {
@@ -143,13 +165,14 @@ export default class MuroPanic extends Phaser.Scene {
     this.lifeIcons.forEach((icon, i) => icon.setAlpha(i < this.lives ? 1 : 0.2));
   }
 
-  // Rosanna's comments, briefly, in the top-left corner of the field.
+  // Rosanna's comments, briefly, near the top of the field: below the top
+  // edge, so they never hide a patrol.
   say(lines, chance = 1) {
     if (Math.random() > chance) return;
     this.bubble?.destroy();
     const line = typeof lines === 'string' ? lines : pick(lines);
-    const t = (this.bubble = text(this, 8, FY + 6, line, { color: C.white }).setDepth(55));
-    const bg = this.add.rectangle(4, FY + 2, t.width + 8, t.height + 8, N.black, 0.8).setOrigin(0).setDepth(54);
+    const t = (this.bubble = text(this, 12, FY + 16, line, { color: C.white }).setDepth(55));
+    const bg = this.add.rectangle(8, FY + 12, t.width + 8, t.height + 8, N.black, 0.6).setOrigin(0).setDepth(54);
     t.once('destroy', () => bg.destroy());
     this.time.delayedCall(2400, () => t.active && t.destroy());
   }
@@ -185,16 +208,21 @@ export default class MuroPanic extends Phaser.Scene {
     o.add(text(this, X, P.y + 28, this.lv.name, { color: C.ocraLight, wrap: 300 }));
     o.add(text(this, X, P.y + 46, `ABBATTI IL ${this.lv.target}% DEL MURO`, { color: C.white }));
     const best = this.progress.best[this.level];
+    // Enemies on their own line: "6 DRONI, 1 CAPOBRANCO" doesn't fit next to the time.
     const drones = this.lv.drones.length;
-    o.add(text(this, X, P.y + 60, `TEMPO ${this.lv.time}s   ${drones} DRON${drones > 1 ? 'I' : 'E'}${best ? `   RECORD ${best}` : ''}`, { color: C.chalkDim }));
+    const bosses = this.lv.drones.filter((d) => d.size > 1).length;
+    const patrols = this.lv.patrols.length;
+    o.add(text(this, X, P.y + 60, `TEMPO ${this.lv.time}s   ${patrols} ROND${patrols > 1 ? 'E' : 'A'}`, { color: C.chalkDim }));
+    o.add(text(this, X, P.y + 71, `${drones} DRONI${bosses ? `, ${bosses} CAPOBRANCO` : ''}`, { color: C.chalkDim }));
+    if (best) o.add(text(this, P.x + 60, P.y + 138, `RECORD ${best}`, { color: C.chalkDim, origin: [0.5, 0] }));
 
-    const order = o.add(text(this, X, P.y + 80, '', { color: C.white, wrap: 300, lineSpacing: 5 }));
+    const order = o.add(text(this, X, P.y + 90, '', { color: C.white, wrap: 300, lineSpacing: 5 }));
     typeText(this, order, this.lv.order);
 
     const touch = matchMedia('(pointer: coarse)').matches;
     o.add(text(this, WIDTH / 2, P.y + 148, touch ? 'DITO GIU\' OVUNQUE E TRASCINA PER MUOVERTI' : 'FRECCE PER MUOVERTI', { color: C.chalkDim, origin: [0.5, 0] }));
     o.add(text(this, WIDTH / 2, P.y + 159, 'ESCI DAL BORDO, TRACCIA, TORNA: IL MURO CROLLA', { color: C.chalkDim, origin: [0.5, 0] }));
-    o.add(text(this, WIDTH / 2, P.y + 170, `DRONE SULLA LINEA: PERDI UNA VITA   ${LIVES} VITE`, { color: '#e07a6a', origin: [0.5, 0] }));
+    o.add(text(this, WIDTH / 2, P.y + 170, `DRONI SULLA LINEA O RONDA ADDOSSO: -1 VITA`, { color: '#e07a6a', origin: [0.5, 0] }));
     const go = o.add(text(this, WIDTH / 2, P.y + 186, touch ? 'TOCCA PER INIZIARE' : 'CLICCA PER INIZIARE', { color: C.ocraLight, origin: [0.5, 0] }));
     button(this, o, P.x + 12, P.y + 182, '< MENU', () => goTo(this, 'Menu'), 64);
     blink(this, go, 450);
@@ -486,18 +514,26 @@ export default class MuroPanic extends Phaser.Scene {
 
   // ---------------------------------------------------------------- drones
 
-  // Drones fly straight inside what's left of the Muro and bounce off its
-  // edges. A drone already overlapping free ground (a cut right next to it)
-  // flies on until it's clear.
+  // Drones fly inside what's left of the Muro and bounce off its edges.
+  // While a line is being drawn they turn towards the marker (how sharply
+  // depends on the level), otherwise they drift. A drone already overlapping
+  // free ground (a cut right next to it) flies on until it's clear.
   updateDrones(dt, time) {
+    const px = FX + this.pos.x * CELL + CELL / 2;
+    const py = FY + this.pos.y * CELL + CELL / 2;
     for (const d of this.drones) {
+      if (this.drawing && this.state === 'play' && d.chase) d.a = steer(d.a, Math.atan2(py - d.y, px - d.x), d.chase * dt);
+      else d.a += rand(-WANDER, WANDER) * dt;
+      let vx = Math.cos(d.a) * d.speed;
+      let vy = Math.sin(d.a) * d.speed;
       const stuck = this.blocked(d, d.x, d.y);
-      const nx = d.x + d.vx * dt;
-      if (!stuck && this.blocked(d, nx, d.y)) d.vx = -d.vx * rand(0.95, 1.05);
+      const nx = d.x + vx * dt;
+      if (!stuck && this.blocked(d, nx, d.y)) vx = -vx;
       else d.x = nx;
-      const ny = d.y + d.vy * dt;
-      if (!stuck && this.blocked(d, d.x, ny)) d.vy = -d.vy * rand(0.95, 1.05);
+      const ny = d.y + vy * dt;
+      if (!stuck && this.blocked(d, d.x, ny)) vy = -vy;
       else d.y = ny;
+      d.a = Math.atan2(vy, vx);
       d.x = Phaser.Math.Clamp(d.x, FX + CELL + d.hw, FX + (COLS - 1) * CELL - d.hw);
       d.y = Phaser.Math.Clamp(d.y, FY + CELL + d.hh, FY + (ROWS - 1) * CELL - d.hh);
       d.img.setPosition(Math.round(d.x), Math.round(d.y + Math.sin(d.phase + time / 300)));
@@ -514,33 +550,62 @@ export default class MuroPanic extends Phaser.Scene {
     return false;
   }
 
+  // ---------------------------------------------------------------- patrols
+
+  // Patrols run along the edge of what's left of the Muro, step by step like
+  // the player. A cut can leave one on free ground: it jumps back to the edge.
+  updatePatrols(dt, time) {
+    const light = Math.floor(time / 160) % 2 ? 'red' : 'blue';
+    for (const p of this.patrols) {
+      if (!isEdge(this.grid, p.x, p.y)) Object.assign(p, nearestEdge(this.grid, p.x, p.y));
+      p.acc += dt * p.speed;
+      while (p.acc >= 1) {
+        p.acc -= 1;
+        Object.assign(p, patrolStep(this.grid, p));
+      }
+      p.img.setTexture(rondaKey(light));
+      this.placePatrol(p);
+    }
+  }
+
+  // A patrol on the marker, or right next to it.
+  checkPatrols() {
+    if (this.safeLeft > 0) return;
+    const p = this.patrols.find((r) => Math.abs(r.x - this.pos.x) <= 1 && Math.abs(r.y - this.pos.y) <= 1);
+    if (p) this.hit(p, 'patrol');
+  }
+
   // A drone on the line, or on the marker while it's out in the Muro.
   checkHits() {
     if (!this.drawing || this.safeLeft > 0) return;
     const px = FX + this.pos.x * CELL + CELL / 2;
     const py = FY + this.pos.y * CELL + CELL / 2;
     for (const d of this.drones) {
-      if (Math.abs(px - d.x) < d.hw + 3 && Math.abs(py - d.y) < d.hh + 3) return this.hit(d);
+      if (Math.abs(px - d.x) < d.hw + 3 && Math.abs(py - d.y) < d.hh + 3) return this.hit(d, 'drone');
       const [x0, y0] = this.cellOf(d.x - d.hw, d.y - d.hh);
       const [x1, y1] = this.cellOf(d.x + d.hw, d.y + d.hh);
       for (let cy = y0; cy <= y1; cy++) {
-        for (let cx = x0; cx <= x1; cx++) if (cellAt(this.grid, cx, cy) === TRAIL) return this.hit(d);
+        for (let cx = x0; cx <= x1; cx++) if (cellAt(this.grid, cx, cy) === TRAIL) return this.hit(d, 'drone');
       }
     }
   }
 
-  hit(d) {
+  // Lose a life. A line being drawn is lost too, and the marker goes back
+  // where it started.
+  hit(by, kind) {
     this.lives--;
     sfx.alarm();
     this.cameras.main.shake(200, 0.01);
     this.cameras.main.flash(150, 224, 68, 58);
-    d.img.setTint(0xff7070);
-    this.time.delayedCall(600, () => d.img.active && d.img.clearTint());
-    clearTrail(this.grid);
-    this.drawing = false;
-    this.trail = [];
-    this.pos = { ...this.trailStart };
-    this.placePlayer();
+    by.img.setTint(0xff7070);
+    this.time.delayedCall(600, () => by.img.active && by.img.clearTint());
+    if (this.drawing) {
+      clearTrail(this.grid);
+      this.drawing = false;
+      this.trail = [];
+      this.pos = { ...this.trailStart };
+      this.placePlayer();
+    }
     this.safeLeft = SAFE_SECONDS;
     this.updateHud();
     if (this.lives <= 0) {
@@ -548,8 +613,8 @@ export default class MuroPanic extends Phaser.Scene {
       this.endRound('caught');
       return;
     }
-    banner(this, 'LINEA SPEZZATA!', C.red, 900);
-    this.say(ROSANNA.hit);
+    banner(this, kind === 'patrol' ? 'LA RONDA!' : 'LINEA SPEZZATA!', C.red, 900);
+    this.say(kind === 'patrol' ? ROSANNA.patrol : ROSANNA.hit);
   }
 
   // ---------------------------------------------------------------- loop
@@ -567,6 +632,10 @@ export default class MuroPanic extends Phaser.Scene {
         this.safeLeft = Math.max(0, this.safeLeft - dt);
         this.updatePlayer(dt);
         if (this.state === 'play') {
+          // A hit gives a moment of safety, so only the first of these counts.
+          this.checkPatrols(); // after the player's move...
+          this.updatePatrols(dt, time);
+          this.checkPatrols(); // ...and after theirs: they can't slip through each other
           this.updateDrones(dt, time);
           this.checkHits();
         }
@@ -618,11 +687,13 @@ export default class MuroPanic extends Phaser.Scene {
       this.grid.cells.fill(FREE);
       this.redrawWall();
       this.drones.forEach((d) => this.tweens.add({ targets: d.img, y: -20, x: d.x + rand(-60, 60), duration: 900, ease: 'Quad.in' }));
+      this.patrols.forEach((p) => this.tweens.add({ targets: p.img, alpha: 0, duration: 600 }));
       banner(this, 'IL MURO CROLLA!', C.ocraLight, 1400, 70);
     });
     this.time.delayedCall(1900, () => {
-      this.add.rectangle(0, HEIGHT - 22, WIDTH, 22, N.black, 0.7).setOrigin(0).setDepth(50);
-      text(this, WIDTH / 2, HEIGHT - 15, this.lv.name, { color: C.white, origin: [0.5, 0] }).setDepth(51);
+      // The name over the sky, where it covers nobody.
+      this.add.rectangle(0, FY, WIDTH, 22, N.black, 0.7).setOrigin(0).setDepth(50);
+      text(this, WIDTH / 2, FY + 7, this.lv.name, { color: C.white, origin: [0.5, 0] }).setDepth(51);
     });
     this.time.delayedCall(4200, results);
   }
@@ -659,7 +730,7 @@ export default class MuroPanic extends Phaser.Scene {
     const g = o.add(this.add.graphics());
     panel(g, P.x + 14, P.y + 52, 96, 96, { fill: N.black, alpha: 1 });
     o.add(this.add.image(P.x + 14, P.y + 52, 'rosanna-96').setOrigin(0));
-    const line = win && last ? ROSANNA.final : pick(win ? ROSANNA.win : ROSANNA[result]);
+    const line = win ? this.lv.win : pick(ROSANNA[result]);
     o.add(text(this, P.x + 120, P.y + (win ? 134 : 60), line, { color: C.white, wrap: P.w - 136, lineSpacing: 4 }));
 
     const next = () => this.scene.restart({ level: this.level + 1 });

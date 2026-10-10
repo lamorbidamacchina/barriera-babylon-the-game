@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { WALL, FREE, TRAIL, makeGrid, cellAt, isEdge, canEnter, closeTrail, clearTrail, percentDown, cutPoints, endBonus, nearestEdge } from './rules.js';
+import { WALL, FREE, TRAIL, makeGrid, cellAt, isEdge, canEnter, closeTrail, clearTrail, percentDown, cutPoints, endBonus, nearestEdge, patrolStep, steer } from './rules.js';
 
 // Draws a line of TRAIL cells from (x0, y0) to (x1, y1), straight only.
 function trail(g, x0, y0, x1, y1) {
@@ -74,6 +74,42 @@ describe('nearestEdge', () => {
     expect(isEdge(g, 1, 3)).toBe(false);
     expect(nearestEdge(g, 1, 3)).toEqual({ x: 4, y: 3 });
     expect(nearestEdge(g, 4, 3)).toEqual({ x: 4, y: 3 });
+  });
+});
+
+describe('patrolStep', () => {
+  it('goes round the frame, clockwise or not, always on the edge', () => {
+    const g = makeGrid(10, 6);
+    for (const hand of [1, -1]) {
+      let p = { x: 4, y: 0, dx: hand, dy: 0, hand };
+      const seen = new Set();
+      for (let i = 0; i < 28; i++) {
+        p = patrolStep(g, p);
+        expect(isEdge(g, p.x, p.y)).toBe(true);
+        seen.add(`${p.x},${p.y}`);
+      }
+      expect(seen.size).toBe(28); // the whole ring, no cell twice
+      expect([p.x, p.y]).toEqual([4, 0]); // and back where it started
+    }
+  });
+
+  it('follows the new edge after a cut', () => {
+    const g = makeGrid(12, 8);
+    trail(g, 4, 1, 4, 6);
+    closeTrail(g, [[8, 3]]);
+    // Going left on the top frame, anticlockwise: it turns down along the cut.
+    let p = { x: 6, y: 0, dx: -1, dy: 0, hand: -1 };
+    for (let i = 0; i < 3; i++) p = patrolStep(g, p);
+    expect(p.x).toBe(4);
+    expect(p.y).toBeGreaterThan(0);
+  });
+});
+
+describe('steer', () => {
+  it('turns by at most maxTurn, the short way round', () => {
+    expect(steer(0, 1, 0.25)).toBeCloseTo(0.25);
+    expect(steer(0, 0.1, 0.25)).toBeCloseTo(0.1);
+    expect(steer(3, -3, 0.5)).toBeCloseTo(3.2831, 3); // across ±pi
   });
 });
 
