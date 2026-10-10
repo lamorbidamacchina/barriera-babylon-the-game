@@ -48,6 +48,7 @@ Risoluzione interna 480×270, font Press Start 2P (in MAIUSCOLO usare `CAFFE'` i
 | clic / tocco / qualsiasi tasto | gettone, poi start |
 | frecce, Invio, Esc | navigazione menu |
 | mouse premuto / dito + trascina | taglia (Contrabbando) |
+| frecce (o WASD) / dito + trascina | muovi e traccia la linea (Muro Panic) |
 | P o Esc | pausa |
 | cifre, Backspace | codice della verifica OTP |
 | F | schermo intero |

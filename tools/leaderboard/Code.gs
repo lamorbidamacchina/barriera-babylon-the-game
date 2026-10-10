@@ -24,7 +24,7 @@
 // real player can always beat it. Raise it if a game's scoring changes.
 var MAX_SCORE = {
   contrabbando: 20000, // ~15 per vegetable + combos + 5 per second left
-  muro: 1000000, // not out yet: set a real cap when the game is ready
+  muro: 40000, // ~1 per cell of Muro, up to x4 for big cuts, + end bonuses
   ferri: 1000000,
   ruspe: 1000000,
 };

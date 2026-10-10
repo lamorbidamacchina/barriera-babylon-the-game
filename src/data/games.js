@@ -11,11 +11,12 @@ export const GAMES = [
   },
   {
     id: 'muro',
+    scene: 'MuroPanic',
     title: 'MURO PANIC',
     desc: 'Il Comitato Caos contro il Muro.',
     portrait: 'rosanna-96',
-    available: false,
-    mei: 'Muro ancora in piedi. Per poco. Torna domani.',
+    available: true,
+    mei: 'Bambini di Rosanna buttano giù Muro. Io vendo merenda.',
   },
   {
     id: 'ferri',
