@@ -1,4 +1,6 @@
-import { FONT, C, N } from './config.js';
+import Phaser from 'phaser';
+import { WIDTH, HEIGHT, FONT, C, N } from './config.js';
+import { sfx } from './sfx.js';
 
 // Pixel text. Press Start 2P is drawn on an 8px grid, so sizes should be
 // multiples of 8 and positions whole numbers to stay crisp.
@@ -133,4 +135,60 @@ export function textInput(scene, x, y, { maxLength = 12, value = '', placeholder
   };
   scene.events.once('shutdown', remove);
   return { el, remove, value: () => el.value };
+}
+
+// ------------------------------------------------------------------ game UI
+// Shared by the minigames: overlays, buttons, banners, typed-out text.
+
+// Dark full-screen layer at depth 100 that swallows clicks; add() puts more
+// objects on it, close() removes them all.
+export function overlay(scene) {
+  const objs = [];
+  const add = (o) => (objs.push(o.setDepth(100)), o);
+  add(scene.add.rectangle(0, 0, WIDTH, HEIGHT, N.black, 0.72).setOrigin(0).setInteractive());
+  return { add, close: () => objs.forEach((o) => o.destroy()) };
+}
+
+// Buttons are tiny on a phone (the game shrinks below 1x), and on the intro a
+// tap that misses one starts the game: hits count a few pixels outside.
+export function hitArea(w, h, padX = 4, padY = 8) {
+  return { hitArea: new Phaser.Geom.Rectangle(-padX, -padY, w + padX * 2, h + padY * 2), hitAreaCallback: Phaser.Geom.Rectangle.Contains };
+}
+
+export function button(scene, o, x, y, label, onClick, w = 60) {
+  const bg = o.add(scene.add.rectangle(x, y, w, 18, N.night2).setOrigin(0).setStrokeStyle(1, N.ocra));
+  o.add(text(scene, x + w / 2, y + 5, label, { color: C.ocraLight, origin: [0.5, 0] }));
+  bg.setInteractive({ ...hitArea(w, 18), useHandCursor: true });
+  bg.on('pointerover', () => bg.setFillStyle(N.night3));
+  bg.on('pointerout', () => bg.setFillStyle(N.night2));
+  bg.on('pointerdown', (p, lx, ly, e) => {
+    e.stopPropagation();
+    sfx.confirm();
+    onClick();
+  });
+  return bg;
+}
+
+// Big 16px message that pops in and goes away by itself; a new one replaces it.
+export function banner(scene, str, color = C.white, ms = 1100, y = 100) {
+  scene._lastBanner?.destroy();
+  const t = (scene._lastBanner = text(scene, WIDTH / 2, Math.round(y), str, { size: 16, color, origin: 0.5 }).setDepth(70));
+  scene.tweens.add({ targets: t, scale: { from: 0.5, to: 1 }, duration: 160, ease: 'Back.out' });
+  scene.time.delayedCall(ms, () => t.active && t.destroy());
+  return t;
+}
+
+// Types str into a text object a letter at a time, with a blip every 3.
+export function typeText(scene, t, str) {
+  let i = 0;
+  scene.time.addEvent({
+    delay: 22,
+    repeat: str.length - 1,
+    callback: () => {
+      i++;
+      if (!t.active) return;
+      t.setText(str.slice(0, i));
+      if (i % 3 === 0) sfx.blip();
+    },
+  });
 }

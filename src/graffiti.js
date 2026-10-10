@@ -48,6 +48,21 @@ const darken = (c, k) => Phaser.Display.Color.ValueToColor(c).darken(k).color;
 
 // Returns a Container positioned at (x, y) (top-left of the tag).
 export function sprayTag(scene, x, y, str, opts = {}) {
+  const { mist, paint, drips } = paintTag(str, opts);
+  const gMist = scene.add.graphics().setAlpha(MIST_ALPHA);
+  const gPaint = scene.add.graphics();
+  const gDrips = scene.add.graphics();
+  mist.toGraphics(gMist);
+  paint.toGraphics(gPaint);
+  drips.toGraphics(gDrips);
+  return scene.add.container(Math.round(x), Math.round(y), [gMist, gPaint, gDrips]);
+}
+
+export const MIST_ALPHA = 0.35;
+
+// The tag as three Painters of the same size w×h: the overspray `mist` (to draw
+// at MIST_ALPHA), the letters `paint` and the `drips` on top.
+export function paintTag(str, opts = {}) {
   const {
     color = 0xff4fa3,
     outline = 0x1c0812,
@@ -183,11 +198,5 @@ export function sprayTag(scene, x, y, str, opts = {}) {
     }
   }
 
-  const gMist = scene.add.graphics().setAlpha(0.35);
-  const gPaint = scene.add.graphics();
-  const gDrips = scene.add.graphics();
-  mist.toGraphics(gMist);
-  p.toGraphics(gPaint);
-  drips.toGraphics(gDrips);
-  return scene.add.container(Math.round(x), Math.round(y), [gMist, gPaint, gDrips]);
+  return { w: W, h: H, mist, paint: p, drips };
 }

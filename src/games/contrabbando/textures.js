@@ -3,7 +3,7 @@
 // level needs (no blurry or blocky rescaling), and level after level the
 // veggies get smaller. Sizes at scale 1 follow Fruit Ninja's first fruits:
 // about 15-28% of the screen height.
-import { Painter, shaded } from '../../painter.js';
+import { shaded, paint } from '../../painter.js';
 
 export const VEGGIES = {
   zucchina: { name: 'ZUCCHINE', w: 64, h: 22, juice: [0x9fd36a, 0xe8f0b0] },
@@ -162,16 +162,6 @@ const drawPower = {
     R(10, 4, 2, 2, 0x9be36b);
   },
 };
-
-function paint(scene, key, w, h, fn) {
-  if (scene.textures.exists(key)) return;
-  const p = new Painter(w, h);
-  fn(p);
-  const g = scene.make.graphics({ x: 0, y: 0 }, false);
-  p.toGraphics(g);
-  g.generateTexture(key, w, h);
-  g.destroy();
-}
 
 function addHalves(scene, key) {
   const tex = scene.textures.get(key);

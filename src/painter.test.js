@@ -59,6 +59,17 @@ describe('Painter', () => {
     p.toGraphics({ fillStyle: (c) => ((fill = c), { fillRect: (x, y, w, h) => rects.push([fill, x, y, w, h]) }) });
     expect(rects).toEqual([[1, 0, 0, 3, 1], [2, 3, 0, 1, 1]]);
   });
+  it('fills polygons by pixel centers', () => {
+    const p = new Painter(8, 8);
+    p.poly([[0, 0], [4, 0], [4, 4], [0, 4]], 1);
+    expect(painted(p)).toBe(16);
+    expect(p.get(3, 3)).toBe(1);
+    expect(p.get(4, 0)).toBeNull();
+    const t = new Painter(9, 9);
+    t.poly([[0, 8], [4.5, 0], [9, 8]], 2);
+    expect(t.get(4, 1)).toBe(2);
+    expect(t.get(0, 1)).toBeNull();
+  });
 });
 
 describe('shaded', () => {
@@ -69,4 +80,5 @@ describe('shaded', () => {
     for (let y = 0; y < 20; y++) for (let x = 0; x < 20; x++) seen.add(m(x, y));
     expect([...seen].sort()).toEqual([1, 2, 3, 4]);
   });
+
 });

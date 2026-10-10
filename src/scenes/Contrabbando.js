@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { WIDTH, HEIGHT, C, N } from '../config.js';
-import { text, blink, panel, goTo, fadeIn, makeTexture, textInput } from '../ui.js';
+import { text, blink, panel, goTo, fadeIn, makeTexture, textInput, overlay, button, banner, typeText, hitArea } from '../ui.js';
 import { sfx } from '../sfx.js';
 import { loadSave, writeSave } from '../save.js';
 import { refreshRecords, getRecord, beatsRecord, onRecords, submitRecord, cleanNickname, NICKNAME_MAX } from '../leaderboard.js';
@@ -219,26 +219,11 @@ export default class Contrabbando extends Phaser.Scene {
     this.tweens.add({ targets: t, y: y - 18, duration: 700, onComplete: () => t.destroy() });
   }
 
-  banner(str, color = C.white, ms = 1100, y = 100) {
-    this.lastBanner?.destroy();
-    const t = (this.lastBanner = text(this, WIDTH / 2, Math.round(y), str, { size: 16, color, origin: 0.5 }).setDepth(70));
-    this.tweens.add({ targets: t, scale: { from: 0.5, to: 1 }, duration: 160, ease: 'Back.out' });
-    this.time.delayedCall(ms, () => t.active && t.destroy());
-    return t;
-  }
-
   // ---------------------------------------------------------------- overlays
-
-  overlay() {
-    const objs = [];
-    const add = (o) => (objs.push(o.setDepth(100)), o);
-    add(this.add.rectangle(0, 0, WIDTH, HEIGHT, N.black, 0.72).setOrigin(0).setInteractive());
-    return { add, close: () => objs.forEach((o) => o.destroy()) };
-  }
 
   showIntro() {
     this.state = 'intro';
-    const o = (this.introUi = this.overlay());
+    const o = (this.introUi = overlay(this));
     const P = { x: 20, y: 36, w: 440, h: 206 };
     panel(o.add(this.add.graphics()), P.x, P.y, P.w, P.h);
 
@@ -254,9 +239,9 @@ export default class Contrabbando extends Phaser.Scene {
       // Big enough to hit with a thumb; greyed out when there's nowhere to go.
       // A greyed arrow still swallows the tap: a near miss must not start the game.
       const step = (label, x, dir, enabled) => {
-        if (enabled) return this.button(o, x, P.y + 6, label, () => this.changeLevel(dir), 44);
+        if (enabled) return button(this, o, x, P.y + 6, label, () => this.changeLevel(dir), 44);
         const bg = o.add(this.add.rectangle(x, P.y + 6, 44, 18, N.night).setOrigin(0).setStrokeStyle(1, N.night3));
-        bg.setInteractive(this.hitArea(44, 18)).on('pointerdown', (p, lx, ly, e) => e.stopPropagation());
+        bg.setInteractive(hitArea(44, 18)).on('pointerdown', (p, lx, ly, e) => e.stopPropagation());
         o.add(text(this, x + 22, P.y + 11, label, { color: '#3a4560', origin: [0.5, 0], shadow: null }));
       };
       step('<', P.x + P.w - 108, -1, this.level > 0);
@@ -275,13 +260,13 @@ export default class Contrabbando extends Phaser.Scene {
     o.add(text(this, X, P.y + 78, `TEMPO ${this.recipe.time}s${best ? `   TUO RECORD ${best}` : ''}`, { color: C.chalkDim }));
 
     const order = o.add(text(this, X, P.y + 96, '', { color: C.white, wrap: 300, lineSpacing: 5 }));
-    this.typeText(order, this.recipe.order);
+    typeText(this, order, this.recipe.order);
 
     o.add(text(this, WIDTH / 2, P.y + 148, 'TIENI PREMUTO E TRASCINA PER TAGLIARE', { color: C.chalkDim, origin: [0.5, 0] }));
     o.add(text(this, WIDTH / 2, P.y + 159, 'FUORI RICETTA: -10 PUNTI E UNA X   3 X = FINE', { color: '#e07a6a', origin: [0.5, 0] }));
     o.add(text(this, WIDTH / 2, P.y + 170, `DRONE O VERIFICA: CODICE IN ${this.recipe.otp}s O FINE`, { color: '#e07a6a', origin: [0.5, 0] }));
     const go = o.add(text(this, WIDTH / 2, P.y + 186, 'CLICCA PER INIZIARE', { color: C.ocraLight, origin: [0.5, 0] }));
-    this.button(o, P.x + 12, P.y + 182, '< MENU', () => goTo(this, 'Menu'), 64);
+    button(this, o, P.x + 12, P.y + 182, '< MENU', () => goTo(this, 'Menu'), 64);
     blink(this, go, 450);
 
     this.introClick = () => this.startPlay();
@@ -307,20 +292,6 @@ export default class Contrabbando extends Phaser.Scene {
     this.events.once('shutdown', off);
   }
 
-  typeText(t, str) {
-    let i = 0;
-    this.time.addEvent({
-      delay: 22,
-      repeat: str.length - 1,
-      callback: () => {
-        i++;
-        if (!t.active) return;
-        t.setText(str.slice(0, i));
-        if (i % 3 === 0) sfx.blip();
-      },
-    });
-  }
-
   changeLevel(dir) {
     sfx.move();
     this.scene.restart({ level: this.level + dir });
@@ -332,11 +303,11 @@ export default class Contrabbando extends Phaser.Scene {
     this.introUi.close();
     this.state = 'ready';
     sfx.confirm();
-    this.banner('PRONTI...', C.white, 700);
+    banner(this, 'PRONTI...', C.white, 700);
     this.say(FRANCO.start);
     this.time.delayedCall(800, () => {
       sfx.start();
-      this.banner('VIA!', C.ocraLight, 600);
+      banner(this, 'VIA!', C.ocraLight, 600);
       this.state = 'play';
     });
   }
@@ -344,37 +315,17 @@ export default class Contrabbando extends Phaser.Scene {
   pause() {
     this.state = 'pause';
     this.strokeEnd();
-    const o = (this.pauseUi = this.overlay());
+    const o = (this.pauseUi = overlay(this));
     o.add(text(this, WIDTH / 2, 90, 'PAUSA', { size: 16, color: C.white, origin: 0.5 }));
     // CONTINUA is 64px of text: 80px buttons leave it room inside the border.
-    this.button(o, WIDTH / 2 - 85, 130, 'CONTINUA', () => this.resume(), 80);
-    this.button(o, WIDTH / 2 + 5, 130, 'MENU', () => goTo(this, 'Menu'), 80);
+    button(this, o, WIDTH / 2 - 85, 130, 'CONTINUA', () => this.resume(), 80);
+    button(this, o, WIDTH / 2 + 5, 130, 'MENU', () => goTo(this, 'Menu'), 80);
   }
 
   resume() {
     this.pauseUi?.close();
     this.pauseUi = null;
     this.state = 'play';
-  }
-
-  button(o, x, y, label, onClick, w = 60) {
-    const bg = o.add(this.add.rectangle(x, y, w, 18, N.night2).setOrigin(0).setStrokeStyle(1, N.ocra));
-    o.add(text(this, x + w / 2, y + 5, label, { color: C.ocraLight, origin: [0.5, 0] }));
-    bg.setInteractive({ ...this.hitArea(w, 18), useHandCursor: true });
-    bg.on('pointerover', () => bg.setFillStyle(N.night3));
-    bg.on('pointerout', () => bg.setFillStyle(N.night2));
-    bg.on('pointerdown', (p, lx, ly, e) => {
-      e.stopPropagation();
-      sfx.confirm();
-      onClick();
-    });
-    return bg;
-  }
-
-  // Buttons are tiny on a phone (the game shrinks below 1x), and on the intro a
-  // tap that misses one starts the game: hits count a few pixels outside.
-  hitArea(w, h, padX = 4, padY = 8) {
-    return { hitArea: new Phaser.Geom.Rectangle(-padX, -padY, w + padX * 2, h + padY * 2), hitAreaCallback: Phaser.Geom.Rectangle.Contains };
   }
 
   onKey(e) {
@@ -557,7 +508,7 @@ export default class Contrabbando extends Phaser.Scene {
     this.cameras.main.flash(150, 224, 68, 58);
     // Banner above the drone (or below, if it's high), never covering it.
     const by = o.y > 90 ? o.y - o.img.height / 2 - 20 : o.y + o.img.height / 2 + 20;
-    this.banner('SCANSIONE!', C.red, 1000, by);
+    banner(this, 'SCANSIONE!', C.red, 1000, by);
     this.say(FRANCO.drone);
   }
 
@@ -572,7 +523,7 @@ export default class Contrabbando extends Phaser.Scene {
 
   activatePower(type) {
     sfx.powerup();
-    this.banner(POWERUPS[type].label, '#' + POWERUPS[type].color.toString(16).padStart(6, '0'), 1000);
+    banner(this, POWERUPS[type].label, '#' + POWERUPS[type].color.toString(16).padStart(6, '0'), 1000);
     if (type === 'laser') {
       sfx.laser();
       this.say(FRANCO.laser);
@@ -619,13 +570,13 @@ export default class Contrabbando extends Phaser.Scene {
     }
     if (ok && this.otpReason === 'drone') {
       sfx.confirm();
-      this.banner('POSIZIONE CONFERMATA', '#9be36b', 1000);
+      banner(this, 'POSIZIONE CONFERMATA', '#9be36b', 1000);
     } else if (ok) {
       sfx.powerup();
       this.addScore(13, WIDTH / 2, 120, '+13 SOCIAL SCORE');
     } else {
       sfx.error();
-      this.banner('CITTADINO IRREGOLARE', C.red, 1200);
+      banner(this, 'CITTADINO IRREGOLARE', C.red, 1200);
       this.endRound('scanned');
     }
   }
@@ -865,7 +816,7 @@ export default class Contrabbando extends Phaser.Scene {
 
     if (win) sfx.win();
     else sfx.lose();
-    if (result === 'time') this.banner('TEMPO SCADUTO', C.red, 1000);
+    if (result === 'time') banner(this, 'TEMPO SCADUTO', C.red, 1000);
     this.time.delayedCall(900, () => {
       const results = (named) => this.showResults(result, bonus, total, record, named);
       if (barriera) this.askNickname(total, results);
@@ -877,7 +828,7 @@ export default class Contrabbando extends Phaser.Scene {
   // with the last one used (this is also how a player changes it). The record
   // goes online in the background; skipping keeps it on this device only.
   askNickname(total, done) {
-    const o = this.overlay();
+    const o = overlay(this);
     // High on the screen: on a phone the keyboard covers the bottom half.
     const P = { x: 60, y: 20, w: 360, h: 128 };
     panel(o.add(this.add.graphics()), P.x, P.y, P.w, P.h, { border: N.pink });
@@ -891,7 +842,7 @@ export default class Contrabbando extends Phaser.Scene {
     blink(this, title, 300);
     o.add(text(this, cx, P.y + 26, String(total), { color: C.ocraLight, origin: [0.5, 0] }));
     const line = o.add(text(this, X, P.y + 42, '', { color: C.white, wrap: P.w - 136, lineSpacing: 4 }));
-    this.typeText(line, pick(MEI_RECORD));
+    typeText(this, line, pick(MEI_RECORD));
 
     let asking = true;
     const finish = (name) => {
@@ -916,14 +867,14 @@ export default class Contrabbando extends Phaser.Scene {
       onEnter: (v) => v.trim() && finish(v),
       onEscape: () => finish(null),
     });
-    this.button(o, cx - 70, P.y + 100, 'OK', () => field.value().trim() && finish(field.value()), 64);
-    this.button(o, cx + 6, P.y + 100, 'SALTA', () => finish(null), 64);
+    button(this, o, cx - 70, P.y + 100, 'OK', () => field.value().trim() && finish(field.value()), 64);
+    button(this, o, cx + 6, P.y + 100, 'SALTA', () => finish(null), 64);
   }
 
   showResults(result, bonus, total, record, barriera) {
     const win = result === 'win';
     const last = this.level === RECIPES.length - 1;
-    const o = this.overlay();
+    const o = overlay(this);
     const P = { x: 60, y: 36, w: 360, h: 200 };
     panel(o.add(this.add.graphics()), P.x, P.y, P.w, P.h, { border: win ? N.ocra : N.red });
 
@@ -959,12 +910,12 @@ export default class Contrabbando extends Phaser.Scene {
     const menu = () => goTo(this, 'Menu');
     const by = P.y + P.h - 26;
     if (win && !last) {
-      this.button(o, P.x + 20, by, 'PROSSIMA', next, 96);
-      this.button(o, P.x + 132, by, 'RIPROVA', retry, 96);
+      button(this, o, P.x + 20, by, 'PROSSIMA', next, 96);
+      button(this, o, P.x + 132, by, 'RIPROVA', retry, 96);
     } else {
-      this.button(o, P.x + 20, by, 'RIPROVA', retry, 96);
+      button(this, o, P.x + 20, by, 'RIPROVA', retry, 96);
     }
-    this.button(o, P.x + P.w - 116, by, 'MENU', menu, 96);
+    button(this, o, P.x + P.w - 116, by, 'MENU', menu, 96);
     this.endActions = { primary: win && !last ? next : retry, retry, menu };
   }
 }

@@ -66,6 +66,27 @@ export class Painter {
     return this;
   }
 
+  // Filled polygon, points as [[x, y], ...]: a pixel is in when its center is.
+  poly(points, c, { over = false } = {}) {
+    const ys = points.map(([, y]) => y);
+    for (let y = Math.max(0, Math.floor(Math.min(...ys))); y <= Math.min(this.h - 1, Math.ceil(Math.max(...ys))); y++) {
+      const cy = y + 0.5;
+      const xs = [];
+      points.forEach(([x0, y0], i) => {
+        const [x1, y1] = points[(i + 1) % points.length];
+        if ((y0 <= cy && y1 > cy) || (y1 <= cy && y0 > cy)) xs.push(x0 + ((cy - y0) * (x1 - x0)) / (y1 - y0));
+      });
+      xs.sort((a, b) => a - b);
+      for (let i = 0; i + 1 < xs.length; i += 2) {
+        for (let x = Math.ceil(xs[i] - 0.5); x < Math.ceil(xs[i + 1] - 0.5); x++) {
+          if (over && this.get(x, y) === null) continue;
+          this.set(x, y, c);
+        }
+      }
+    }
+    return this;
+  }
+
   // Classic dark 1px outline around everything drawn so far.
   outline(c) {
     const edge = [];
@@ -77,6 +98,25 @@ export class Painter {
     }
     edge.forEach(([x, y]) => this.set(x, y, c));
     return this;
+  }
+
+  // The pixels on a new <canvas> (browser only), for big pictures that would
+  // be thousands of fillRect calls through toGraphics.
+  toCanvas() {
+    const canvas = document.createElement('canvas');
+    canvas.width = this.w;
+    canvas.height = this.h;
+    const ctx = canvas.getContext('2d');
+    const img = ctx.createImageData(this.w, this.h);
+    this.px.forEach((c, i) => {
+      if (c === null) return;
+      img.data[i * 4] = c >> 16;
+      img.data[i * 4 + 1] = (c >> 8) & 0xff;
+      img.data[i * 4 + 2] = c & 0xff;
+      img.data[i * 4 + 3] = 255;
+    });
+    ctx.putImageData(img, 0, 0);
+    return canvas;
   }
 
   // Emits the pixels into a Phaser Graphics, merging horizontal runs.
@@ -113,4 +153,15 @@ export function shaded(pal, cx, cy, rx, ry) {
     if (d < -0.5 || (d < -0.32 && checker)) return pal.light;
     return pal.base;
   };
+}
+
+// Painter → Phaser texture, once per game (skipped if the key exists).
+export function paint(scene, key, w, h, fn) {
+  if (scene.textures.exists(key)) return;
+  const p = new Painter(w, h);
+  fn(p);
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+  p.toGraphics(g);
+  g.generateTexture(key, w, h);
+  g.destroy();
 }
