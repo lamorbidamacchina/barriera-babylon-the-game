@@ -219,7 +219,7 @@ export default class MuroPanic extends Phaser.Scene {
     const bosses = this.lv.drones.filter((d) => d.size > 1).length;
     const patrols = this.lv.patrols.length;
     o.add(text(this, X, P.y + 60, `TEMPO ${this.lv.time}s   ${patrols} ROND${patrols > 1 ? 'E' : 'A'}`, { color: C.chalkDim }));
-    o.add(text(this, X, P.y + 71, `${drones} DRONI${bosses ? `, ${bosses} CAPOBRANCO` : ''}`, { color: C.chalkDim }));
+    o.add(text(this, X, P.y + 71, `${drones} DRON${drones > 1 ? 'I' : 'E'}${bosses ? `, ${bosses} CAPOBRANCO` : ''}`, { color: C.chalkDim }));
     if (best) o.add(text(this, P.x + 60, P.y + 138, `RECORD ${best}`, { color: C.chalkDim, origin: [0.5, 0] }));
 
     const order = o.add(text(this, X, P.y + 90, '', { color: C.white, wrap: 300, lineSpacing: 5 }));

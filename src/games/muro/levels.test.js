@@ -14,10 +14,9 @@ describe('levels', () => {
       expect(l.target).toBeGreaterThanOrEqual(50);
       expect(l.target).toBeLessThanOrEqual(90);
       if (i) expect(l.target).toBeGreaterThanOrEqual(LEVELS[i - 1].target);
-      expect(l.drones.length).toBeGreaterThanOrEqual(2);
+      expect(l.drones.length).toBe(i + 1); // one drone at level 1, one more per level
       expect(l.patrols.length).toBeGreaterThan(0);
       for (const p of l.patrols) expect(p.speed).toBeLessThan(20); // the player must be able to outrun them
-      if (i) expect(l.drones.length).toBeGreaterThan(LEVELS[i - 1].drones.length);
     });
   });
 
