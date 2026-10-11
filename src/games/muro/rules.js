@@ -5,7 +5,8 @@ export const WALL = 0;
 export const FREE = 1;
 export const TRAIL = 2;
 
-export const POINTS = { perCell: 1, maxChunkBonus: 3, perPercentOver: 100, perSecondLeft: 10, perLife: 500 };
+// Same range as the Contrabbando: a won level is worth a few hundred points.
+export const POINTS = { perPercent: 5, bigCut: 20, perPercentOver: 10, perSecondLeft: 2, perLife: 50 };
 
 // A cols×rows field of Muro with a one-cell frame already free: the frame is
 // where the player starts and walks.
@@ -146,11 +147,11 @@ export function percentDown(g) {
   return (100 * (g.interior - wall)) / g.interior;
 }
 
-// Points for one cut: a point per cell, doubled for a cut of at least 10% of
-// the Muro, tripled from 20%, at most quadrupled: big brave cuts pay.
+// Points for one cut: 5 per percent of Muro knocked down, doubled for a cut
+// of at least 20%: big brave cuts pay. Never less than 1.
 export function cutPoints(cells, interior) {
-  const bonus = Math.min(POINTS.maxChunkBonus, Math.floor((10 * cells) / interior));
-  return cells * POINTS.perCell * (1 + bonus);
+  const percent = (100 * cells) / interior;
+  return Math.max(1, Math.round(percent * POINTS.perPercent * (percent >= POINTS.bigCut ? 2 : 1)));
 }
 
 // End of a won level: every percent past the target, every second and every

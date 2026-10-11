@@ -127,14 +127,14 @@ describe('clearTrail', () => {
 
 describe('scoring', () => {
   it('pays big cuts more', () => {
-    expect(cutPoints(50, 1000)).toBe(50);
-    expect(cutPoints(100, 1000)).toBe(200);
-    expect(cutPoints(250, 1000)).toBe(750);
-    expect(cutPoints(900, 1000)).toBe(3600); // capped at x4
+    expect(cutPoints(1, 1000)).toBe(1); // a line that frees nothing else
+    expect(cutPoints(100, 1000)).toBe(50); // 10%
+    expect(cutPoints(250, 1000)).toBe(250); // 25%: doubled
+    expect(cutPoints(700, 1000)).toBe(700);
   });
 
   it('end bonus only for a win', () => {
-    expect(endBonus(true, 83.7, 75, 12.2, 2)).toEqual({ muro: 800, time: 130, lives: 1000 });
+    expect(endBonus(true, 83.7, 75, 12.2, 2)).toEqual({ muro: 80, time: 26, lives: 100 });
     expect(endBonus(false, 90, 75, 30, 3)).toEqual({ muro: 0, time: 0, lives: 0 });
   });
 });
