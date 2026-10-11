@@ -21,6 +21,8 @@ const SAFE_SECONDS = 1.5; // after losing a life, nothing can hit you
 const WANDER = 0.6; // radians per second a drone drifts by when not chasing
 const STICK_DEAD = 5; // joystick: px of drag before it moves
 const STICK_MAX = 22; // joystick: the base follows a finger dragged further
+const HINT = { x: WIDTH - 44, y: HEIGHT - 52 }; // the ghost joystick / arrow keys
+const HINT_STEP = 700; // ms the ghost spends on each direction
 const GRAVITY = 420;
 const GAME_ID = 'muro'; // in the save
 const pick = Phaser.Utils.Array.GetRandom;
@@ -51,6 +53,8 @@ export default class MuroPanic extends Phaser.Scene {
     this.patternPx = this.patternPx ?? this.pattern.getContext('2d').getImageData(0, 0, COLS * CELL, ROWS * CELL).data;
 
     this.state = 'intro';
+    this.touch = matchMedia('(pointer: coarse)').matches;
+    this.hintDone = false;
     this.add.rectangle(0, 0, WIDTH, HEIGHT, N.black).setOrigin(0);
     this.add.image(FX, FY - VIEW_CROP, createView(this, this.lv.view)).setOrigin(0).setCrop(0, VIEW_CROP, COLS * CELL, ROWS * CELL);
     this.setupField();
@@ -58,6 +62,8 @@ export default class MuroPanic extends Phaser.Scene {
     this.player = this.add.image(0, 0, CURSOR_KEY).setDepth(5);
     this.debrisGfx = this.add.graphics().setDepth(20);
     this.stickGfx = this.add.graphics().setDepth(80);
+    this.hintGfx = this.add.graphics().setDepth(79);
+    this.hintAlpha = 0;
     this.setupRound();
     this.drawHud();
 
@@ -239,6 +245,7 @@ export default class MuroPanic extends Phaser.Scene {
     this.introUi.close();
     this.state = 'ready';
     this.stick = null; // the tap that started the game doesn't steer
+    this.hintAlpha = 1; // until the first move
     sfx.confirm();
     banner(this, 'PRONTI...', C.white, 700);
     this.say(ROSANNA.start);
@@ -274,6 +281,7 @@ export default class MuroPanic extends Phaser.Scene {
       else if (['Enter', 'Space'].includes(e.code)) this.startPlay();
     } else if (this.state === 'play' || this.state === 'ready') {
       if (DIRS[e.code]) {
+        this.hintDone = true;
         this.releaseKey(e.code);
         this.held.push(e.code);
       } else if (this.state === 'play' && ['Escape', 'KeyP'].includes(e.code)) this.pause();
@@ -307,6 +315,7 @@ export default class MuroPanic extends Phaser.Scene {
       const p = toGame(e);
       if (p.y < HUD_H) return; // the pause button
       this.stick = { id: e.pointerId, ox: p.x, oy: p.y, x: p.x, y: p.y };
+      this.hintDone = true;
     };
     const move = (e) => {
       const s = this.stick;
@@ -357,6 +366,35 @@ export default class MuroPanic extends Phaser.Scene {
     if (!s || this.state !== 'play') return;
     g.lineStyle(1, N.white, 0.35).strokeCircle(Math.round(s.ox), Math.round(s.oy), STICK_MAX);
     g.fillStyle(N.white, 0.3).fillCircle(Math.round(s.x), Math.round(s.y), 7);
+  }
+
+  // A wordless how-to at the start of a level: a ghost joystick pushed in the
+  // four directions (arrow keys lighting up on desktop). It fades out at the
+  // first touch or key press.
+  drawHint(dt, time) {
+    if (this.hintDone) this.hintAlpha = Math.max(0, this.hintAlpha - dt * 3);
+    const g = this.hintGfx.clear();
+    if (this.hintAlpha <= 0 || (this.state !== 'play' && this.state !== 'ready')) return;
+    const a = this.hintAlpha;
+    const step = Math.floor(time / HINT_STEP) % 4;
+    const [dx, dy] = [[1, 0], [0, 1], [-1, 0], [0, -1]][step];
+    if (this.touch) {
+      // Out and back in each step, like a thumb nudging the stick.
+      const push = Math.sin(((time % HINT_STEP) / HINT_STEP) * Math.PI) * (STICK_MAX - 4);
+      g.lineStyle(1, N.white, 0.3 * a).strokeCircle(HINT.x, HINT.y, STICK_MAX);
+      g.fillStyle(N.white, 0.3 * a).fillCircle(Math.round(HINT.x + dx * push), Math.round(HINT.y + dy * push), 7);
+    } else {
+      // The arrow keys in their usual T, the pressed one filled.
+      const K = 14;
+      const keys = [[0, -1], [-1, 0], [0, 0], [1, 0]];
+      const lit = dy < 0 ? 0 : dx < 0 ? 1 : dy > 0 ? 2 : 3;
+      keys.forEach(([kx, ky], i) => {
+        const x = HINT.x + kx * (K + 2) - K / 2;
+        const y = HINT.y + ky * (K + 2) - K / 2 + 8;
+        if (i === lit) g.fillStyle(N.white, 0.35 * a).fillRect(x, y, K, K);
+        g.lineStyle(1, N.white, 0.3 * a).strokeRect(x + 0.5, y + 0.5, K - 1, K - 1);
+      });
+    }
   }
 
   // ---------------------------------------------------------------- moving and cutting
@@ -643,6 +681,7 @@ export default class MuroPanic extends Phaser.Scene {
     this.player.setVisible(this.safeLeft <= 0 || Math.floor(time / 100) % 2 === 0);
     this.drawTrail();
     this.drawStick();
+    this.drawHint(dt, time);
     this.updateDebris(dt);
   }
 
