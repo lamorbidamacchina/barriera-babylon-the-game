@@ -196,7 +196,7 @@ export default class Title extends Phaser.Scene {
     // The score is the build number (see vite.config.js).
     const build = String(__BUILD__).padStart(6, '0');
     text(this, WIDTH - 8, 6, `SOCIAL SCORE ${build}`, { color: C.red, origin: [1, 0] });
-    text(this, 8, HEIGHT - 12, '© 2026 BAR STELLA SOFT', { color: C.paper, shadow: '#2a2a28' });
+    text(this, 8, HEIGHT - 12, '© 2026 lamorbidamacchina', { color: C.paper, shadow: '#2a2a28' });
     this.creditText = text(this, WIDTH - 8, HEIGHT - 12, 'CREDITI 00', { color: C.paper, origin: [1, 0], shadow: '#2a2a28' });
   }
 
