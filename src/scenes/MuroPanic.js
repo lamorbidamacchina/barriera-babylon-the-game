@@ -220,9 +220,6 @@ export default class MuroPanic extends Phaser.Scene {
     typeText(this, order, this.lv.order);
 
     const touch = matchMedia('(pointer: coarse)').matches;
-    o.add(text(this, WIDTH / 2, P.y + 148, touch ? 'DITO GIU\' OVUNQUE E TRASCINA PER MUOVERTI' : 'FRECCE PER MUOVERTI', { color: C.chalkDim, origin: [0.5, 0] }));
-    o.add(text(this, WIDTH / 2, P.y + 159, 'ESCI DAL BORDO, TRACCIA, TORNA: IL MURO CROLLA', { color: C.chalkDim, origin: [0.5, 0] }));
-    o.add(text(this, WIDTH / 2, P.y + 170, `DRONI SULLA LINEA O RONDA ADDOSSO: -1 VITA`, { color: '#e07a6a', origin: [0.5, 0] }));
     const go = o.add(text(this, WIDTH / 2, P.y + 186, touch ? 'TOCCA PER INIZIARE' : 'CLICCA PER INIZIARE', { color: C.ocraLight, origin: [0.5, 0] }));
     button(this, o, P.x + 12, P.y + 182, '< MENU', () => goTo(this, 'Menu'), 64);
     blink(this, go, 450);

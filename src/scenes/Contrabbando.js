@@ -262,10 +262,8 @@ export default class Contrabbando extends Phaser.Scene {
     const order = o.add(text(this, X, P.y + 96, '', { color: C.white, wrap: 300, lineSpacing: 5 }));
     typeText(this, order, this.recipe.order);
 
-    o.add(text(this, WIDTH / 2, P.y + 148, 'TIENI PREMUTO E TRASCINA PER TAGLIARE', { color: C.chalkDim, origin: [0.5, 0] }));
-    o.add(text(this, WIDTH / 2, P.y + 159, 'FUORI RICETTA: -10 PUNTI E UNA X   3 X = FINE', { color: '#e07a6a', origin: [0.5, 0] }));
-    o.add(text(this, WIDTH / 2, P.y + 170, `DRONE O VERIFICA: CODICE IN ${this.recipe.otp}s O FINE`, { color: '#e07a6a', origin: [0.5, 0] }));
-    const go = o.add(text(this, WIDTH / 2, P.y + 186, 'CLICCA PER INIZIARE', { color: C.ocraLight, origin: [0.5, 0] }));
+    const touch = matchMedia('(pointer: coarse)').matches;
+    const go = o.add(text(this, WIDTH / 2, P.y + 186, touch ? 'TOCCA PER INIZIARE' : 'CLICCA PER INIZIARE', { color: C.ocraLight, origin: [0.5, 0] }));
     button(this, o, P.x + 12, P.y + 182, '< MENU', () => goTo(this, 'Menu'), 64);
     blink(this, go, 450);
 
