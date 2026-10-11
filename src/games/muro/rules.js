@@ -45,10 +45,11 @@ export function canEnter(g, x, y, drawing) {
   return drawing || isEdge(g, x, y);
 }
 
-// The line came back to free ground: it becomes free, and so does every piece
-// of Muro cut off from all the drones (seeds: their cells). Returns how many
-// cells were knocked down, line included.
-export function closeTrail(g, seeds) {
+// The line came back to free ground: it becomes free, and the Muro splits
+// into pieces. The biggest piece stays up, every other one falls, wherever
+// the drones are (the scene moves the ones caught in a fallen piece). Returns
+// how many cells were knocked down, line included.
+export function closeTrail(g) {
   const { cols, cells } = g;
   let claimed = 0;
   for (let i = 0; i < cells.length; i++) {
@@ -57,28 +58,32 @@ export function closeTrail(g, seeds) {
       claimed++;
     }
   }
-  // Flood from each drone through the Muro; whatever isn't reached falls.
-  const reached = new Uint8Array(cells.length);
+  // Label each piece of Muro (flood fill), keeping track of the biggest.
+  const piece = new Int32Array(cells.length).fill(-1);
+  const sizes = [];
   const stack = [];
-  for (const [x, y] of seeds) {
-    const i = y * cols + x;
-    if (inside(g, x, y) && cells[i] === WALL && !reached[i]) {
-      reached[i] = 1;
-      stack.push(i);
-    }
-  }
-  while (stack.length) {
-    const i = stack.pop();
-    const x = i % cols;
-    for (const n of [i - cols, i + cols, x > 0 ? i - 1 : -1, x < cols - 1 ? i + 1 : -1]) {
-      if (n >= 0 && n < cells.length && cells[n] === WALL && !reached[n]) {
-        reached[n] = 1;
-        stack.push(n);
+  for (let s = 0; s < cells.length; s++) {
+    if (cells[s] !== WALL || piece[s] >= 0) continue;
+    const id = sizes.length;
+    let size = 0;
+    piece[s] = id;
+    stack.push(s);
+    while (stack.length) {
+      const i = stack.pop();
+      size++;
+      const x = i % cols;
+      for (const n of [i - cols, i + cols, x > 0 ? i - 1 : -1, x < cols - 1 ? i + 1 : -1]) {
+        if (n >= 0 && n < cells.length && cells[n] === WALL && piece[n] < 0) {
+          piece[n] = id;
+          stack.push(n);
+        }
       }
     }
+    sizes.push(size);
   }
+  const keep = sizes.indexOf(Math.max(...sizes));
   for (let i = 0; i < cells.length; i++) {
-    if (cells[i] === WALL && !reached[i]) {
+    if (cells[i] === WALL && piece[i] !== keep) {
       cells[i] = FREE;
       claimed++;
     }

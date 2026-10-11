@@ -30,7 +30,7 @@ const rand = Phaser.Math.FloatBetween;
 const DIRS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] };
 
 // Muro Panic: Gals Panic on the Muro. Teresa's marker leaves the edge, draws a
-// line through the Muro and comes back: the piece without drones falls and
+// line through the Muro and comes back: the smaller pieces fall and
 // Torino shows through. Knock down enough Muro to clear the level; a drone
 // touching the line while it's being drawn costs a life.
 export default class MuroPanic extends Phaser.Scene {
@@ -435,12 +435,11 @@ export default class MuroPanic extends Phaser.Scene {
     this.placePlayer();
   }
 
-  // The line is closed: whatever has no drone in it falls.
+  // The line is closed: the biggest piece of Muro stays, the rest falls.
   cut() {
     const g = this.grid;
     const before = g.cells.slice();
-    const seeds = this.drones.map((d) => this.cellOf(d.x, d.y));
-    const n = closeTrail(g, seeds);
+    const n = closeTrail(g);
     this.drawing = false;
     this.trail = [];
     const fallen = [];
@@ -448,6 +447,7 @@ export default class MuroPanic extends Phaser.Scene {
     this.spawnDebris(fallen, 160);
     this.redrawWall();
     if (!isEdge(g, this.pos.x, this.pos.y)) this.pos = nearestEdge(g, this.pos.x, this.pos.y);
+    for (const d of this.drones) if (cellAt(g, ...this.cellOf(d.x, d.y)) === FREE) this.relocateDrone(d);
 
     const points = cutPoints(n, g.interior);
     this.score += points;
@@ -466,6 +466,38 @@ export default class MuroPanic extends Phaser.Scene {
     this.tweens.add({ targets: t, y: t.y - 16, duration: 700, onComplete: () => t.destroy() });
     this.updateHud();
     if (this.percent >= this.lv.target) this.endRound('win');
+  }
+
+  // A drone caught in a fallen piece pops up again in what's left of the
+  // Muro, away from the player if there's room.
+  relocateDrone(d) {
+    const px = FX + this.pos.x * CELL;
+    const py = FY + this.pos.y * CELL;
+    let spot = null;
+    for (let i = 0; i < 300 && !spot; i++) {
+      const x = rand(FX + CELL + d.hw, FX + (COLS - 1) * CELL - d.hw);
+      const y = rand(FY + CELL + d.hh, FY + (ROWS - 1) * CELL - d.hh);
+      if (!this.blocked(d, x, y) && (i > 200 || Math.hypot(x - px, y - py) > 80)) spot = { x, y };
+    }
+    if (!spot) {
+      // Not even room for its box: any cell of Muro will do.
+      const cells = [];
+      this.grid.cells.forEach((c, i) => c === WALL && cells.push(i));
+      if (!cells.length) return;
+      const i = pick(cells);
+      spot = { x: FX + (i % COLS) * CELL + CELL / 2, y: FY + Math.floor(i / COLS) * CELL + CELL / 2 };
+    }
+    this.puff(d.x, d.y);
+    Object.assign(d, spot);
+    d.img.setPosition(Math.round(d.x), Math.round(d.y)).setAlpha(0);
+    this.tweens.add({ targets: d.img, alpha: 1, duration: 300, delay: 150 });
+    this.puff(d.x, d.y);
+  }
+
+  // A ring of smoke where a drone vanishes or appears.
+  puff(x, y) {
+    const c = this.add.circle(x, y, 6).setStrokeStyle(2, N.white, 0.8).setDepth(21);
+    this.tweens.add({ targets: c, scale: 2.5, alpha: 0, duration: 400, onComplete: () => c.destroy() });
   }
 
   cellOf(px, py) {

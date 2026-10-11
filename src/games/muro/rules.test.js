@@ -26,7 +26,7 @@ describe('walking', () => {
     expect(isEdge(g, 0, 0)).toBe(true); // diagonal to (1, 1)
     expect(isEdge(g, 1, 1)).toBe(false); // that's Muro
     const big = makeGrid(10, 10);
-    closeTrail(big, []); // everything falls
+    big.cells.fill(FREE); // the whole Muro is down
     expect(isEdge(big, 5, 5)).toBe(false);
   });
 
@@ -40,29 +40,32 @@ describe('walking', () => {
 });
 
 describe('closeTrail', () => {
-  it('knocks down the side without the drone', () => {
+  it('knocks down the smaller side', () => {
     // 12×8: a vertical cut at x=4 from the top frame to the bottom frame.
     const g = makeGrid(12, 8);
     trail(g, 4, 1, 4, 6);
-    const n = closeTrail(g, [[8, 3]]);
+    const n = closeTrail(g);
     expect(n).toBe(6 + 3 * 6); // the line + the 3 columns on the left
     expect(cellAt(g, 2, 3)).toBe(FREE);
     expect(cellAt(g, 8, 3)).toBe(WALL);
     expect(percentDown(g)).toBeCloseTo((100 * 24) / 60);
   });
 
-  it('keeps every region that holds a drone', () => {
+  it('keeps only the biggest of several pieces', () => {
+    // Cuts at x=3 and x=6: pieces of 2, 2 and 4 columns.
     const g = makeGrid(12, 8);
-    trail(g, 4, 1, 4, 6);
-    expect(closeTrail(g, [[8, 3], [2, 3]])).toBe(6);
-    expect(cellAt(g, 2, 3)).toBe(WALL);
+    trail(g, 3, 1, 3, 6);
+    trail(g, 6, 1, 6, 6);
+    closeTrail(g);
+    expect(cellAt(g, 1, 3)).toBe(FREE);
+    expect(cellAt(g, 4, 3)).toBe(FREE);
+    expect(cellAt(g, 9, 3)).toBe(WALL);
   });
 
-  it('a drone on free ground protects nothing', () => {
-    const g = makeGrid(6, 6);
-    trail(g, 2, 1, 2, 4);
-    closeTrail(g, [[0, 0]]);
-    expect(percentDown(g)).toBe(100);
+  it('a line that splits nothing frees only itself', () => {
+    const g = makeGrid(12, 8);
+    trail(g, 1, 3, 3, 3);
+    expect(closeTrail(g)).toBe(3);
   });
 });
 
@@ -70,7 +73,7 @@ describe('nearestEdge', () => {
   it('walks the player back to what is left of the Muro', () => {
     const g = makeGrid(12, 8);
     trail(g, 4, 1, 4, 6);
-    closeTrail(g, [[8, 3]]);
+    closeTrail(g);
     expect(isEdge(g, 1, 3)).toBe(false);
     expect(nearestEdge(g, 1, 3)).toEqual({ x: 4, y: 3 });
     expect(nearestEdge(g, 4, 3)).toEqual({ x: 4, y: 3 });
@@ -96,7 +99,7 @@ describe('patrolStep', () => {
   it('follows the new edge after a cut', () => {
     const g = makeGrid(12, 8);
     trail(g, 4, 1, 4, 6);
-    closeTrail(g, [[8, 3]]);
+    closeTrail(g);
     // Going left on the top frame, anticlockwise: it turns down along the cut.
     let p = { x: 6, y: 0, dx: -1, dy: 0, hand: -1 };
     for (let i = 0; i < 3; i++) p = patrolStep(g, p);
