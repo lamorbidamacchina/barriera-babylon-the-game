@@ -222,7 +222,11 @@ export default class MuroPanic extends Phaser.Scene {
     const patrols = this.lv.patrols.length;
     o.add(text(this, X, P.y + 60, `TEMPO ${this.lv.time}s   ${patrols} ROND${patrols > 1 ? 'E' : 'A'}`, { color: C.chalkDim }));
     o.add(text(this, X, P.y + 71, `${drones} DRON${drones > 1 ? 'I' : 'E'}${bosses ? `, ${bosses} CAPOBRANCO` : ''}`, { color: C.chalkDim }));
-    if (best) o.add(text(this, P.x + 60, P.y + 152, `TUO RECORD ${best}`, { color: C.chalkDim, origin: [0.5, 0] }));
+    if (best) {
+      // Two lines: with a 4-digit score one doesn't fit under the portrait.
+      o.add(text(this, P.x + 60, P.y + 152, 'TUO RECORD', { color: C.chalkDim, origin: [0.5, 0] }));
+      o.add(text(this, P.x + 60, P.y + 163, String(best), { color: C.chalkDim, origin: [0.5, 0] }));
+    }
 
     const order = o.add(text(this, X, P.y + 90, '', { color: C.white, wrap: 300, lineSpacing: 5 }));
     typeText(this, order, this.lv.order);
