@@ -22,7 +22,7 @@ export const LEVELS = [
     win: 'Università aperta! Domani lezione lì: si entra senza bussare.',
   },
   {
-    name: 'LA CASA DELLA SALUTE',
+    name: 'POLIAMBULATORI DI QUARTIERE',
     view: 'salute',
     target: 72,
     time: 120,
@@ -32,13 +32,13 @@ export const LEVELS = [
     win: 'Ora chi ha la gamba rotta ci arriva. Senza OTP e senza fila.',
   },
   {
-    name: 'IL VIALE CICLABILE',
-    view: 'viale',
+    name: 'IL PARCO E IL VIALE',
+    view: 'parco',
     target: 75,
     time: 110,
     drones: swarm(4, 85, 1.4),
     patrols: [{ speed: 12 }, { speed: 12 }],
-    order: "Alberi, biciclette, meno macchine. L'ambientalismo senza lotta di classe è giardinaggio. Pennarelli in pugno!",
+    order: "Alberi, biciclette, tram, meno macchine. L'ambientalismo senza lotta di classe è giardinaggio. Pennarelli in pugno!",
     win: 'Chico Mendes sarebbe fiero di voi.',
   },
   {
@@ -52,14 +52,14 @@ export const LEVELS = [
     win: 'Brava classe. Il nido è aperto: merenda per tutti, poi sabotaggio.',
   },
   {
-    name: 'IL PARCO',
-    view: 'parco',
+    name: 'IL DIRITTO ALLA CASA',
+    view: 'casa',
     target: 80,
     time: 120,
     drones: [{ speed: 60, size: 2, chase: 2.4 }, ...swarm(5, 95, 2)],
     patrols: [{ speed: 14 }, { speed: 14 }, { speed: 14 }],
-    order: "Ultima operazione. Dietro c'è il parco, con le montagne. Sport all'aria aperta lontano dallo smog!",
-    win: 'Il Muro è giù e Torino è lì. Ora tutti a casa: compiti per le vacanze.',
+    order: "Ultima operazione. Dietro il Muro ci sono case vere: luce, balconi, cortili. Una casa è un diritto, non un premio.",
+    win: 'Il Muro è giù e le case sono lì. Si torna a casa: compiti per le vacanze.',
   },
 ];
 

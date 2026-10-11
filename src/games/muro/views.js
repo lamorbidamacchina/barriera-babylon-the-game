@@ -1,6 +1,6 @@
 // The pictures behind the Muro, one per level, drawn in code on a Painter as
 // big as the field (480×240): the Torino the Muro keeps away from Barriera,
-// the public one (university, health centre, bike lanes, nursery, park).
+// the public one (university, clinic, park and tram, nursery, homes).
 // Knocking the Muro down reveals it, like the pictures of Gals Panic.
 import { Painter } from '../../painter.js';
 import { miniText, miniTextCentered } from '../../sprites/minifont.js';
@@ -191,6 +191,26 @@ function stroller(p, x, gy) {
   for (const wx of [x - 4, x + 3]) p.ellipse(wx + 0.5, gy - 1.5, 2, 2, 0x1a1a1a);
 }
 
+
+// A tram of line n, going left, wheels on gy: orange and cream like the old
+// Torino trams, people at the windows.
+function tram(p, x, gy, n) {
+  const w = 150;
+  const top = gy - 24;
+  p.rect(x, top + 2, w, 20, 0xf0e4c8).rect(x, top + 12, w, 10, 0xe8803a).rect(x, top + 20, w, 2, 0xb85a2a);
+  p.rect(x + 2, top, w - 4, 2, 0xd8ccb0);
+  p.rect(x - 4, top + 4, 4, 18, 0xe8803a).rect(x - 4, top + 4, 4, 8, 0xf0e4c8).rect(x - 3, top + 5, 3, 6, 0x2c4060); // front
+  for (let wx = x + 6; wx < x + w - 10; wx += 14) {
+    p.rect(wx, top + 4, 10, 7, 0x2c4060);
+    if ((wx / 14) % 3 < 2) p.rect(wx + 3, top + 7, 3, 3, SKIN[(wx / 14) % SKIN.length | 0]).rect(wx + 3, top + 6, 3, 1, HAIR[(wx / 7) % HAIR.length | 0]);
+  }
+  for (const dx of [30, 90]) p.rect(x + dx, top + 4, 8, 17, 0x3a4a58).rect(x + dx + 4, top + 4, 1, 17, 0xf0e4c8);
+  p.rect(x + 2, top + 13, 8, 5, 0x1a1a1a);
+  miniText(p, n, x + 5, top + 13, 0xf0c040);
+  for (const dx of [16, w - 24]) p.rect(x + dx, gy - 2, 10, 3, 0x2a2a2a);
+  p.line(x + 60, top, x + 70, top - 8, 0x3a3a3a).line(x + 80, top, x + 70, top - 8, 0x3a3a3a).rect(x + 64, top - 9, 13, 1, 0x3a3a3a);
+}
+
 // ------------------------------------------------------------------ pictures
 
 export const VIEWS = {
@@ -264,8 +284,8 @@ export const VIEWS = {
     bike(p, 462, 236, { f: -1, frame: 0x4a8ae0, top: 0x9be36b, basket: 0xc9963a });
   },
 
-  // A neighbourhood health centre: a patient on crutches talks with the
-  // doctor at the door; the Mole far away over the roofs.
+  // A neighbourhood clinic ("poliambulatorio di quartiere"): a patient on
+  // crutches talks with the doctor at the door; the Mole far away.
   salute(p, w, h) {
     const r = rng(12);
     sky(p, [[0, 0x5a9ad8], [60, 0x84b8e6], [110, 0xb4d6ee], [150, 0xd8eaf2]]);
@@ -278,12 +298,13 @@ export const VIEWS = {
     const G = 196;
     p.rect(24, 96, 240, G - 96, (x) => (x < 30 ? 0xffffff : x > 256 ? 0xd8d4c8 : 0xf0ece0));
     p.rect(22, 94, 244, 3, 0xc8c4b8);
-    for (const y of [108, 146]) {
-      p.rect(34, y, 220, 18, 0x6a9ac0).rect(34, y, 220, 2, 0x9ac0dc).rect(34, y + 18, 220, 1, 0xa8a49a);
-      for (let x = 34; x < 254; x += 20) p.rect(x, y, 1, 18, 0x4a6a80);
+    for (const y of [104, 148]) {
+      p.rect(34, y, 220, 16, 0x6a9ac0).rect(34, y, 220, 2, 0x9ac0dc).rect(34, y + 16, 220, 1, 0xa8a49a);
+      for (let x = 34; x < 254; x += 20) p.rect(x, y, 1, 16, 0x4a6a80);
     }
-    p.rect(40, 129, 160, 14, 0xffffff);
-    miniText(p, 'CASA DELLA SALUTE', 48, 132, 0x2a8a4a, 2);
+    p.rect(38, 123, 134, 23, 0xffffff);
+    miniTextCentered(p, 'POLIAMBULATORIO', 105, 125, 0x2a8a4a, 2);
+    miniTextCentered(p, 'DI QUARTIERE', 105, 136, 0x2a8a4a, 2);
     p.rect(264, 74, 70, G - 74, 0xc8945a);
     for (let x = 268; x < 334; x += 5) p.rect(x, 74, 1, G - 74, 0xa87440);
     p.rect(264, 74, 70, 2, 0xe0b07a);
@@ -308,44 +329,9 @@ export const VIEWS = {
     bubble(p, 262, 192, '!');
   },
 
-  // A tree-lined avenue with two bike lanes and no cars; the hill and
-  // Superga in the distance.
-  viale(p, w, h) {
-    const r = rng(13);
-    sky(p, [[0, 0x4a8ad0], [70, 0x78b0e4], [120, 0xa8d0ec], [150, 0xd0e8f2]]);
-    clouds(p, r, 4, 20, 80);
-    p.ellipse(110, 190, 190, 70, 0x8aaa8a);
-    p.ellipse(340, 180, 200, 86, 0x7a9a7a);
-    for (let x = 252; x < w; x += 7) p.ellipse(x, 180 - 86 * Math.sqrt(Math.max(0, 1 - ((x - 340) / 200) ** 2)) + 3, 4, 3, 0x6a8a6a);
-    supergaSmall(p, 340, 98);
-    for (let x = 4; x < w; x += 24) tree(p, x + between(r, -3, 3), 180, { size: between(r, 11, 14), trunk: 14, seed: x, pal: { base: 0x5a8a44, dark: 0x3a6a34, light: 0x7aaa54, hl: 0xa8d07a } });
-    // Path for walking, grass, the two bike lanes.
-    p.rect(0, 178, w, 10, 0xd8ccb0).rect(0, 178, w, 1, 0xc0b498);
-    p.rect(0, 188, w, 4, 0x6a9a4a);
-    p.rect(0, 192, w, 32, 0xa85a40).rect(0, 192, w, 1, 0xf4f1e8).rect(0, 223, w, 1, 0xf4f1e8);
-    for (let x = 0; x < w; x += 14) p.rect(x, 207, 7, 1, 0xf4f1e8);
-    for (const x of [90, 310]) bikeSign(p, x, 214);
-    p.rect(0, 224, w, h - 224, 0x5a8a40);
-    for (let i = 0; i < 40; i++) p.rect(between(r, 0, w), between(r, 226, h), 1, 2, 0x7aaa54);
-    // People on foot, bikes both ways.
-    person(p, 40, 186, { pose: 'walk', top: 0xe8803a, long: true, hair: HAIR[3], skin: SKIN[3] });
-    person(p, 200, 186, { pose: 'walk', top: 0x8a5ab0, f: -1, hair: 0xc8c8c8 });
-    dog(p, 186, 186);
-    person(p, 380, 186, { pose: 'run', top: 0xf0c040, f: -1, skin: SKIN[2] });
-    bike(p, 70, 206, { frame: 0x4a8ae0, top: 0x9be36b, basket: 0xc9963a });
-    bike(p, 230, 206, { frame: 0xf0c040, top: 0xe0443a, child: 0x4a8ae0, skin: SKIN[3], hair: HAIR[3] });
-    bike(p, 360, 206, { frame: 0x2c4060, top: 0xf4f1e8, hair: HAIR[2], skin: SKIN[0] });
-    bike(p, 150, 222, { f: -1, frame: 0x9be36b, top: 0xff4fa3, hair: HAIR[4] });
-    bike(p, 300, 222, { f: -1, frame: 0xe0443a, top: 0x2c4060, skin: SKIN[4], hair: HAIR[3] });
-    bike(p, 440, 222, { f: -1, frame: 0xc9963a, top: 0x4ab0a0, basket: 0x9be36b });
-    // Big trees in front framing the avenue, canopies over the top.
-    const big = { base: 0x3e6e34, dark: 0x264a22, light: 0x5a8a44, hl: 0x8ab864 };
-    tree(p, 8, 244, { size: 40, trunk: 150, seed: 21, pal: big });
-    tree(p, 476, 244, { size: 40, trunk: 150, seed: 22, pal: big });
-  },
-
   // An "asilo nido": a colourful nursery, parents bringing the kids in, the
-  // Po on the right with a rowing boat, trees everywhere.
+  // Po on the right with a rowing boat, the hill and Superga across the river,
+  // trees everywhere.
   asilo(p, w, h) {
     const r = rng(14);
     sky(p, [[0, 0x3a8ae0], [60, 0x6ab0ec], [110, 0xa8d4f0], [150, 0xd0e8f4]]);
@@ -355,8 +341,9 @@ export const VIEWS = {
       p.line(56 + Math.cos(a) * 18, 40 + Math.sin(a) * 18, 56 + Math.cos(a) * 24, 40 + Math.sin(a) * 24, 0xffe080);
     }
     clouds(p, r, 3, 20, 60);
-    // The far bank: the hill with houses.
+    // The far bank: the hill with houses, and Superga on top.
     p.ellipse(410, 176, 160, 58, 0x5a8a4a);
+    supergaSmall(p, 408, 121);
     for (let i = 0; i < 6; i++) p.rect(300 + i * 28, 130 + (i % 3) * 6, 12, 9, [0xe8d8c0, 0xf0c090, 0xe8b0a0][i % 3]).rect(300 + i * 28, 128 + (i % 3) * 6, 12, 2, 0xa0503a);
     for (let x = 270; x < w; x += 12) tree(p, x, 152, { size: 7, trunk: 4, seed: x });
     // The Po.
@@ -413,45 +400,128 @@ export const VIEWS = {
     bike(p, 244, 236, { f: -1, frame: 0x4a8ae0, top: 0xc9963a, child: 0x9be36b });
   },
 
-  // A park with a running track, a basketball court and a "toret" fountain;
-  // the Alps behind, with the Monviso.
+  // A park next to a tree-lined avenue: running track, basketball, a "toret"
+  // fountain; in front a bike lane and the tram 4 at its stop; the Alps and
+  // the Monviso behind.
   parco(p, w, h) {
     const r = rng(15);
-    sky(p, [[0, 0x3a7ac8], [60, 0x6aa0d8], [110, 0xa8d0ec], [140, 0xd8ecf4]]);
-    mountains(p, r, { base: 150, top: 82, color: 0x8a9ab8, shade: 0x7a8aa8, snow: 0xf4f8ff, snowLine: 108 });
-    monviso(p, 172, 30, 150);
-    mountains(p, r, { base: 166, top: 136, color: 0x4a6a4a, shade: 0x3e5e40 });
-    for (let x = 0; x < w; x += 9) tree(p, x + between(r, -2, 2), 168, { size: 6, trunk: 3, seed: x, pal: { base: 0x3a6a34, dark: 0x264a22, light: 0x4a7a3a, hl: 0x6a9a4a } });
-    // Mowed grass.
-    p.rect(0, 166, w, h - 166, (x, y) => (Math.floor((x + (y - 166) * 0.6) / 16) % 2 ? 0x6aa84a : 0x62a044));
-    // Running track with lanes, a pitch inside.
-    p.ellipse(300, 206, 168, 31, 0xc0583a);
-    p.ellipse(300, 206, 160, 26, 0xf4f1e8).ellipse(300, 206, 159, 25, 0xc0583a);
-    p.ellipse(300, 206, 151, 20, 0xf4f1e8).ellipse(300, 206, 150, 19, 0x6aa84a);
-    p.rect(299, 188, 1, 36, 0xf4f1e8).ellipse(300, 206, 8, 4, 0xf4f1e8).ellipse(300, 206, 7, 3, 0x6aa84a);
-    for (const gx of [160, 434]) p.rect(gx, 198, 6, 1, 0xf4f1e8).rect(gx, 198, 1, 10, 0xf4f1e8).rect(gx + 5, 198, 1, 10, 0xf4f1e8);
-    kid(p, 250, 212, { pose: 'run', top: 0xe0443a, skin: SKIN[3] });
-    kid(p, 280, 208, { pose: 'run', top: 0x4a8ae0, f: -1, hair: HAIR[2] });
-    p.ellipse(268, 210, 2, 2, 0xffffff);
-    // Runners round the track: the near side runs right, the far side left.
-    for (const [a, top, skin] of [[0.35, 0xf0c040, SKIN[1]], [0.62, 0xff4fa3, SKIN[3]], [0.85, 0x4ab0a0, SKIN[0]], [1.3, 0xe8803a, SKIN[2]], [1.75, 0xf4f1e8, SKIN[4]]]) {
+    sky(p, [[0, 0x3a7ac8], [50, 0x6aa0d8], [95, 0xa8d0ec], [125, 0xd8ecf4]]);
+    clouds(p, r, 2, 16, 40);
+    mountains(p, r, { base: 140, top: 76, color: 0x8a9ab8, shade: 0x7a8aa8, snow: 0xf4f8ff, snowLine: 100 });
+    monviso(p, 120, 24, 140);
+    mountains(p, r, { base: 156, top: 128, color: 0x4a6a4a, shade: 0x3e5e40 });
+    for (let x = 0; x < w; x += 9) tree(p, x + between(r, -2, 2), 158, { size: 6, trunk: 3, seed: x, pal: { base: 0x3a6a34, dark: 0x264a22, light: 0x4a7a3a, hl: 0x6a9a4a } });
+    // The park: mowed grass, track, pitch, court.
+    p.rect(0, 156, w, 44, (x, y) => (Math.floor((x + (y - 156) * 0.6) / 16) % 2 ? 0x6aa84a : 0x62a044));
+    p.ellipse(300, 176, 132, 18, 0xc0583a);
+    p.ellipse(300, 176, 126, 15, 0xf4f1e8).ellipse(300, 176, 125, 14, 0xc0583a);
+    p.ellipse(300, 176, 118, 11, 0xf4f1e8).ellipse(300, 176, 117, 10, 0x6aa84a);
+    p.rect(299, 166, 1, 20, 0xf4f1e8);
+    kid(p, 280, 182, { pose: 'run', top: 0xe0443a, skin: SKIN[3] });
+    kid(p, 316, 180, { pose: 'run', top: 0x4a8ae0, f: -1, hair: HAIR[2] });
+    p.ellipse(298, 180, 1.5, 1.5, 0xffffff);
+    for (const [a, top, skin] of [[0.9, 0xff4fa3, SKIN[3]], [1.2, 0xe8803a, SKIN[2]], [1.75, 0xf4f1e8, SKIN[4]], [0.08, 0xf0c040, SKIN[1]]]) {
       const ang = a * Math.PI;
-      person(p, 300 + Math.cos(ang) * 163, 210 + Math.sin(ang) * 28, { pose: 'run', top, skin, f: Math.sin(ang) > 0 ? 1 : -1, bottom: 0x1a1a1a, long: a > 1.5 });
+      person(p, 300 + Math.cos(ang) * 128, 178 + Math.sin(ang) * 16, { pose: 'run', top, skin, f: Math.sin(ang) > 0 ? 1 : -1, bottom: 0x1a1a1a, long: a > 1.5 });
     }
-    // Basketball court.
-    p.poly([[8, 222], [24, 176], [120, 176], [118, 222]], 0x4a6aa0);
-    p.line(8, 222, 24, 176, 0xf4f1e8).line(24, 176, 120, 176, 0xf4f1e8).line(120, 176, 118, 222, 0xf4f1e8).line(8, 222, 118, 222, 0xf4f1e8);
-    p.rect(30, 150, 2, 40, 0x6a6a64).rect(24, 144, 14, 9, 0xf4f1e8).rect(28, 148, 6, 4, 0xe0443a).rect(30, 154, 6, 1, 0xff7a2f);
-    person(p, 50, 194, { pose: 'cheer', top: 0xe0443a, skin: SKIN[4] });
-    p.ellipse(44, 170, 3, 3, 0xe8803a);
-    person(p, 84, 212, { pose: 'stand', top: 0xf4f1e8, f: -1, skin: SKIN[2] });
-    // A "toret", the green drinking fountain of Torino, and trees.
-    tree(p, 466, 196, { size: 14, trunk: 16, seed: 31 });
-    const T = 420;
-    p.rect(T, 214, 8, 20, 0x2a6a3a).rect(T - 1, 212, 10, 3, 0x2a6a3a).rect(T, 214, 1, 20, 0x3a8a4a).rect(T + 8, 220, 3, 2, 0x2a6a3a);
-    p.rect(T + 11, 222, 1, 3, 0x9ad0f0).rect(T + 12, 225, 1, 6, 0x9ad0f0);
-    person(p, 444, 234, { pose: 'stand', top: 0x9be36b, f: -1, skin: SKIN[3], hair: HAIR[3] }); // waiting for a sip
-    tree(p, 140, 240, { size: 14, trunk: 14, seed: 32 });
+    p.poly([[6, 198], [18, 164], [104, 164], [102, 198]], 0x4a6aa0);
+    p.line(6, 198, 18, 164, 0xf4f1e8).line(18, 164, 104, 164, 0xf4f1e8).line(104, 164, 102, 198, 0xf4f1e8).line(6, 198, 102, 198, 0xf4f1e8);
+    p.rect(22, 136, 2, 40, 0x6a6a64).rect(16, 130, 14, 9, 0xf4f1e8).rect(20, 134, 6, 4, 0xe0443a).rect(22, 140, 6, 1, 0xff7a2f);
+    person(p, 42, 180, { pose: 'cheer', top: 0xe0443a, skin: SKIN[4] });
+    p.ellipse(36, 156, 3, 3, 0xe8803a);
+    person(p, 76, 194, { pose: 'stand', top: 0xf4f1e8, f: -1, skin: SKIN[2] });
+    const T = 450;
+    p.rect(T, 178, 8, 20, 0x2a6a3a).rect(T - 1, 176, 10, 3, 0x2a6a3a).rect(T, 178, 1, 20, 0x3a8a4a).rect(T + 8, 184, 3, 2, 0x2a6a3a);
+    p.rect(T + 11, 186, 1, 3, 0x9ad0f0).rect(T + 12, 189, 1, 6, 0x9ad0f0);
+    person(p, 472, 198, { pose: 'stand', top: 0x9be36b, f: -1, skin: SKIN[3], hair: HAIR[3] });
+    // The avenue: sidewalk with a row of trees, the bike lane, the tram.
+    p.rect(0, 200, w, 5, 0xc8c0b0);
+    for (let x = 30; x < w; x += 90) tree(p, x, 204, { size: 12, trunk: 14, seed: x + 7 });
+    p.rect(0, 205, w, 13, 0xa85a40).rect(0, 205, w, 1, 0xf4f1e8).rect(0, 217, w, 1, 0xf4f1e8);
+    bikeSign(p, 200, 213);
+    p.rect(0, 218, w, h - 218, 0x9a948a);
+    for (let x = 0; x < w; x += 6) p.rect(x, 218 + ((x / 6) % 2) * 3, 5, 1, 0x8a847a);
+    p.rect(0, 236, w, 1, 0x5a5a58).rect(0, 238, w, 1, 0x5a5a58);
+    bike(p, 120, 216, { frame: 0x4a8ae0, top: 0x9be36b, basket: 0xc9963a });
+    bike(p, 250, 216, { frame: 0xf0c040, top: 0xe0443a, child: 0x4a8ae0, skin: SKIN[3], hair: HAIR[3] });
+    bike(p, 330, 216, { f: -1, frame: 0x9be36b, top: 0xff4fa3, hair: HAIR[4] });
+    tram(p, 300, 237, '4');
+    // The stop, people waiting.
+    p.rect(20, 214, 64, 3, 0x3a4a58).rect(22, 217, 2, 20, 0x3a4a58).rect(80, 217, 2, 20, 0x3a4a58);
+    p.rect(24, 218, 56, 14, 0xb8d8e8).rect(30, 228, 30, 2, 0x6a6a64);
+    p.rect(96, 210, 2, 27, 0x6a6a64).ellipse(97, 208, 5, 5, 0xe8803a);
+    miniTextCentered(p, '4', 97, 206, 0xffffff);
+    person(p, 40, 228, { pose: 'sit', top: 0x8a5ab0, hair: 0xc8c8c8, bottom: 0x3a3a50, hold: 0xc9963a });
+    person(p, 66, 237, { pose: 'stand', top: 0x2c4060, f: -1, long: true, hair: HAIR[1], pack: 0xe0443a });
+    person(p, 110, 237, { pose: 'walk', top: 0xf0c040, f: -1, skin: SKIN[4], hair: HAIR[3] });
+    person(p, 420, 204, { pose: 'walk', top: 0xe8803a, long: true, hair: HAIR[3], skin: SKIN[3] });
+    dog(p, 434, 204);
+  },
+
+  // The right to a home: social housing to live in. Two blocks with
+  // balconies full of plants, laundry, solar panels and a garden on the roof;
+  // between them a courtyard with vegetable beds (Marco's cabbages), a long
+  // table, kids playing. A banner hangs across.
+  casa(p, w, h) {
+    const r = rng(16);
+    sky(p, [[0, 0x4a6ab0], [44, 0x7a78b8], [88, 0xc88a98], [124, 0xf0b088], [150, 0xf8d4a0]]);
+    p.ellipse(240, 150, 30, 30, 0xffe8a0);
+    city(p, r, { base: 170, minH: 20, maxH: 50, color: 0xb88a90, lit: 0xf8d4a0, litShare: 0.3 });
+    const G = 204;
+    // A block: floors of windows, every other one with a balcony.
+    const block = (x0, x1, top, wall, light, trim) => {
+      p.rect(x0, top, x1 - x0, G - top, (x) => (x < x0 + 4 ? light : x > x1 - 5 ? trim : wall));
+      p.rect(x0 - 2, top - 3, x1 - x0 + 4, 3, trim);
+      // Solar panels and a garden on the roof.
+      for (let x = x0 + 4; x < x0 + (x1 - x0) / 2; x += 12) p.poly([[x, top - 3], [x + 10, top - 3], [x + 8, top - 9], [x + 2, top - 9]], 0x2c4a7a).line(x + 2, top - 6, x + 9, top - 6, 0x6a8ac0);
+      for (let x = x0 + (x1 - x0) / 2 + 6; x < x1 - 6; x += 9) p.ellipse(x, top - 5, 5, 4, x % 2 ? 0x5a9a4a : 0x4a8a3a);
+      let k = 0;
+      for (let y = top + 8; y < G - 30; y += 22) {
+        for (let x = x0 + 8; x < x1 - 14; x += 22) {
+          k++;
+          p.rect(x, y, 10, 13, 0x3a4a60).rect(x, y, 10, 1, 0xf4f1e8).rect(x + 5, y, 1, 13, 0xf4f1e8);
+          if (r() < 0.45) p.rect(x + 1, y + 1, 4, 12, 0xf8d4a0); // lit window
+          if (k % 2) {
+            // Balcony: slab, railing, plants, sometimes laundry.
+            p.rect(x - 3, y + 13, 16, 2, trim).rect(x - 3, y + 8, 16, 1, 0x3a3a3a);
+            for (let rx = x - 3; rx < x + 13; rx += 3) p.rect(rx, y + 8, 1, 5, 0x3a3a3a);
+            p.ellipse(x - 1, y + 7, 3, 3, 0x4a9a3a).ellipse(x + 11, y + 7, 3, 3, 0x5aaa4a);
+            if (r() < 0.5) p.rect(x - 1, y + 4, 2, 2, [0xe0443a, 0xff8ab0, 0xf0c040][k % 3]); // flowers
+            if (r() < 0.35) {
+              p.line(x - 3, y + 1, x + 13, y + 1, 0xd8d4c8);
+              for (let c = 0; c < 3; c++) p.rect(x - 1 + c * 5, y + 2, 3, 4, [0x4a8ae0, 0xf4f1e8, 0xe0443a, 0x9be36b][(k + c) % 4]);
+            }
+          }
+        }
+      }
+      // Ground floor: entrance and a common room.
+      p.rect(x0 + (x1 - x0) / 2 - 10, G - 22, 20, 22, 0x6a4a30).rect(x0 + (x1 - x0) / 2 - 12, G - 25, 24, 3, trim);
+    };
+    block(14, 192, 54, 0xd88a5a, 0xe8a070, 0xa85a3a);
+    block(296, 470, 74, 0xe8c06a, 0xf4d488, 0xb8903a);
+    // The banner across the courtyard.
+    p.line(192, 88, 296, 98, 0x5a5a58);
+    p.rect(198, 92, 92, 13, 0xf4f1e8).rect(198, 104, 92, 1, 0xc8c4b8);
+    miniTextCentered(p, "LA CASA E' UN DIRITTO", 244, 96, 0xe0443a); // the mini font has no È: E' as in CAFFE'
+    // The courtyard: a big tree, vegetable beds, a long table, kids.
+    p.rect(0, G, w, h - G, 0xc8b898);
+    p.rect(192, G - 2, 104, h - G + 2, 0x7ab05a);
+    tree(p, 244, 200, { size: 22, trunk: 26, seed: 41 });
+    for (const [bx, by] of [[198, 212], [198, 226], [262, 226]]) {
+      p.rect(bx, by, 30, 9, 0x6a4a30).rect(bx + 1, by + 1, 28, 7, 0x4a3420);
+      for (let cx = bx + 4; cx < bx + 28; cx += 6) p.ellipse(cx, by + 3, 3, 3, (x, y) => ((x + y) % 2 ? 0x5a9a5a : 0x8ac07a)); // cabbages
+    }
+    p.rect(120, 220, 60, 3, 0xf4f1e8).rect(122, 223, 2, 8, 0x6a6a64).rect(176, 223, 2, 8, 0x6a6a64);
+    for (let x = 126; x < 176; x += 10) p.rect(x, 218, 4, 2, [0xe0443a, 0xf0c040, 0x9be36b][(x / 10) % 3]);
+    person(p, 130, 236, { pose: 'talk', top: 0xe8803a, skin: SKIN[2] });
+    person(p, 150, 238, { pose: 'cheer', top: 0x2c4060, skin: SKIN[4], hair: HAIR[3] });
+    person(p, 170, 236, { pose: 'stand', top: 0x8a5ab0, f: -1, hair: 0xc8c8c8, long: true });
+    kid(p, 320, 236, { pose: 'run', top: 0xf0c040, hair: HAIR[2] });
+    kid(p, 350, 234, { pose: 'cheer', top: 0xe0443a, f: -1, skin: SKIN[3] });
+    p.ellipse(336, 226, 2, 2, 0xffffff);
+    person(p, 400, 236, { pose: 'walk', top: 0x4a8ae0, f: -1, skin: SKIN[1] });
+    stroller(p, 386, 236);
+    person(p, 60, 236, { pose: 'walk', top: 0x9be36b, hold: 0xc9963a, skin: SKIN[3], long: true, hair: HAIR[0] });
   },
 };
 
