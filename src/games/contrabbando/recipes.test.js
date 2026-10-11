@@ -3,6 +3,7 @@ import { RECIPES, FRANCO, MEI_END, MEI_RECORD } from './recipes.js';
 import { VEGGIES, POWERUPS } from './textures.js';
 import { POINTS } from './rules.js';
 import { loadCodeGs } from '../../../test/gas.js';
+import { wrappedLines, RECORD_LINE_CHARS } from '../../../test/wrap.js';
 
 // Invariants of the level data: they hold whatever the tuning, so a typo or a
 // careless tweak fails here instead of in someone's hands.
@@ -77,6 +78,10 @@ describe('scores fit the server cap', () => {
 
 describe('lines', () => {
   const all = [...Object.values(FRANCO).flat(), ...Object.values(MEI_END).flat(), ...MEI_RECORD];
+
+  it('fit the record panel in two lines', () => {
+    for (const s of MEI_RECORD) expect(wrappedLines(s, RECORD_LINE_CHARS), s).toBeLessThanOrEqual(2);
+  });
 
   it('are all non-empty strings', () => {
     for (const s of all) {

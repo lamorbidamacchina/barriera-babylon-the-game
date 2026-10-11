@@ -88,7 +88,7 @@ export const FRANCO = {
 
 // When a dish beats the Barriera record: she asks a name for the chalkboard.
 export const MEI_RECORD = [
-  'Nessuno in Barriera taglia meglio. Nome? Io scrivo su lavagna.',
+  'Nessuno in Barriera taglia meglio. Nome? Per lavagna.',
   'Record di Barriera. Dimmi nome, così tutti invidiano.',
   'Mai visto mani così. Come ti chiami? Per lavagna.',
 ];
