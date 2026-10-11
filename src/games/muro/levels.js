@@ -72,4 +72,9 @@ export const ROSANNA = {
   cut: ['Bene! Un altro pezzo.', 'Crolla, crolla!', 'Questo è un bel dieci.'],
   caught: ['Beccati. Si dice "ci hanno beccato", non "ci beccarono".', 'Tre volte presi. Nota sul registro.'],
   time: ['Campanella. Il Muro resta su. Per stavolta.', 'Tempo scaduto. Compiti: un altro Muro.'],
+  record: [
+    'Record di Barriera! Nome alla lavagna.',
+    'Dieci e lode. Firma qui, per la bacheca.',
+    'Nessuno ha fatto meglio. Nome? Per il registro.',
+  ],
 };

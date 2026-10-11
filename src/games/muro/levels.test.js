@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { LEVELS } from './levels.js';
+import { LEVELS, ROSANNA } from './levels.js';
 import { POINTS } from './rules.js';
 import { VIEWS } from './views.js';
 import { loadCodeGs } from '../../../test/gas.js';
+import { wrappedLines, RECORD_LINE_CHARS } from '../../../test/wrap.js';
 
 describe('levels', () => {
   it('has a known picture for every level', () => {
@@ -25,6 +26,7 @@ describe('levels', () => {
       expect(l.order.length).toBeLessThanOrEqual(150); // 4 lines of the intro
       expect(l.win.length).toBeLessThanOrEqual(80); // 3 lines of the results panel
     }
+    for (const s of ROSANNA.record) expect(wrappedLines(s, RECORD_LINE_CHARS), s).toBeLessThanOrEqual(2);
   });
 
   it('the best possible score stays under the Barriera records cap', () => {

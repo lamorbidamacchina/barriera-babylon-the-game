@@ -3,6 +3,8 @@ import { WIDTH, HEIGHT, C, N } from '../config.js';
 import { text, blink, panel, goTo, fadeIn, droneTexture, overlay, button, banner, typeText, hitArea } from '../ui.js';
 import { sfx } from '../sfx.js';
 import { loadSave, writeSave } from '../save.js';
+import { refreshRecords, beatsRecord } from '../leaderboard.js';
+import { drawBarrieraRecord, askNickname } from '../records.js';
 import { LEVELS, ROSANNA } from '../games/muro/levels.js';
 import { createView } from '../games/muro/views.js';
 import { createTextures, wallPattern, CURSOR_KEY, rondaKey } from '../games/muro/textures.js';
@@ -24,7 +26,7 @@ const STICK_MAX = 22; // joystick: the base follows a finger dragged further
 const HINT = { x: WIDTH - 44, y: HEIGHT - 52 }; // the ghost joystick / arrow keys
 const HINT_STEP = 700; // ms the ghost spends on each direction
 const GRAVITY = 420;
-const GAME_ID = 'muro'; // in the save
+const GAME_ID = 'muro'; // in the save and in the Barriera records
 const pick = Phaser.Utils.Array.GetRandom;
 const rand = Phaser.Math.FloatBetween;
 const DIRS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] };
@@ -46,6 +48,7 @@ export default class MuroPanic extends Phaser.Scene {
 
   create() {
     fadeIn(this);
+    refreshRecords();
     this.lv = LEVELS[this.level];
     createTextures(this);
     droneTexture(this);
@@ -194,8 +197,7 @@ export default class MuroPanic extends Phaser.Scene {
     const g = o.add(this.add.graphics());
     panel(g, P.x + 12, P.y + 14, 96, 96, { fill: N.black, alpha: 1 });
     o.add(this.add.image(P.x + 12, P.y + 14, 'rosanna-96').setOrigin(0));
-    o.add(text(this, P.x + 60, P.y + 116, 'MAESTRA', { color: C.ocraLight, origin: [0.5, 0] }));
-    o.add(text(this, P.x + 60, P.y + 127, 'ROSANNA', { color: C.ocraLight, origin: [0.5, 0] }));
+    drawBarrieraRecord(this, o, GAME_ID, this.level, P.x + 60, P.y + 116, ['MAESTRA', 'ROSANNA']);
 
     const X = P.x + 124;
     const unlocked = Math.min(this.progress.unlocked, LEVELS.length - 1);
@@ -220,7 +222,7 @@ export default class MuroPanic extends Phaser.Scene {
     const patrols = this.lv.patrols.length;
     o.add(text(this, X, P.y + 60, `TEMPO ${this.lv.time}s   ${patrols} ROND${patrols > 1 ? 'E' : 'A'}`, { color: C.chalkDim }));
     o.add(text(this, X, P.y + 71, `${drones} DRON${drones > 1 ? 'I' : 'E'}${bosses ? `, ${bosses} CAPOBRANCO` : ''}`, { color: C.chalkDim }));
-    if (best) o.add(text(this, P.x + 60, P.y + 138, `RECORD ${best}`, { color: C.chalkDim, origin: [0.5, 0] }));
+    if (best) o.add(text(this, P.x + 60, P.y + 152, `TUO RECORD ${best}`, { color: C.chalkDim, origin: [0.5, 0] }));
 
     const order = o.add(text(this, X, P.y + 90, '', { color: C.white, wrap: 300, lineSpacing: 5 }));
     typeText(this, order, this.lv.order);
@@ -730,18 +732,19 @@ export default class MuroPanic extends Phaser.Scene {
     const bonus = endBonus(win, this.percent, this.lv.target, this.timeLeft, this.lives);
     const total = win ? this.score + bonus.muro + bonus.time + bonus.lives : 0;
     const record = win && total > (this.progress.best[this.level] ?? 0);
+    const barriera = win && beatsRecord(GAME_ID, this.level, total);
     if (win) {
       if (record) this.progress.best[this.level] = total;
       this.progress.unlocked = Math.max(this.progress.unlocked, this.level + 1);
       this.save[GAME_ID] = this.progress;
       writeSave(this.save);
     }
-    const results = () => this.showResults(result, bonus, total, record);
+    const results = (named) => this.showResults(result, bonus, total, record, named);
 
     if (!win) {
       sfx.lose();
       if (result === 'time') banner(this, 'TEMPO SCADUTO', C.red, 1000);
-      this.time.delayedCall(1000, results);
+      this.time.delayedCall(1000, () => results(false));
       return;
     }
     // The whole Muro comes down and Torino is there.
@@ -763,10 +766,13 @@ export default class MuroPanic extends Phaser.Scene {
       this.add.rectangle(0, FY, WIDTH, 22, N.black, 0.7).setOrigin(0).setDepth(50);
       text(this, WIDTH / 2, FY + 7, this.lv.name, { color: C.white, origin: [0.5, 0] }).setDepth(51);
     });
-    this.time.delayedCall(4200, results);
+    this.time.delayedCall(4200, () => {
+      if (barriera) askNickname(this, { game: GAME_ID, level: this.level, total, portrait: 'rosanna-96', line: pick(ROSANNA.record) }, results);
+      else results(false);
+    });
   }
 
-  showResults(result, bonus, total, record) {
+  showResults(result, bonus, total, record, barriera) {
     const win = result === 'win';
     const last = this.level === LEVELS.length - 1;
     const o = overlay(this);
@@ -790,8 +796,9 @@ export default class MuroPanic extends Phaser.Scene {
         o.add(text(this, P.x + P.w - 20, P.y + 54 + i * 12, String(v), { color: i === rows.length - 1 ? C.ocraLight : C.white, origin: [1, 0] }));
       });
     }
-    if (record) {
-      const r = o.add(text(this, P.x + P.w - 20, P.y + 118, 'NUOVO RECORD!', { color: C.pink, origin: [1, 0] }));
+    if (record || barriera) {
+      const label = barriera ? 'RECORD DI BARRIERA!' : 'NUOVO RECORD!';
+      const r = o.add(text(this, P.x + P.w - 20, P.y + 118, label, { color: C.pink, origin: [1, 0] }));
       blink(this, r, 300);
     }
 
