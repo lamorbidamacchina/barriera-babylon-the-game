@@ -83,6 +83,14 @@ for (const ev of ['resize', 'orientationchange', 'fullscreenchange', 'webkitfull
   document.addEventListener(ev, fit);
 }
 window.visualViewport?.addEventListener('resize', fit);
+// iOS (home screen apps above all) can fire the rotation events before the
+// viewport has its new size: fit() reads the old one and nothing calls it
+// again, so the game stays small. Check again once the layout really changes,
+// and a few times after a rotation in case even that comes early.
+game.events.once(Phaser.Core.Events.READY, () => new ResizeObserver(() => fit()).observe(stageEl));
+const refitLater = () => [100, 300, 700].forEach((ms) => setTimeout(fit, ms));
+window.addEventListener('orientationchange', refitLater);
+screen.orientation?.addEventListener('change', refitLater);
 document.addEventListener('focusout', () => {
   window.scrollTo(0, 0); // iOS leaves the page scrolled after the keyboard closes
   requestAnimationFrame(fit);
