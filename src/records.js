@@ -29,9 +29,10 @@ export function drawBarrieraRecord(scene, o, game, level, cx, y, name) {
 
 // New Barriera record: the host (portrait: a 96px texture key; line: what
 // they say) asks for a name for the chalkboard, prefilled with the last one
-// used (this is also how a player changes it). The record goes online in the
-// background; skipping keeps it on this device only. done(named) afterwards.
-export function askNickname(scene, { game, level, total, portrait, line }, done) {
+// used (this is also how a player changes it). points: the score before the
+// end bonuses. The record goes online in the background; skipping keeps it
+// on this device only. done(named) afterwards.
+export function askNickname(scene, { game, level, points, total, portrait, line }, done) {
   const o = overlay(scene);
   // High on the screen: on a phone the keyboard covers the bottom half.
   const P = { x: 60, y: 20, w: 360, h: 128 };
@@ -44,7 +45,9 @@ export function askNickname(scene, { game, level, total, portrait, line }, done)
   const cx = X + (P.w - 136) / 2;
   const title = o.add(text(scene, cx, P.y + 14, 'RECORD DI BARRIERA!', { color: C.pink, origin: [0.5, 0] }));
   blink(scene, title, 300);
-  o.add(text(scene, cx, P.y + 26, String(total), { color: C.ocraLight, origin: [0.5, 0] }));
+  // The HUD showed the points without the bonuses: say where the rest comes from.
+  const sum = total > points ? `${points} + BONUS ${total - points} = ${total}` : String(total);
+  o.add(text(scene, cx, P.y + 26, sum, { color: C.ocraLight, origin: [0.5, 0] }));
   const said = o.add(text(scene, X, P.y + 42, '', { color: C.white, wrap: P.w - 136, lineSpacing: 4 }));
   typeText(scene, said, line);
 

@@ -799,7 +799,7 @@ export default class Contrabbando extends Phaser.Scene {
     if (result === 'time') banner(this, 'TEMPO SCADUTO', C.red, 1000);
     this.time.delayedCall(900, () => {
       const results = (named) => this.showResults(result, bonus, total, record, named);
-      if (barriera) askNickname(this, { game: GAME_ID, level: this.level, total, portrait: 'mei-li-96', line: pick(MEI_RECORD) }, results);
+      if (barriera) askNickname(this, { game: GAME_ID, level: this.level, points: this.score, total, portrait: 'mei-li-96', line: pick(MEI_RECORD) }, results);
       else results(false);
     });
   }

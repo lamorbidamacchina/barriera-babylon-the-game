@@ -771,7 +771,7 @@ export default class MuroPanic extends Phaser.Scene {
       text(this, WIDTH / 2, FY + 7, this.lv.name, { color: C.white, origin: [0.5, 0] }).setDepth(51);
     });
     this.time.delayedCall(4200, () => {
-      if (barriera) askNickname(this, { game: GAME_ID, level: this.level, total, portrait: 'rosanna-96', line: pick(ROSANNA.record) }, results);
+      if (barriera) askNickname(this, { game: GAME_ID, level: this.level, points: this.score, total, portrait: 'rosanna-96', line: pick(ROSANNA.record) }, results);
       else results(false);
     });
   }
