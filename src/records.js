@@ -17,7 +17,7 @@ export function drawBarrieraRecord(scene, o, game, level, cx, y, name) {
   const show = () => {
     if (!lines[0].active) return;
     const r = getRecord(game, level);
-    const rows = r === undefined ? [...name, ''] : r ? ['RECORD', r.nickname, String(r.score)] : ['RECORD', 'LIBERO!', ''];
+    const rows = r === undefined ? [...name, ''] : r ? ['WORLD RECORD', r.nickname, String(r.score)] : ['WORLD RECORD', 'LIBERO!', ''];
     lines.forEach((t, i) => t.setText(rows[i] ?? ''));
     lines[0].setColor(r === undefined ? C.ocraLight : C.pink);
     lines[1].setColor(r === undefined ? C.ocraLight : C.white);
