@@ -8,7 +8,7 @@ import { drawBarrieraRecord, askNickname } from '../records.js';
 import { rng } from '../rng.js';
 import { LEVELS, DON_REMO } from '../games/ferri/levels.js';
 import { FIELD, MARGIN, KNOT_R, STRIKES, layout, crossings, beamHits, score } from '../games/ferri/rules.js';
-import { YARN, SCARF_H, scarfEnd } from '../games/ferri/sprites.js';
+import { YARN, SCARF_H, scarfEnd, scarfLength, isFinished } from '../games/ferri/sprites.js';
 import { createTextures, scarfTexture, KNOT_KEY, NEEDLES_KEY, TABLE_KEY, SCARF_TEX_W } from '../games/ferri/textures.js';
 
 const HUD_H = 28;
@@ -82,18 +82,27 @@ export default class NodoNeiFerri extends Phaser.Scene {
     this.selected = -1; // the knot the keyboard moves (Tab)
     this.keyMove = null; // { knot, from } while arrow keys move it
     this.held = []; // arrow keys held down
-    this.drone = { phase: 'idle', next: this.lv.drone.first, dir: 1, img: this.add.image(-40, FIELD.y + 12, 'drone').setScale(2).setDepth(16) };
-    this.droneShadow = this.add.ellipse(0, FIELD.y + 20, 30, 8, N.black, 0.45).setDepth(14).setVisible(false);
+    // Drones fly together, from opposite sides when there are two; the first
+    // one's side alternates from pass to pass.
+    this.nextPass = this.lv.drone.first;
+    this.passDir = 1;
+    this.drones = Array.from({ length: this.lv.drone.count ?? 1 }, () => ({
+      phase: 'idle',
+      x: -40,
+      img: this.add.image(-40, FIELD.y + 12, 'drone').setScale(2).setDepth(16),
+      shadow: this.add.ellipse(0, FIELD.y + 20, 30, 8, N.black, 0.45).setDepth(14).setVisible(false),
+    }));
     this.recount();
     this.drawThreads();
   }
 
-  // The scarf with the stripes knitted so far, and the needles under them.
+  // The scarf with the stripes knitted so far, and the needles under them
+  // until it's finished.
   setupScarf() {
     this.stripes = this.stripesUpTo(this.progress.unlocked);
     this.scarf = this.add.image(SCARF.x, SCARF.y, scarfTexture(this, this.stripes)).setOrigin(0).setDepth(2);
     this.needles = this.add.image(SCARF.x + SCARF_TEX_W / 2, 0, NEEDLES_KEY).setDepth(3);
-    this.showScarf(scarfEnd(this.stripes.length));
+    this.showScarf(scarfLength(this.stripes));
   }
 
   stripesUpTo(n) {
@@ -102,7 +111,7 @@ export default class NodoNeiFerri extends Phaser.Scene {
 
   showScarf(h) {
     this.scarf.setCrop(0, 0, SCARF_TEX_W, Math.min(h, SCARF_H));
-    this.needles.setY(SCARF.y + h);
+    this.needles.setY(SCARF.y + h).setVisible(!(isFinished(this.stripes) && h >= scarfEnd(this.stripes.length)));
   }
 
   drawHud() {
@@ -170,7 +179,8 @@ export default class NodoNeiFerri extends Phaser.Scene {
     o.add(text(this, X, P.y + 28, this.lv.name, { color: C.ocraLight, wrap: 300 }));
     o.add(text(this, X, P.y + 46, 'NESSUN FILO INCROCIATO', { color: C.white }));
     o.add(text(this, X, P.y + 60, `TEMPO ${this.lv.time}s   ${this.knots.length} GOMITOLI`, { color: C.chalkDim }));
-    o.add(text(this, X, P.y + 71, `DRONE OGNI ${this.lv.drone.every}s`, { color: C.chalkDim }));
+    const n = this.drones.length;
+    o.add(text(this, X, P.y + 71, `${n > 1 ? `${n} DRONI` : 'DRONE'} OGNI ${this.lv.drone.every}s`, { color: C.chalkDim }));
     const best = this.progress.best[this.level];
     if (best) {
       o.add(text(this, P.x + 60, P.y + 152, 'TUO RECORD', { color: C.chalkDim, origin: [0.5, 0] }));
@@ -373,52 +383,60 @@ export default class NodoNeiFerri extends Phaser.Scene {
 
   // ---------------------------------------------------------------- the drone
 
-  // Idle until its time comes, then heard (warn), then flies across the table
-  // dragging its scan. Passes alternate between left→right and right→left.
-  updateDrone(dt, time) {
-    const d = this.drone;
+  // Idle until the pass is due, then heard (warn), then flying across the
+  // table dragging their scans. The next pass is timed from the end of this one.
+  updateDrones(dt, time) {
     const { band, speed, every } = this.lv.drone;
-    if (d.phase === 'idle') {
-      if (this.elapsed < d.next) return;
-      d.phase = 'warn';
-      d.t = WARN_SECONDS;
-      d.x = d.dir > 0 ? FIELD.x - 30 : FIELD.x + FIELD.w + 30;
+    if (this.drones.every((d) => d.phase === 'idle') && this.elapsed >= this.nextPass) {
+      this.drones.forEach((d, i) => {
+        d.phase = 'warn';
+        d.t = WARN_SECONDS;
+        d.dir = i % 2 ? -this.passDir : this.passDir;
+        d.x = d.dir > 0 ? FIELD.x - 30 : FIELD.x + FIELD.w + 30;
+        d.shadow.setVisible(true).setPosition(d.dir > 0 ? FIELD.x + 16 : FIELD.x + FIELD.w - 16, FIELD.y + 20);
+      });
+      this.passDir = -this.passDir;
       sfx.drone();
       this.say(DON_REMO.drone);
-      this.droneShadow.setVisible(true).setPosition(d.dir > 0 ? FIELD.x + 16 : FIELD.x + FIELD.w - 16, FIELD.y + 20);
-    } else if (d.phase === 'warn') {
-      d.t -= dt;
-      this.droneShadow.setAlpha(0.25 + 0.25 * Math.sin(time / 80));
-      if (d.t <= 0) {
-        d.phase = 'fly';
-        this.droneShadow.setVisible(false);
-      }
-    } else {
-      d.x += d.dir * speed * dt;
-      if (Math.floor(time / 600) !== Math.floor((time - dt * 1000) / 600)) sfx.drone();
-      const k = this.heldKnot();
-      if (k >= 0 && this.safeLeft <= 0 && beamHits(this.knots[k].x, d.x, band / 2)) {
-        this.strike(k);
-        if (this.state !== 'play') return; // the third X: endRound has cleared the scan
-      }
-      if ((d.dir > 0 && d.x > FIELD.x + FIELD.w + 30) || (d.dir < 0 && d.x < FIELD.x - 30)) {
-        d.phase = 'idle';
-        d.dir = -d.dir;
-        d.next = this.elapsed + every;
-      }
     }
-    d.img.setPosition(Math.round(d.x), FIELD.y + 10 + Math.round(Math.sin(time / 200) * 2));
-    this.drawBeam();
+    let flying = false;
+    for (const d of this.drones) {
+      if (d.phase === 'warn') {
+        d.t -= dt;
+        d.shadow.setAlpha(0.25 + 0.25 * Math.sin(time / 80));
+        if (d.t <= 0) {
+          d.phase = 'fly';
+          d.shadow.setVisible(false);
+        }
+      } else if (d.phase === 'fly') {
+        flying = true;
+        d.x += d.dir * speed * dt;
+        const k = this.heldKnot();
+        if (k >= 0 && this.safeLeft <= 0 && beamHits(this.knots[k].x, d.x, band / 2)) {
+          this.strike(k);
+          if (this.state !== 'play') return; // the third X: endRound has cleared the scans
+        }
+        if ((d.dir > 0 && d.x > FIELD.x + FIELD.w + 30) || (d.dir < 0 && d.x < FIELD.x - 30)) {
+          d.phase = 'idle';
+          if (this.drones.every((o) => o.phase === 'idle')) this.nextPass = this.elapsed + every;
+        }
+      }
+      d.img.setPosition(Math.round(d.x), FIELD.y + 10 + Math.round(Math.sin(time / 200 + d.x / 50) * 2));
+    }
+    if (flying && Math.floor(time / 600) !== Math.floor((time - dt * 1000) / 600)) sfx.drone();
+    this.drawBeams();
   }
 
-  drawBeam() {
+  drawBeams() {
     const g = this.beamGfx.clear();
-    const d = this.drone;
-    if (d.phase !== 'fly') return;
     const half = this.lv.drone.band / 2;
     const top = FIELD.y + 16;
-    g.fillStyle(N.droneLight, 0.16).fillRect(d.x - half, top, half * 2, FIELD.y + FIELD.h - top);
-    g.fillStyle(N.droneLight, 0.4).fillRect(d.x - half, top, 1, FIELD.y + FIELD.h - top).fillRect(d.x + half - 1, top, 1, FIELD.y + FIELD.h - top);
+    const h = FIELD.y + FIELD.h - top;
+    for (const d of this.drones) {
+      if (d.phase !== 'fly') continue;
+      g.fillStyle(N.droneLight, 0.16).fillRect(d.x - half, top, half * 2, h);
+      g.fillStyle(N.droneLight, 0.4).fillRect(d.x - half, top, 1, h).fillRect(d.x + half - 1, top, 1, h);
+    }
   }
 
   // Caught moving a knot under the scan: an X, and the knot goes back where
@@ -457,7 +475,7 @@ export default class NodoNeiFerri extends Phaser.Scene {
       } else {
         if (Math.ceil(this.timeLeft) !== Math.ceil(this.timeLeft + dt)) this.updateHud();
         this.moveWithKeys(dt);
-        this.updateDrone(dt, time);
+        this.updateDrones(dt, time);
       }
     }
     if (this.state !== 'end') this.drawThreads();
@@ -477,7 +495,7 @@ export default class NodoNeiFerri extends Phaser.Scene {
     this.state = 'end';
     this.dropKnot();
     this.beamGfx.clear();
-    this.droneShadow.setVisible(false);
+    this.drones.forEach((d) => d.shadow.setVisible(false));
 
     const win = result === 'win';
     const s = score({ knots: this.knots.length, timeLeft: this.timeLeft, strikes: this.strikes, moves: this.moves });
@@ -491,7 +509,7 @@ export default class NodoNeiFerri extends Phaser.Scene {
       writeSave(this.save);
     }
     const results = (named) => this.showResults(result, s, total, record, named);
-    this.tweens.add({ targets: this.drone.img, y: -30, duration: 700, ease: 'Quad.in' });
+    this.tweens.add({ targets: this.drones.map((d) => d.img), y: -30, duration: 700, ease: 'Quad.in' });
 
     if (!win) {
       sfx.lose();
@@ -537,7 +555,7 @@ export default class NodoNeiFerri extends Phaser.Scene {
     this.stripes = this.stripesUpTo(this.progress.unlocked);
     this.scarf.setTexture(scarfTexture(this, this.stripes)).setOrigin(0);
     const from = scarfEnd(this.level);
-    const to = scarfEnd(this.stripes.length);
+    const to = scarfLength(this.stripes);
     let h = from;
     this.showScarf(h);
     this.time.addEvent({

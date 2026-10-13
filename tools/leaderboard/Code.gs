@@ -25,7 +25,7 @@
 var MAX_SCORE = {
   contrabbando: 20000, // ~15 per vegetable + combos + 5 per second left
   muro: 2000, // 5 per % of Muro, x2 for big cuts, + end bonuses
-  ferri: 1000000,
+  ferri: 2000, // 30 per knot + 5 per second left + 50 per unused X + moves bonus
   ruspe: 1000000,
 };
 var MAX_LEVEL = 50;

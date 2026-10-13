@@ -80,6 +80,11 @@ const CAST_ON = 15; // three months of work: a short grey start
 export const STRIPE_H = 36;
 // Where the knitting ends after `stripes` stripes: the needles go there.
 export const scarfEnd = (stripes) => PEG_H + CAST_ON + stripes * STRIPE_H;
+// The wedding stripe closes the scarf: fringe under it, no more needles.
+export const FRINGE_H = 10;
+export const isFinished = (stripes) => stripes.at(-1)?.pattern === 'wedding';
+// How much of the scarf shows: down to the needles, or to the fringe's end.
+export const scarfLength = (stripes) => scarfEnd(stripes.length) + (isFinished(stripes) ? FRINGE_H : 0);
 
 // Each pattern picks the yarn of one stitch (4 pixels wide, 3 tall) of a
 // stripe: column and row of the stitch, from the level's yarn colours.
@@ -103,10 +108,18 @@ const PATTERNS = {
     if (heart && heart[r][col - 1] === 'X') return row >= 7 ? 0xff4fa3 : 0xe0443a;
     return 0xb48cff;
   },
+  // The wedding: cream, with lilac edges for Irene and the green plastic ring
+  // in the middle, "lucido come una biglia" (its top stitch catches the light).
+  wedding: (colors, col, row) => {
+    if (row === 0 || row === 11) return 0xb48cff;
+    if (row >= 4 && row <= 7 && RING[row - 4][col - 1] === 'X') return row === 4 && col === 2 ? 0xb8f0a0 : 0x3fbf5f;
+    return 0xf4f1e8;
+  },
 };
 
 // Hearts in stitches, 5 wide and 4 tall.
 const HEART = ['.X.X.', 'XXXXX', '.XXX.', '..X..'];
+const RING = ['.XXX.', 'X...X', 'X...X', '.XXX.'];
 const BROKEN_HEART = ['.X.X.', 'XX.XX', '.X.X.', '..X..'];
 
 // The scarf hanging from a peg on the right of the screen: the grey start of
@@ -131,6 +144,15 @@ export function drawScarf(p, w, stripes) {
   for (let yy = PEG_H; yy < y; yy += 3) {
     p.set(x0 - 1, yy + 1, 0x1a1a1a);
     p.set(x0 + SCARF_W, yy + 1, 0x1a1a1a);
+  }
+  // Finished: a fringe of tassels in the colours of every stripe.
+  if (isFinished(stripes)) {
+    const colors = stripes.flatMap((s) => s.colors);
+    for (let x = x0 + 1, i = 0; x < x0 + SCARF_W; x += 3, i++) {
+      const len = FRINGE_H - 2 + (i % 3 === 1 ? 2 : i % 2);
+      p.rect(x, y, 2, len, colors[(i * 5) % colors.length]);
+      p.rect(x, y + len - 1, 2, 1, shade(colors[(i * 5) % colors.length], 0.62));
+    }
   }
 }
 

@@ -57,7 +57,7 @@ Ogni livello ha un tempo ("Irene arriva tra..."). A zero il livello è perso con
 
 ## 7. La sciarpa
 
-- Una riga per ogni livello superato, con i colori dei fili di quel livello e un punto diverso: righe (livello 1), pois come le "pastiglie di libertà" di Mei Li (livello 2), patchwork come le coperte dello sferruzzamento solidale (livello 3), due cuori su lilla, il colore del cappello di Irene, il secondo spezzato per il trentottesimo no (livello 4), frange e anello verde per il matrimonio.
+- Una riga per ogni livello superato, con i colori dei fili di quel livello e un punto diverso: righe (livello 1), pois come le "pastiglie di libertà" di Mei Li (livello 2), patchwork come le coperte dello sferruzzamento solidale (livello 3), due cuori su lilla, il colore del cappello di Irene, il secondo spezzato per il trentottesimo no (livello 4), per il matrimonio panna con bordi lilla e l'anello verde di plastica al centro (livello 5). Con l'ultima riga la sciarpa è finita: compaiono le frange, con i colori di tutte le righe, e spariscono i ferri.
 - Alla vittoria i fili scivolano nella sciarpa e la nuova riga si lavora una fila alla volta (un tic per fila).
 - La sciarpa mostra le righe già guadagnate (dal salvataggio), quindi cresce da una partita all'altra.
 
@@ -71,7 +71,7 @@ Numeri di partenza: si tarano dopo le prove su iPad, a piccoli passi come per Mu
 | 2 | I GOMITOLI DI MEI LI | 5 | 10 | 15 | 120 s | ogni 22 s | un colore per retta |
 | 3 | SFERRUZZAMENTO SOLIDALE | 6 (−2 gomitoli) | 13 | 19 | 150 s | ogni 18 s | casuali |
 | 4 | IL TRENTOTTESIMO NO | 6 | 15 | 24 | 170 s | ogni 15 s, più veloce | casuali |
-| 5 | IL MATRIMONIO | 7 (−3 gomitoli) | 18 | ~27 | 180 s | ogni 12 s, due droni | casuali |
+| 5 | IL MATRIMONIO | 7 (−3 gomitoli) | 18 | 27 | 180 s | ogni 12 s, due droni insieme, da lati opposti | casuali |
 
 Massimo 18 gomitoli: con 21 su un iPhone i gomitoli diventano troppo fitti (deciso il 13 ottobre). Per avere 13 o 18 gomitoli si parte da 6 o 7 rette e si tolgono gomitoli: una delle due rette passa dritta nel buco, l'altra si interrompe; nessun gomitolo resta attaccato a un filo solo.
 
@@ -90,7 +90,7 @@ Con un colore per retta, i fili dello stesso colore nella soluzione stanno in fi
    - "Rosanna mi ha dato nove. In seminario non ho mai superato il quattro."
 4. **IL TRENTOTTESIMO NO**
    - "Trentasette volte Irene ha detto no. Stasera ci riprovo, con la sciarpa quasi finita."
-   - "No, ha detto. Ma con un proverbio nuovo. È un passo avanti."
+   - "No, ha detto. Trentotto. Ma stavolta ha sorriso."
 5. **IL MATRIMONIO**
    - "Alla trentanovesima Irene ha detto sì. Ultimo nodo, poi all'altare. Stavolta dall'altra parte."
    - "Sciarpa finita, anello di plastica verde. Finché nodo non ci separi."
@@ -115,7 +115,7 @@ Nello stesso ordine di grandezza degli altri giochi (un livello vinto ~500–900
 - \+ 50 per ogni X non usata
 - \+ bonus mosse: `max(0, 2 × gomitoli − mosse) × 10` (una mossa = un gomitolo preso e lasciato)
 
-Livello perso: nessun punteggio, come negli altri giochi. Record di Barriera per livello. Quando i cinque livelli ci sono tutti, `MAX_SCORE.ferri` in `tools/leaderboard/Code.gs` scende dal segnaposto (1.000.000) al punteggio massimo credibile; poi va ripubblicato lo script.
+Livello perso: nessun punteggio, come negli altri giochi. Record di Barriera per livello. `MAX_SCORE.ferri` in `tools/leaderboard/Code.gs` è 2000 (il livello 5 risolto in zero secondi e con zero mosse farebbe 1950); dopo ogni modifica va ripubblicato lo script.
 
 ## 10. Fuori, per ora
 
@@ -125,6 +125,7 @@ Livello perso: nessun punteggio, come negli altri giochi. Record di Barriera per
 
 ## 11. Ordine di lavoro
 
-1. Livello 1 giocabile da provare su iPad: regole, groviglio, drone, tempo, sciarpa, record.
-2. Dopo la prova: taratura, poi livelli 2–5 e i punti della sciarpa.
-3. `MAX_SCORE.ferri` definitivo e ripubblicazione dello script.
+1. ~~Livello 1 giocabile da provare su iPad: regole, groviglio, drone, tempo, sciarpa, record.~~
+2. ~~Livelli 2–5 e i punti della sciarpa.~~ (13–14 ottobre)
+3. ~~`MAX_SCORE.ferri` definitivo~~, poi ripubblicazione dello script.
+4. Taratura dopo le prove su iPhone e iPad.

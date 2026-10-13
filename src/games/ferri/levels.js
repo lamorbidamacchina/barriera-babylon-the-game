@@ -5,10 +5,10 @@
 // everyone, so the Barriera records compare; minCrossings: how tangled it
 // starts at least; time: seconds before Irene arrives; drone: first = seconds
 // before the first pass, every = seconds between passes, speed in px/s, band =
-// width of its scan in px; hintColors: one yarn colour per line (the threads
-// of a colour end up in a row), otherwise mixed colours; stripe: how the
-// stripe is knitted (sprites.js); order: Don Remo's briefing; win: his line on
-// the results panel.
+// width of its scan in px, count = drones flying together (1 if missing);
+// hintColors: one yarn colour per line (the threads of a colour end up in a
+// row), otherwise mixed colours; stripe: how the stripe is knitted
+// (sprites.js); order: Don Remo's briefing; win: his line on the results panel.
 export const LEVELS = [
   {
     name: 'IL PRIMO GIRO',
@@ -60,7 +60,20 @@ export const LEVELS = [
     hintColors: false,
     stripe: 'hearts',
     order: 'Trentasette volte Irene ha detto no. Stasera ci riprovo, con la sciarpa quasi finita.',
-    win: 'No, ha detto. Ma con un proverbio nuovo. È un passo avanti.',
+    win: 'No, ha detto. Trentotto. Ma stavolta ha sorriso.',
+  },
+  {
+    name: 'IL MATRIMONIO',
+    lines: 7,
+    drop: 3,
+    seed: 5055,
+    minCrossings: 20,
+    time: 180,
+    drone: { first: 10, every: 12, speed: 85, band: 40, count: 2 },
+    hintColors: false,
+    stripe: 'wedding',
+    order: "Alla trentanovesima Irene ha detto sì. Ultimo nodo, poi all'altare. Stavolta dall'altra parte.",
+    win: 'Sciarpa finita, anello di plastica verde. Finché nodo non ci separi.',
   },
 ];
 
