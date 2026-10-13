@@ -57,7 +57,7 @@ Ogni livello ha un tempo ("Irene arriva tra..."). A zero il livello è perso con
 
 ## 7. La sciarpa
 
-- Una riga per ogni livello superato, con i colori dei fili di quel livello e un punto diverso: liscio, righe, pois (come la sciarpa a pois di Zio Franco), cuoricini per il trentottesimo no, frange e anello verde per il matrimonio.
+- Una riga per ogni livello superato, con i colori dei fili di quel livello e un punto diverso: righe (livello 1), pois come le "pastiglie di libertà" di Mei Li (livello 2), da decidere per il livello 3, cuoricini per il trentottesimo no, frange e anello verde per il matrimonio.
 - Alla vittoria i fili scivolano nella sciarpa e la nuova riga si lavora una fila alla volta (un tic per fila).
 - La sciarpa mostra le righe già guadagnate (dal salvataggio), quindi cresce da una partita all'altra.
 

@@ -23,6 +23,19 @@ export const LEVELS = [
     order: 'Tre mesi su questa sciarpa e un nodo mi blocca tutto. Non tagliare: se tagli, cade tutto. Sciogli i fili.',
     win: 'Prima riga di sciarpa. Tre mesi per una riga: è un miracolo.',
   },
+  {
+    name: 'I GOMITOLI DI MEI LI',
+    lines: 5,
+    drop: 0,
+    seed: 2024,
+    minCrossings: 8,
+    time: 120,
+    drone: { first: 15, every: 22, speed: 70, band: 40 },
+    hintColors: true,
+    stripe: 'pois',
+    order: 'Mei Li distribuisce gomitoli come pastiglie di libertà. Lei li lancia, io li sbroglio. Tu mi aiuti.',
+    win: 'Mei Li dice che non è bella. Però è calda. Basta e avanza.',
+  },
 ];
 
 // Don Remo during the round and after a lost one (the win lines are in each

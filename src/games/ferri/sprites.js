@@ -81,9 +81,17 @@ export const STRIPE_H = 36;
 // Where the knitting ends after `stripes` stripes: the needles go there.
 export const scarfEnd = (stripes) => PEG_H + CAST_ON + stripes * STRIPE_H;
 
-// Each pattern knits a stripe from the level's yarn colours, row by row.
+// Each pattern picks the yarn of one stitch (4 pixels wide, 3 tall) of a
+// stripe: column and row of the stitch, from the level's yarn colours.
 const PATTERNS = {
-  bands: (colors, row) => colors[Math.floor(row / 6) % colors.length],
+  // Bands of two stitch rows per colour.
+  bands: (colors, col, row) => colors[Math.floor(row / 2) % colors.length],
+  // Polka dots, like Mei Li's "pastiglie di libertà": single stitches in the
+  // other colours, staggered, on the first one.
+  pois: (colors, col, row) => {
+    if (row % 2 === 0 || (col + (row >> 1)) % 2) return colors[0];
+    return colors[1 + ((col + row) % (colors.length - 1))];
+  },
 };
 
 // The scarf hanging from a peg on the right of the screen: the grey start of
@@ -100,9 +108,7 @@ export function drawScarf(p, w, stripes) {
   for (const s of stripes) {
     const fill = PATTERNS[s.pattern] ?? PATTERNS.bands;
     for (let row = 0; row < STRIPE_H; row++) {
-      // Whole stitch rows of one colour: the Vs don't get cut in half.
-      const c = fill(s.colors, Math.floor(row / 3) * 3);
-      p.rect(x0, y + row, SCARF_W, 1, (x) => knit(c)(x - x0, row));
+      p.rect(x0, y + row, SCARF_W, 1, (x) => knit(fill(s.colors, Math.floor((x - x0) / 4), Math.floor(row / 3)))(x - x0, row));
     }
     y += STRIPE_H;
   }
