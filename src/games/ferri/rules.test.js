@@ -29,6 +29,19 @@ describe('makeTangle', () => {
     }
   });
 
+  it('leaves no knot hanging on a single thread', () => {
+    for (const [lines, drop] of [[6, 2], [7, 3]]) {
+      for (let seed = 1; seed <= 10; seed++) {
+        const t = makeTangle(lines, seed, drop);
+        expect(t.solution).toHaveLength((lines * (lines - 1)) / 2 - drop);
+        const degree = new Array(t.solution.length).fill(0);
+        for (const th of t.threads) degree[th.a]++, degree[th.b]++;
+        expect(Math.min(...degree), `${lines} lines, seed ${seed}`).toBeGreaterThanOrEqual(2);
+        expect(crossings(t.solution, t.threads, 0.01).count).toBe(0);
+      }
+    }
+  });
+
   it('fits the unit square with knots far enough apart', () => {
     const { solution } = makeTangle(6, 3);
     for (const k of solution) {

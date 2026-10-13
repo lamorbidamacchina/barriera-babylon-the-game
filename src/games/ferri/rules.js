@@ -92,10 +92,20 @@ function layLines(n, r) {
   return { knots, along, gap };
 }
 
+// A dropped knot: one of its lines runs on through the gap, the other one
+// stops on both sides of it (two lines crossing with no knot would be a
+// tangle in the solution). Knots to drop are picked again while one left
+// behind would hang on a single thread: those place themselves.
 function untangled({ knots, along }, r, drop) {
-  // A dropped knot: one of its lines runs on through the gap, the other one
-  // stops on both sides of it (two lines crossing with no knot would be a
-  // tangle in the solution).
+  let best = null;
+  for (let i = 0; i < TRIES && !(best?.loose === 0); i++) {
+    const t = dropKnots(knots, along, r, drop);
+    if (!best || t.loose < best.loose) best = t;
+  }
+  return { solution: best.solution, threads: best.threads };
+}
+
+function dropKnots(knots, along, r, drop) {
   const through = new Map(); // dropped knot → the line that runs on
   while (through.size < Math.min(drop, knots.length - 3)) {
     const k = Math.floor(r() * knots.length);
@@ -107,7 +117,7 @@ function untangled({ knots, along }, r, drop) {
   const threads = [];
   along.forEach((list, line) => {
     let prev = null;
-    for (const [, k] of list.sort((p, q) => p[0] - q[0])) {
+    for (const [, k] of [...list].sort((p, q) => p[0] - q[0])) {
       if (through.has(k)) {
         if (through.get(k) !== line) prev = null;
         continue;
@@ -117,7 +127,9 @@ function untangled({ knots, along }, r, drop) {
     }
   });
   const solution = knots.filter((k, i) => !through.has(i)).map(({ x, y }) => ({ x, y }));
-  return { solution, threads };
+  const degree = new Array(solution.length).fill(0);
+  for (const t of threads) degree[t.a]++, degree[t.b]++;
+  return { solution, threads, loose: degree.filter((d) => d < 2).length };
 }
 
 // The knots scrambled on a circle (unit square), in a random order, until at

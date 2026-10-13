@@ -92,6 +92,9 @@ const PATTERNS = {
     if (row % 2 === 0 || (col + (row >> 1)) % 2) return colors[0];
     return colors[1 + ((col + row) % (colors.length - 1))];
   },
+  // Patchwork, like the blankets of the "sferruzzamento solidale": squares
+  // of two stitches by two rows, each in its own yarn.
+  patchwork: (colors, col, row) => colors[(Math.floor(col / 2) * 4 + Math.floor(row / 2) * 5) % colors.length],
 };
 
 // The scarf hanging from a peg on the right of the screen: the grey start of

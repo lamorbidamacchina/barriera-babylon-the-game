@@ -36,6 +36,19 @@ export const LEVELS = [
     order: 'Mei Li distribuisce gomitoli come pastiglie di libertà. Lei li lancia, io li sbroglio. Tu mi aiuti.',
     win: 'Mei Li dice che non è bella. Però è calda. Basta e avanza.',
   },
+  {
+    name: 'SFERRUZZAMENTO SOLIDALE',
+    lines: 6,
+    drop: 2,
+    seed: 3033,
+    minCrossings: 12,
+    time: 150,
+    drone: { first: 12, every: 18, speed: 75, band: 40 },
+    hintColors: false,
+    stripe: 'patchwork',
+    order: 'Diciotto maglioni e sei coperte entro fine mese, dice Rosanna. Io intanto ho questo nodo. Priorità.',
+    win: 'Rosanna mi ha dato nove. In seminario non ho mai superato il quattro.',
+  },
 ];
 
 // Don Remo during the round and after a lost one (the win lines are in each

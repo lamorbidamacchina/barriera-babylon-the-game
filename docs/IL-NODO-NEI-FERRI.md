@@ -57,7 +57,7 @@ Ogni livello ha un tempo ("Irene arriva tra..."). A zero il livello è perso con
 
 ## 7. La sciarpa
 
-- Una riga per ogni livello superato, con i colori dei fili di quel livello e un punto diverso: righe (livello 1), pois come le "pastiglie di libertà" di Mei Li (livello 2), da decidere per il livello 3, cuoricini per il trentottesimo no, frange e anello verde per il matrimonio.
+- Una riga per ogni livello superato, con i colori dei fili di quel livello e un punto diverso: righe (livello 1), pois come le "pastiglie di libertà" di Mei Li (livello 2), patchwork come le coperte dello sferruzzamento solidale (livello 3), cuoricini per il trentottesimo no, frange e anello verde per il matrimonio.
 - Alla vittoria i fili scivolano nella sciarpa e la nuova riga si lavora una fila alla volta (un tic per fila).
 - La sciarpa mostra le righe già guadagnate (dal salvataggio), quindi cresce da una partita all'altra.
 
@@ -69,9 +69,11 @@ Numeri di partenza: si tarano dopo le prove su iPad, a piccoli passi come per Mu
 |---|---|---|---|---|---|---|---|
 | 1 | IL PRIMO GIRO | 4 | 6 | 8 | 90 s | ogni 30 s, il primo a 20 s, lento | un colore per retta (aiuto) |
 | 2 | I GOMITOLI DI MEI LI | 5 | 10 | 15 | 120 s | ogni 22 s | un colore per retta |
-| 3 | SFERRUZZAMENTO SOLIDALE | 6 | 15 | 24 | 150 s | ogni 18 s | casuali |
-| 4 | IL TRENTOTTESIMO NO | 7 (−3 gomitoli) | 18 | ~29 | 170 s | ogni 15 s, più veloce | casuali |
-| 5 | IL MATRIMONIO | 7 | 21 | 35 | 180 s | ogni 12 s, due droni | casuali |
+| 3 | SFERRUZZAMENTO SOLIDALE | 6 (−2 gomitoli) | 13 | 19 | 150 s | ogni 18 s | casuali |
+| 4 | IL TRENTOTTESIMO NO | 6 | 15 | 24 | 170 s | ogni 15 s, più veloce | casuali |
+| 5 | IL MATRIMONIO | 7 (−3 gomitoli) | 18 | ~27 | 180 s | ogni 12 s, due droni | casuali |
+
+Massimo 18 gomitoli: con 21 su un iPhone i gomitoli diventano troppo fitti (deciso il 13 ottobre). Per avere 13 o 18 gomitoli si parte da 6 o 7 rette e si tolgono gomitoli: una delle due rette passa dritta nel buco, l'altra si interrompe; nessun gomitolo resta attaccato a un filo solo.
 
 Con un colore per retta, i fili dello stesso colore nella soluzione stanno in fila: è l'aiuto dei primi due livelli.
 
