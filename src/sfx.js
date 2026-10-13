@@ -13,6 +13,9 @@ export function unlockAudio() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
+    // iOS mutes web audio in silent mode unless the page asks to be played
+    // like media (Safari 16.4+). Side effect: it pauses the player's music.
+    if (navigator.audioSession) navigator.audioSession.type = 'playback';
     ctx = new AC();
     master = ctx.createGain();
     master.gain.value = muted ? 0 : 0.18;
@@ -37,6 +40,10 @@ export function toggleMute() {
 }
 
 export const isMuted = () => muted;
+
+// For the ?debug overlay: the AudioContext's state ('none' before the first
+// gesture), the game's mute button, and iOS's audio session type if any.
+export const audioInfo = () => `${ctx ? ctx.state : 'none'}${muted ? ' MUTED' : ''}  session ${navigator.audioSession?.type ?? '-'}`;
 
 // One note: wave type, start/end frequency, duration, start offset, volume.
 function tone(type, f1, f2, dur, at = 0, vol = 1) {

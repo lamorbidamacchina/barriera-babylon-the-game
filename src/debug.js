@@ -4,6 +4,8 @@
 // current swipe), plus a log of notable events. Built to chase the iPhone bug
 // where swipes stop registering for a few seconds.
 
+import { audioInfo } from './sfx.js';
+
 const LOG_SIZE = 10;
 
 export function initDebug(game) {
@@ -97,6 +99,7 @@ export function initDebug(game) {
     el.textContent = [
       `loop ${game.loop.running ? 'running' : 'SLEEPING'}  ${fps} fps`,
       `scene ${key}  state ${state}`,
+      `audio ${audioInfo()}`,
       `swipe ${stroke}  trail ${scene?.trail?.length ?? '-'}`,
       `touches on screen ${touchesNow}`,
       `pointers\n  ${pointers}`,
