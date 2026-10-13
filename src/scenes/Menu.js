@@ -2,13 +2,16 @@ import Phaser from 'phaser';
 import { WIDTH, HEIGHT, C, N } from '../config.js';
 import { text, blink, goTo, fadeIn } from '../ui.js';
 import { sfx } from '../sfx.js';
-import { GAMES } from '../data/games.js';
+import { GAMES, isComplete } from '../data/games.js';
+import { loadSave } from '../save.js';
 import { refreshRecords } from '../leaderboard.js';
 
 const LIST_X = 40;
 const LIST_Y = 62;
 const ROW_H = 34;
 const PIC = { x: 348, y: 62, size: 96 };
+const DONE = 0x8fd16a; // green chalk: a game played to the end
+const DONE_CSS = '#8fd16a';
 
 // Game selection, written in chalk on the Bar Stella blackboard.
 export default class Menu extends Phaser.Scene {
@@ -19,6 +22,7 @@ export default class Menu extends Phaser.Scene {
   create() {
     fadeIn(this);
     refreshRecords();
+    this.save = loadSave();
     this.index = 0;
 
     this.drawBoard();
@@ -83,6 +87,7 @@ export default class Menu extends Phaser.Scene {
     const title = text(this, LIST_X, y, game.title, { color, shadow: '#0e1410' });
     const sub = game.available ? game.desc : 'DOMANI';
     const desc = text(this, LIST_X, y + 12, sub, { color: C.chalkDim, shadow: null });
+    if (isComplete(game, this.save)) this.drawTick(LIST_X + title.width + 6, y - 2);
     if (!game.available) {
       // Crossed out in chalk, like a dish that's finished.
       const g = this.add.graphics();
@@ -95,6 +100,14 @@ export default class Menu extends Phaser.Scene {
       this.choose();
     });
     return { title, desc, y };
+  }
+
+  // A green chalk tick, 2px strokes: short down, long up.
+  drawTick(x, y) {
+    const g = this.add.graphics();
+    g.fillStyle(DONE, 0.95);
+    for (let i = 0; i < 4; i++) g.fillRect(x + i, y + 5 + i, 2, 2);
+    for (let i = 0; i < 8; i++) g.fillRect(x + 4 + i, y + 7 - i, 2, 2);
   }
 
   drawPicture() {
@@ -124,7 +137,8 @@ export default class Menu extends Phaser.Scene {
     this.pic.setTexture(game.portrait);
     this.picShade.setVisible(!game.available);
     this.picStamp.setVisible(!game.available);
-    this.picCaption.setText(game.available ? '1 GETTONE' : 'CHIUSO');
+    const done = isComplete(game, this.save);
+    this.picCaption.setText(!game.available ? 'CHIUSO' : done ? 'COMPLETATO' : '1 GETTONE').setColor(done ? DONE_CSS : C.chalkHi);
     this.meiText.setText(`MEI LI: ${game.mei}`);
   }
 
