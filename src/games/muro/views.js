@@ -3,21 +3,13 @@
 // the public one (university, clinic, park and tram, nursery, homes).
 // Knocking the Muro down reveals it, like the pictures of Gals Panic.
 import { Painter } from '../../painter.js';
+import { rng } from '../../rng.js';
 import { miniText, miniTextCentered } from '../../sprites/minifont.js';
 import { person, kid, bike, tree, SKIN, HAIR } from './people.js';
 
 export const VIEW_W = 480;
 export const VIEW_H = 240;
 
-// Same pictures every time: a small seeded random (mulberry32).
-function rng(seed) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 const between = (r, a, b) => a + Math.floor(r() * (b - a + 1));
 
 // Sky in flat bands, dithered into the next one over the last 4 rows.

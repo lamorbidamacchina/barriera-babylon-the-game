@@ -20,10 +20,11 @@ export const GAMES = [
   },
   {
     id: 'ferri',
+    scene: 'NodoNeiFerri',
     title: 'IL NODO NEI FERRI',
-    desc: 'Puzzle a maglia con gli sferruzzatori.',
+    desc: 'Sciogli i fili, non tagliare niente.',
     portrait: 'don-remo-96',
-    available: false,
+    available: true,
     mei: 'Don Remo prima finisce sciarpa. Tre mesi che ci prova.',
   },
   {

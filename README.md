@@ -49,6 +49,7 @@ Risoluzione interna 480×270, font Press Start 2P (in MAIUSCOLO usare `CAFFE'` i
 | frecce, Invio, Esc | navigazione menu |
 | mouse premuto / dito + trascina | taglia (Contrabbando) |
 | frecce (o WASD) / dito + trascina | muovi e traccia la linea (Muro Panic) |
+| mouse / dito + trascina, oppure Tab + frecce | sposta i gomitoli (Il nodo nei ferri) |
 | P o Esc | pausa |
 | cifre, Backspace | codice della verifica OTP |
 | F | schermo intero |
@@ -107,6 +108,8 @@ Internal resolution 480×270, font Press Start 2P (in UPPERCASE text write `CAFF
 | click / tap / any key | insert coin, then start |
 | arrows, Enter, Esc | menu navigation |
 | mouse held / finger + drag | slice (Contrabbando) |
+| arrows (or WASD) / finger + drag | move and draw the line (Muro Panic) |
+| mouse / finger + drag, or Tab + arrows | move the balls of wool (Il nodo nei ferri) |
 | P or Esc | pause |
 | digits, Backspace | OTP check code |
 | F | fullscreen |

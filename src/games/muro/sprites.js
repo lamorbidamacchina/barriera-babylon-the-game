@@ -1,22 +1,13 @@
 // Muro Panic sprites drawn on a Painter, without Phaser (so the preview tool
 // and the tests can use them): the face of the Muro, the player's cursor and
 // the patrols. textures.js turns them into textures.
+import { rng } from '../../rng.js';
 import { miniText } from '../../sprites/minifont.js';
 
 export const CURSOR_KEY = 'muro-cursor';
 export const CURSOR_SIZE = 11;
 export const RONDA_SIZE = 13;
 export const rondaKey = (light) => `muro-ronda-${light}`; // 'red' / 'blue': two frames of the siren
-
-// Same Muro every time: a small seeded random (mulberry32).
-function rng(seed) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 // Precast concrete panels like the Title screen's Muro: seams, joints, bolts
 // with rust running down, stencilled site markings.
