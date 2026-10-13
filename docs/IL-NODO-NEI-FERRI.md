@@ -57,7 +57,7 @@ Ogni livello ha un tempo ("Irene arriva tra..."). A zero il livello è perso con
 
 ## 7. La sciarpa
 
-- Una riga per ogni livello superato, con i colori dei fili di quel livello e un punto diverso: righe (livello 1), pois come le "pastiglie di libertà" di Mei Li (livello 2), patchwork come le coperte dello sferruzzamento solidale (livello 3), cuoricini per il trentottesimo no, frange e anello verde per il matrimonio.
+- Una riga per ogni livello superato, con i colori dei fili di quel livello e un punto diverso: righe (livello 1), pois come le "pastiglie di libertà" di Mei Li (livello 2), patchwork come le coperte dello sferruzzamento solidale (livello 3), due cuori su lilla, il colore del cappello di Irene, il secondo spezzato per il trentottesimo no (livello 4), frange e anello verde per il matrimonio.
 - Alla vittoria i fili scivolano nella sciarpa e la nuova riga si lavora una fila alla volta (un tic per fila).
 - La sciarpa mostra le righe già guadagnate (dal salvataggio), quindi cresce da una partita all'altra.
 

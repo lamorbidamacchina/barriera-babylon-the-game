@@ -49,6 +49,19 @@ export const LEVELS = [
     order: 'Diciotto maglioni e sei coperte entro fine mese, dice Rosanna. Io intanto ho questo nodo. Priorità.',
     win: 'Rosanna mi ha dato nove. In seminario non ho mai superato il quattro.',
   },
+  {
+    name: 'IL TRENTOTTESIMO NO',
+    lines: 6,
+    drop: 0,
+    seed: 4044,
+    minCrossings: 16,
+    time: 170,
+    drone: { first: 10, every: 15, speed: 85, band: 40 },
+    hintColors: false,
+    stripe: 'hearts',
+    order: 'Trentasette volte Irene ha detto no. Stasera ci riprovo, con la sciarpa quasi finita.',
+    win: 'No, ha detto. Ma con un proverbio nuovo. È un passo avanti.',
+  },
 ];
 
 // Don Remo during the round and after a lost one (the win lines are in each

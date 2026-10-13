@@ -95,7 +95,19 @@ const PATTERNS = {
   // Patchwork, like the blankets of the "sferruzzamento solidale": squares
   // of two stitches by two rows, each in its own yarn.
   patchwork: (colors, col, row) => colors[(Math.floor(col / 2) * 4 + Math.floor(row / 2) * 5) % colors.length],
+  // Two hearts on lilac, Irene's hat: a whole one, then a broken one for the
+  // thirty-eighth no.
+  hearts: (colors, col, row) => {
+    const heart = row >= 1 && row <= 4 ? HEART : row >= 7 && row <= 10 ? BROKEN_HEART : null;
+    const r = row >= 7 ? row - 7 : row - 1;
+    if (heart && heart[r][col - 1] === 'X') return row >= 7 ? 0xff4fa3 : 0xe0443a;
+    return 0xb48cff;
+  },
 };
+
+// Hearts in stitches, 5 wide and 4 tall.
+const HEART = ['.X.X.', 'XXXXX', '.XXX.', '..X..'];
+const BROKEN_HEART = ['.X.X.', 'XX.XX', '.X.X.', '..X..'];
 
 // The scarf hanging from a peg on the right of the screen: the grey start of
 // three months' work, then one stripe per level done. stripes: [{ pattern,
