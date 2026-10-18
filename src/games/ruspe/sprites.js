@@ -10,8 +10,10 @@ import { miniTextCentered } from '../../sprites/minifont.js';
 export const MAP_KEY = (level) => `ruspe-map-${level}`;
 export const RUSPA_KEY = 'ruspe-ruspa';
 export const RUSPA_SIZE = 16;
-export const SIGN_KEY = { official: 'ruspe-sign', mine: 'ruspe-sign-teresa' };
-export const SIGN_SIZE = 11;
+// One texture per kind and direction: rotating a small arrow on the GPU
+// blurs it (on iPad the left one looked like a +).
+export const signKey = (kind, dir) => `ruspe-sign-${kind}-${dir}`;
+export const SIGN_SIZE = 13;
 export const CURSOR_KEY = 'ruspe-cursor';
 export const FACE_SIZE = 20;
 export const faceKey = (kid) => `ruspe-face-${kid}`;
@@ -257,19 +259,30 @@ export function drawRuspa(p, s = RUSPA_SIZE) {
   p.outline(0x1a1208);
 }
 
-// A navigator sign pointing up (the scene turns it). The official ones are
-// the yellow road-works kind; Teresa's are white card with a pink marker
-// arrow, a little crooked.
-export function drawSign(p, kind = 'official', s = SIGN_SIZE) {
+// A navigator sign pointing dir (rules.js: 0 up, then clockwise). The
+// official ones are the yellow road-works kind; Teresa's are white card
+// with a pink marker arrow and a scribble in the corner. The arrow is drawn
+// pointing up and turned pixel by pixel, so it stays sharp.
+export function drawSign(p, kind = 'official', dir = 0, s = SIGN_SIZE) {
   const mine = kind === 'mine';
   const c = Math.floor(s / 2);
   p.rect(0, 0, s, s, mine ? 0xf4f1e8 : 0xe8b020);
   p.rect(0, s - 1, s, 1, mine ? 0xb8b0a0 : 0xb07a10);
   const ink = mine ? 0xff4fa3 : 0x1a1a1a;
-  // Arrow: a head and a shaft.
-  for (let i = 0; i < 4; i++) p.rect(c - i, 2 + i, i * 2 + 1, 1, ink);
-  p.rect(c - 1 + (mine ? 1 : 0), 6, 2, s - 8, ink);
-  if (mine) p.rect(1, s - 3, 1, 1, 0xff4fa3).rect(2, s - 2, 1, 1, 0xff4fa3); // a scribble in the corner
+  const arrow = new Painter(s, s);
+  for (let i = 0; i < 5; i++) arrow.rect(c - i, 2 + i, i * 2 + 1, 1, ink); // the head
+  arrow.rect(c - 1, 7, 3, s - 9, ink); // the shaft, centred
+  for (let y = 0; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      const v = arrow.get(x, y);
+      if (v === null) continue;
+      // Turn (x, y) a quarter clockwise dir times around the centre.
+      let [rx, ry] = [x, y];
+      for (let k = 0; k < dir; k++) [rx, ry] = [s - 1 - ry, rx];
+      p.set(rx, ry, v);
+    }
+  }
+  if (mine) p.rect(1, s - 3, 1, 1, ink).rect(2, s - 2, 1, 1, ink);
   p.outline(0x1a1208);
 }
 

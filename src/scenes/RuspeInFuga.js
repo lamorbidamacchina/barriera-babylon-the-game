@@ -7,7 +7,7 @@ import { refreshRecords, beatsRecord } from '../leaderboard.js';
 import { drawBarrieraRecord, askNickname } from '../records.js';
 import { LEVELS, ROSANNA, BAR } from '../games/ruspe/levels.js';
 import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, forecast, patrolCells, MARBLES_TIME, FOAM_TIME } from '../games/ruspe/rules.js';
-import { createTextures, MAP_KEY, RUSPA_KEY, SIGN_KEY, CURSOR_KEY, MARBLES_KEY, FOAM_KEY, faceKey } from '../games/ruspe/textures.js';
+import { createTextures, MAP_KEY, RUSPA_KEY, signKey, CURSOR_KEY, MARBLES_KEY, FOAM_KEY, faceKey } from '../games/ruspe/textures.js';
 
 const HUD_H = 28;
 const BAR_Y = FIELD.y + FIELD.h; // the tool bar, under the map
@@ -369,10 +369,10 @@ export default class RuspeInFuga extends Phaser.Scene {
       if (!img) {
         const [x, y] = k.split(',').map(Number);
         const c = cellCenter(x, y);
-        img = this.add.image(c.x, c.y, SIGN_KEY.official).setDepth(8);
+        img = this.add.image(c.x, c.y, signKey('official', s.dir)).setDepth(8);
         this.signImgs.set(k, img);
       }
-      img.setTexture(s.mine ? SIGN_KEY.mine : SIGN_KEY.official).setAngle(s.dir * 90);
+      img.setTexture(signKey(s.mine ? 'mine' : 'official', s.dir));
     }
     for (const [k, img] of this.signImgs) {
       if (!this.round.signs.has(k)) {

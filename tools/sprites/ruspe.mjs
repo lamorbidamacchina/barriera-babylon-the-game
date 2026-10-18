@@ -7,8 +7,7 @@ import { drawMap, drawRuspa, drawSign, drawCursor, drawFace, drawPigeon, drawMar
 
 export default [
   { name: 'ruspa', w: RUSPA_SIZE, h: RUSPA_SIZE, draw: (p) => drawRuspa(p) },
-  { name: 'sign', w: SIGN_SIZE, h: SIGN_SIZE, draw: (p) => drawSign(p, 'official') },
-  { name: 'sign-teresa', w: SIGN_SIZE, h: SIGN_SIZE, draw: (p) => drawSign(p, 'mine') },
+  ...['official', 'mine'].flatMap((kind) => [0, 1, 2, 3].map((dir) => ({ name: `sign-${kind}-${dir}`, w: SIGN_SIZE, h: SIGN_SIZE, draw: (p) => drawSign(p, kind, dir) }))),
   { name: 'marbles', w: MARBLES_SIZE, h: MARBLES_SIZE, draw: (p) => drawMarbles(p) },
   { name: 'foam', w: FOAM_SIZE, h: FOAM_SIZE, draw: (p) => drawFoam(p) },
   { name: 'cursor', w: 16, h: 16, draw: (p) => drawCursor(p) },
