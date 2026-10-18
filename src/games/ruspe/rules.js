@@ -32,7 +32,9 @@ const turn = (dir, n) => (dir + n) % 4;
 export const ROAD = new Set(['.', 'C', 'A', ...Object.keys(ARROWS)]);
 
 // The tools, one Comitato Caos kid each, in tool bar order.
-export const TOOLS = ['teresa'];
+export const TOOLS = ['teresa', 'chiara'];
+// How long Chiara's marbles stay on the street, in seconds.
+export const MARBLES_TIME = 10;
 
 // Same range as the other games: a won level is worth a few hundred points.
 export const POINTS = { perBulldozer: 100, perToolLeft: 30, perSecondLeft: 5 };
@@ -61,11 +63,14 @@ export function parseMap(rows) {
   return { rows, at, isRoad, gates, goals, signs };
 }
 
-// Which way a bulldozer leaves cell (x, y), arriving with heading dir: the
-// sign's way if there is one, otherwise straight on. Blocked: right, then
+// Which way a bulldozer leaves cell (x, y), arriving with heading dir. On
+// Chiara's marbles it skids and goes back. Otherwise the sign's way if there
+// is one, unless the sign points back where it came from (no sign makes a
+// bulldozer turn round), and straight on without one. Blocked: right, then
 // left, then back.
-export function chooseDir(map, signs, x, y, dir) {
-  const want = signs.get(key(x, y))?.dir ?? dir;
+export function chooseDir(map, signs, x, y, dir, marbles) {
+  const sign = signs.get(key(x, y))?.dir;
+  const want = marbles?.has(key(x, y)) ? turn(dir, 2) : sign !== undefined && sign !== turn(dir, 2) ? sign : dir;
   for (const n of [0, 1, 3, 2]) {
     const d = turn(want, n);
     if (map.isRoad(x + STEP[d][0], y + STEP[d][1])) return d;
@@ -93,10 +98,15 @@ export function createRound(level) {
     elapsed: 0,
     timeLeft: level.time,
     result: null,
+    marbles: new Map(), // cell key → seconds left
+    drone: level.drone ? { x: level.drone.path[0][0], y: level.drone.path[0][1], next: 1, frozen: 0 } : null,
     events: [], // what happened in the last step, for sounds and effects
     nextId: 1,
   };
 }
+
+// The cell the guide drone is over.
+export const droneCell = (d) => ({ x: Math.round(d.x), y: Math.round(d.y) });
 
 // A tool used on cell (x, y). Returns what happened ({ ok: false } when the
 // tool can't go there), and takes one use of the tool when it counts.
@@ -121,6 +131,13 @@ export function useTool(round, tool, x, y) {
     signs.set(key(x, y), { dir: ways[0], official: null, mine: true });
     return { ok: true, what: 'sign' };
   }
+  if (tool === 'chiara') {
+    if (!map.isRoad(x, y) || map.at(x, y) === 'C' || map.at(x, y) === 'A' || round.marbles.has(key(x, y))) return { ok: false };
+    if (!tools.chiara) return { ok: false, empty: true };
+    tools.chiara--;
+    round.marbles.set(key(x, y), MARBLES_TIME);
+    return { ok: true, what: 'marbles' };
+  }
   return { ok: false };
 }
 
@@ -129,14 +146,20 @@ export function useTool(round, tool, x, y) {
 export function step(round, dt) {
   round.events = [];
   if (round.result) return round;
-  const { level, map, signs } = round;
+  const { level, map, signs, marbles } = round;
   round.elapsed += dt;
   round.timeLeft = Math.max(0, round.timeLeft - dt);
+
+  for (const [k, left] of marbles) {
+    if (left <= dt) marbles.delete(k);
+    else marbles.set(k, left - dt);
+  }
+  if (round.drone) moveDrone(round, dt);
 
   // Out of the gates, taking turns when there are several.
   if (round.spawned < level.count && round.elapsed >= round.nextSpawn) {
     const g = map.gates[round.spawned % map.gates.length];
-    round.ruspe.push({ id: round.nextId++, x: g.x, y: g.y, dir: chooseDir(map, signs, g.x, g.y, g.dir), t: 0 });
+    round.ruspe.push({ id: round.nextId++, x: g.x, y: g.y, dir: chooseDir(map, signs, g.x, g.y, g.dir, marbles), t: 0 });
     round.spawned++;
     round.nextSpawn += level.interval;
     round.events.push({ type: 'out' });
@@ -153,8 +176,9 @@ export function step(round, dt) {
         round.inside++;
         round.events.push({ type: 'in', x: r.x, y: r.y });
       } else {
-        const d = chooseDir(map, signs, r.x, r.y, r.dir);
-        if (d !== r.dir) round.events.push({ type: 'turn' });
+        const d = chooseDir(map, signs, r.x, r.y, r.dir, marbles);
+        if (marbles.has(key(r.x, r.y))) round.events.push({ type: 'skid', x: r.x, y: r.y });
+        else if (d !== r.dir) round.events.push({ type: 'turn' });
         r.dir = d;
       }
     }
@@ -164,6 +188,41 @@ export function step(round, dt) {
   if (round.inside >= level.need) round.result = 'win';
   else if (round.timeLeft <= 0) round.result = 'time';
   return round;
+}
+
+// The guide drone flies its patrol (a loop of cells, in straight lines) and
+// puts every sign it flies over back as the official route wants it:
+// Teresa's own signs go, turned official ones turn back.
+function moveDrone(round, dt) {
+  const d = round.drone;
+  const { path, speed } = round.level.drone;
+  if (d.frozen > 0) {
+    d.frozen = Math.max(0, d.frozen - dt);
+    return;
+  }
+  const before = droneCell(d);
+  let go = speed * dt;
+  while (go > 0) {
+    const [tx, ty] = path[d.next];
+    const dist = Math.abs(tx - d.x) + Math.abs(ty - d.y);
+    if (dist <= go) {
+      d.x = tx;
+      d.y = ty;
+      go -= dist;
+      d.next = (d.next + 1) % path.length;
+    } else {
+      d.x += Math.sign(tx - d.x) * Math.min(go, Math.abs(tx - d.x));
+      d.y += Math.sign(ty - d.y) * Math.min(go, Math.abs(ty - d.y));
+      go = 0;
+    }
+  }
+  const c = droneCell(d);
+  if (c.x === before.x && c.y === before.y) return;
+  const s = round.signs.get(key(c.x, c.y));
+  if (!s?.mine) return;
+  if (s.official === null) round.signs.delete(key(c.x, c.y));
+  else Object.assign(s, { dir: s.official, mine: false });
+  round.events.push({ type: 'reset', x: c.x, y: c.y });
 }
 
 // Where a bulldozer is drawn, in cells (fractions while it drives).

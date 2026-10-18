@@ -1,19 +1,20 @@
 import Phaser from 'phaser';
 import { WIDTH, HEIGHT, C, N } from '../config.js';
-import { text, blink, panel, goTo, fadeIn, overlay, button, banner, typeText, hitArea } from '../ui.js';
+import { text, blink, panel, goTo, fadeIn, overlay, button, banner, typeText, hitArea, droneTexture } from '../ui.js';
 import { sfx } from '../sfx.js';
 import { loadSave, writeSave } from '../save.js';
 import { refreshRecords, beatsRecord } from '../leaderboard.js';
 import { drawBarrieraRecord, askNickname } from '../records.js';
 import { LEVELS, ROSANNA, BAR } from '../games/ruspe/levels.js';
-import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score } from '../games/ruspe/rules.js';
-import { createTextures, MAP_KEY, RUSPA_KEY, SIGN_KEY, CURSOR_KEY, faceKey } from '../games/ruspe/textures.js';
+import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, MARBLES_TIME } from '../games/ruspe/rules.js';
+import { createTextures, MAP_KEY, RUSPA_KEY, SIGN_KEY, CURSOR_KEY, MARBLES_KEY, faceKey } from '../games/ruspe/textures.js';
 
 const HUD_H = 28;
 const BAR_Y = FIELD.y + FIELD.h; // the tool bar, under the map
 const TOOL_W = 48;
+const SAY_W = 320; // Rosanna's lines: 40 characters a line
 const GAME_ID = 'ruspe'; // in the save and in the Barriera records
-const KIDS = { teresa: { name: 'TERESA', what: 'CARTELLO' } };
+const KIDS = { teresa: { name: 'TERESA', what: 'CARTELLO' }, chiara: { name: 'CHIARA', what: 'BIGLIE' } };
 const pick = Phaser.Utils.Array.GetRandom;
 const DIRS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] };
 const cellCenter = (x, y) => ({ x: FIELD.x + x * TILE + TILE / 2, y: FIELD.y + y * TILE + TILE / 2 });
@@ -44,6 +45,8 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.round = createRound(this.lv);
     this.ruspaImgs = new Map(); // bulldozer id → image
     this.signImgs = new Map(); // cell key → image
+    this.marbleImgs = new Map(); // cell key → image
+    this.setupDrone();
     this.hover = this.add.image(0, 0, CURSOR_KEY).setOrigin(0).setDepth(20).setVisible(false);
     this.cursor = null; // the keyboard's cell, once the arrows are used
     this.syncSigns();
@@ -55,6 +58,34 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.input.keyboard.on('keydown', (e) => this.onKey(e));
 
     this.showIntro();
+  }
+
+  // The guide drone over its patrol, drawn as a faint dotted line so its
+  // round can be planned around.
+  setupDrone() {
+    if (!this.round.drone) return;
+    droneTexture(this);
+    const g = this.add.graphics().setDepth(4);
+    const { path } = this.lv.drone;
+    g.fillStyle(N.droneLight, 0.35);
+    path.forEach(([x, y], i) => {
+      const [nx, ny] = path[(i + 1) % path.length];
+      const a = cellCenter(x, y);
+      const b = cellCenter(nx, ny);
+      const n = Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y)) / 4;
+      for (let k = 0; k <= n; k++) g.fillRect(Math.round(a.x + ((b.x - a.x) * k) / n) - 1, Math.round(a.y + ((b.y - a.y) * k) / n) - 1, 2, 2);
+    });
+    this.droneShadow = this.add.ellipse(0, 0, 22, 7, N.black, 0.4).setDepth(14);
+    this.droneImg = this.add.image(0, 0, 'drone').setScale(2).setDepth(16);
+    this.drawDrone(0);
+  }
+
+  drawDrone(time) {
+    const d = this.round.drone;
+    if (!d) return;
+    const c = cellCenter(d.x, d.y);
+    this.droneShadow.setPosition(Math.round(c.x), Math.round(c.y) + 4);
+    this.droneImg.setPosition(Math.round(c.x), Math.round(c.y) - 10 + Math.round(Math.sin(time / 200) * 2));
   }
 
   // ---------------------------------------------------------------- HUD and tool bar
@@ -122,16 +153,15 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.updateToolBar();
   }
 
-  // Rosanna's comments, briefly, in the tool bar.
+  // Rosanna's comments, briefly, on a dark strip at the top of the map: the
+  // maps keep their top row for buildings.
   say(lines, chance = 1) {
     if (Math.random() > chance) return;
     this.bubble?.destroy();
     const line = typeof lines === 'string' ? lines : pick(lines);
-    // In place of the tool's name, two lines at most, clear of the
-    // bottom-right corner.
-    const t = (this.bubble = text(this, this.toolName.x, BAR_Y + 6, line, { color: C.white, wrap: 300 - this.toolName.x }).setDepth(62));
-    this.toolName.setVisible(false);
-    t.once('destroy', () => this.toolName.setVisible(true));
+    const t = (this.bubble = text(this, 10, FIELD.y + 6, line, { color: C.white, wrap: SAY_W }).setDepth(55));
+    const bg = this.add.rectangle(6, t.y - 4, t.width + 8, t.height + 8, N.black, 0.7).setOrigin(0).setDepth(54);
+    t.once('destroy', () => bg.destroy());
     this.time.delayedCall(3200, () => t.active && t.destroy());
   }
 
@@ -202,7 +232,7 @@ export default class RuspeInFuga extends Phaser.Scene {
       sfx.start();
       banner(this, 'VIA!', C.ocraLight, 600);
       this.state = 'play';
-      this.say(this.level === 0 && !this.progress.unlocked ? ROSANNA.first : ROSANNA.start);
+      this.say(this.progress.unlocked <= this.level ? this.lv.tip : ROSANNA.start);
     });
   }
 
@@ -324,18 +354,49 @@ export default class RuspeInFuga extends Phaser.Scene {
     step(this.round, dt);
     for (const ev of this.round.events) this.onEvent(ev);
     this.drawRuspe(time);
+    this.drawMarbles(time);
+    this.drawDrone(time);
     if (Math.ceil(this.round.timeLeft) !== before || this.round.events.length) this.updateHud();
     if (this.round.result) this.endRound(this.round.result);
   }
 
   onEvent(ev) {
-    if (ev.type === 'out') sfx.drone();
+    if (ev.type === 'out') sfx.move();
+    else if (ev.type === 'skid') sfx.swoosh();
+    else if (ev.type === 'reset') {
+      sfx.error();
+      this.syncSigns();
+      const c = cellCenter(ev.x, ev.y);
+      const flash = this.add.rectangle(c.x, c.y, TILE, TILE, N.droneLight, 0.5).setDepth(9);
+      this.tweens.add({ targets: flash, alpha: 0, duration: 400, onComplete: () => flash.destroy() });
+      this.say(ROSANNA.drone, 0.5);
+    }
     else if (ev.type === 'in') {
       sfx.coin();
       const c = cellCenter(ev.x, ev.y);
       const puff = this.add.circle(c.x, c.y, 6, N.paper, 0.6).setDepth(12);
       this.tweens.add({ targets: puff, scale: 2.5, alpha: 0, duration: 400, onComplete: () => puff.destroy() });
       this.say(ROSANNA.in, 0.35);
+    }
+  }
+
+  // Chiara's marbles where they still are; they blink in their last seconds.
+  drawMarbles(time) {
+    for (const [k, left] of this.round.marbles) {
+      let img = this.marbleImgs.get(k);
+      if (!img) {
+        const [x, y] = k.split(',').map(Number);
+        const c = cellCenter(x, y);
+        img = this.add.image(c.x, c.y, MARBLES_KEY).setDepth(7);
+        this.marbleImgs.set(k, img);
+        this.tweens.add({ targets: img, scale: { from: 1.8, to: 1 }, duration: 160, ease: 'Back.out' });
+      }
+      img.setVisible(left > MARBLES_TIME * 0.25 || Math.floor(time / 150) % 2 === 0);
+    }
+    for (const [k, img] of this.marbleImgs) {
+      if (this.round.marbles.has(k)) continue;
+      img.destroy();
+      this.marbleImgs.delete(k);
     }
   }
 

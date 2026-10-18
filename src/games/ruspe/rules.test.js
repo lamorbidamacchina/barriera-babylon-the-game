@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseMap, chooseDir, createRound, useTool, step, replay, score, openDirs, UP, RIGHT, DOWN, LEFT, COLS } from './rules.js';
+import { parseMap, chooseDir, createRound, useTool, step, replay, score, openDirs, droneCell, MARBLES_TIME, UP, RIGHT, DOWN, LEFT, COLS } from './rules.js';
 
 // A small test town, padded to the full width with blocks.
 const pad = (rows) => rows.map((r) => r.padEnd(COLS, '#'));
@@ -45,6 +45,16 @@ describe('driving', () => {
   it('obeys a sign, unless it points into a wall', () => {
     expect(chooseDir(m, new Map([['3,1', { dir: DOWN }]]), 3, 1, RIGHT)).toBe(DOWN);
     expect(chooseDir(m, new Map([['2,1', { dir: UP }]]), 2, 1, RIGHT)).toBe(RIGHT); // right of up
+  });
+
+  it('never turns round for a sign', () => {
+    // Heading left onto a sign pointing right: straight on.
+    expect(chooseDir(m, new Map([['3,1', { dir: RIGHT }]]), 3, 1, LEFT)).toBe(LEFT);
+  });
+
+  it('skids on marbles and goes back, whatever the sign says', () => {
+    const marbles = new Map([['3,1', 5]]);
+    expect(chooseDir(m, new Map([['3,1', { dir: DOWN }]]), 3, 1, RIGHT, marbles)).toBe(LEFT);
   });
 
   it('lists the ways out of a cell clockwise from up', () => {
@@ -126,6 +136,63 @@ describe('Teresa', () => {
     // Down at the first crossing: they loop below and never reach the mall.
     const r = replay(level(), [{ at: 0, tool: 'teresa', x: 3, y: 1 }, { at: 0, tool: 'teresa', x: 3, y: 1 }]);
     expect(r.inside).toBe(0);
+  });
+});
+
+describe('Chiara', () => {
+  it('puts marbles on a street for a while, one use each', () => {
+    const r = createRound(level({ tools: { chiara: 1 } }));
+    expect(useTool(r, 'chiara', 1, 1).ok).toBe(false); // the gate
+    expect(useTool(r, 'chiara', 3, 1)).toMatchObject({ ok: true, what: 'marbles' });
+    expect(useTool(r, 'chiara', 3, 3)).toMatchObject({ ok: false, empty: true });
+    expect(r.tools.chiara).toBe(0);
+    run(r, MARBLES_TIME - 0.5);
+    expect(r.marbles.has('3,1')).toBe(true);
+    run(r, 1);
+    expect(r.marbles.has('3,1')).toBe(false);
+  });
+
+  it('sends the bulldozers back where they came from', () => {
+    // Marbles before the mall: they bounce back and loop below instead.
+    const r = createRound(level({ tools: { chiara: 1 }, time: 3 }));
+    useTool(r, 'chiara', 4, 1);
+    run(r, 2);
+    expect(r.inside).toBe(0);
+  });
+});
+
+describe('the guide drone', () => {
+  // A street with an official sign at (3,1) pointing down.
+  const MAP = pad(['#######', '#C.v.A#', '###.###', '###.###', ...Array(9).fill('#')]);
+  const drone = (o = {}) => createRound(level({ map: MAP, drone: { path: [[1, 1], [5, 1]], speed: 2 }, ...o }));
+
+  it('flies its patrol there and back', () => {
+    const r = drone({ count: 0 });
+    run(r, 1);
+    expect(droneCell(r.drone)).toEqual({ x: 3, y: 1 });
+    run(r, 1);
+    expect(droneCell(r.drone)).toEqual({ x: 5, y: 1 });
+    run(r, 2);
+    expect(droneCell(r.drone)).toEqual({ x: 1, y: 1 });
+  });
+
+  it('puts turned official signs back and takes Teresa\'s away', () => {
+    const r = drone({ count: 0, map: pad(['#######', '#C.v..#', '###.###', '###.###', ...Array(9).fill('#')]), tools: { teresa: 2 } });
+    r.drone.x = 5; // start on the right, flying left
+    r.drone.next = 0;
+    useTool(r, 'teresa', 3, 1); // official: down → turned
+    useTool(r, 'teresa', 4, 1); // a new one
+    expect(r.signs.get('3,1').mine).toBe(true);
+    run(r, 1.2);
+    expect(r.signs.has('4,1')).toBe(false);
+    expect(r.signs.get('3,1')).toMatchObject({ dir: DOWN, mine: false });
+    const resets = [];
+    const q = drone({ count: 0, tools: { teresa: 1 } });
+    q.drone.x = 5;
+    q.drone.next = 0;
+    useTool(q, 'teresa', 3, 1);
+    for (let i = 0; i < 120; i++) resets.push(...step(q, 1 / 60).events.filter((e) => e.type === 'reset'));
+    expect(resets).toEqual([{ type: 'reset', x: 3, y: 1 }]);
   });
 });
 

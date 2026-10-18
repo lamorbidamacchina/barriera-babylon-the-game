@@ -5,6 +5,7 @@
 import { shaded } from '../../painter.js';
 import { rng } from '../../rng.js';
 import { TILE, COLS, ROWS, ROAD } from './rules.js';
+import { miniTextCentered } from '../../sprites/minifont.js';
 
 export const MAP_KEY = (level) => `ruspe-map-${level}`;
 export const RUSPA_KEY = 'ruspe-ruspa';
@@ -14,6 +15,8 @@ export const SIGN_SIZE = 11;
 export const CURSOR_KEY = 'ruspe-cursor';
 export const FACE_SIZE = 20;
 export const faceKey = (kid) => `ruspe-face-${kid}`;
+export const MARBLES_KEY = 'ruspe-marbles';
+export const MARBLES_SIZE = 12;
 
 const ASPHALT = 0x2b2f37;
 const ASPHALT_2 = 0x30343d;
@@ -37,6 +40,7 @@ export function drawMap(p, rows) {
       else if (c === 'K') drawSite(p, px, py, r);
       else if (c === 'M') drawMallRoof(p, px, py, r);
       else if (c === 'T') drawPark(p, px, py, r);
+      else if (c === 'W') drawMuro(p, px, py, x, y, r);
       else drawRoof(p, px, py, x, y, r);
       if (!road(x, y)) drawCurbs(p, px, py, road(x - 1, y), road(x + 1, y), road(x, y - 1), road(x, y + 1));
     }
@@ -45,6 +49,7 @@ export function drawMap(p, rows) {
   for (const [ch, draw] of [
     ['M', drawMallLogo],
     ['K', drawSiteSign],
+    ['W', drawMuroStencil],
   ]) {
     const box = bounds(rows, ch);
     if (box) draw(p, box);
@@ -115,6 +120,21 @@ function drawSite(p, px, py, r) {
 function drawMallRoof(p, px, py, r) {
   p.rect(px, py, TILE, TILE, (x, y) => (x % 8 === 0 || y % 8 === 0 ? 0x6e737a : 0x7d828a));
   if (r() < 0.18) p.rect(px + 3, py + 3, 6, 5, 0x9aa0a8).rect(px + 3, py + 3, 6, 1, 0xb8bcc4).rect(px + 5, py + 5, 2, 2, 0x4a505a);
+}
+
+// The Muro already built, from above: concrete panels as in Muro Panic,
+// bolted, with seams every two cells.
+function drawMuro(p, px, py, x, y, r) {
+  p.rect(px, py, TILE, TILE, (xx, yy) => ((xx * 13 + yy * 7) % 23 === 0 ? 0x545450 : 0x5b5b58));
+  for (let i = 0; i < 6; i++) p.rect(px + Math.floor(r() * 14), py + Math.floor(r() * 15), 1 + Math.floor(r() * 3), 1, r() < 0.6 ? 0x4c4c47 : 0x6a6a64);
+  if (x % 2 === 0) p.rect(px, py, 1, TILE, 0x45453f).rect(px + 1, py, 1, TILE, 0x6a6a64);
+  if (y % 2 === 0) p.rect(px, py, TILE, 1, 0x45453f).rect(px, py + 1, TILE, 1, 0x6a6a64);
+  if (x % 2 === 0 && y % 2 === 0) p.rect(px + 4, py + 4, 2, 2, 0x3a3a38).rect(px + 4, py + 4, 1, 1, 0x8a8a84);
+}
+
+// MURO stencilled on its top, in ocra.
+function drawMuroStencil(p, box) {
+  miniTextCentered(p, 'MURO', box.x + box.w / 2, box.y + Math.floor(box.h / 2) - 5, 0xc9963a, 2);
 }
 
 // A park: grass and round tree tops.
@@ -230,6 +250,18 @@ export function drawSign(p, kind = 'official', s = SIGN_SIZE) {
   p.outline(0x1a1208);
 }
 
+// Chiara's marbles on the asphalt: glass balls in four colours, each with a
+// swirl and a highlight.
+export function drawMarbles(p, s = MARBLES_SIZE) {
+  const balls = [[3, 3, 0x4a90e0], [8, 4, 0x3fbf5f], [5, 8, 0xe0443a], [9, 9, 0xe8c06a]];
+  for (const [x, y, c] of balls) {
+    p.ellipse(x + 0.5, y + 0.5, 2.5, 2.5, c);
+    p.rect(x - 1, y - 1, 1, 1, 0xf4f1e8);
+    p.rect(x + 1, y + 1, 1, 1, 0x1a1a22);
+  }
+  p.outline(0x0e0e14);
+}
+
 // The keyboard cursor and the hover marker: four corners.
 export function drawCursor(p, s = TILE) {
   const c = 0xe8c06a;
@@ -261,5 +293,26 @@ function teresa(p, s) {
   p.outline(OUTLINE);
 }
 
-export const KIDS = { teresa };
+// Chiara, 8: marbles "con precisione chirurgica" and a week of war films
+// with her uncle. A green army helmet over two pigtails, a blue marble
+// between finger and thumb.
+function chiara(p, s) {
+  const c = s / 2;
+  p.ellipse(c - 6, c + 2, 1.5, 3, 0x6a3a1a).ellipse(c + 6, c + 2, 1.5, 3, 0x6a3a1a); // pigtails
+  p.ellipse(c, c + 1, 5, 5.5, shaded({ base: SKIN, dark: 0xd8a070, light: 0xf8dcc0 }, c, c + 1, 5, 5.5));
+  // The helmet, with a camouflage blotch.
+  p.ellipse(c, c - 3, 6.5, 4, shaded({ base: 0x4a6a34, dark: 0x34502a, light: 0x6a8a4a }, c, c - 3, 6.5, 4));
+  p.rect(c - 7, c - 1, 14, 1, 0x34502a);
+  p.rect(c - 3, c - 5, 2, 1, 0x2a3a1e).rect(c + 2, c - 4, 2, 1, 0x7a6a3a);
+  p.rect(c - 3, c + 1, 2, 2, 0x1a1010).rect(c + 2, c + 1, 2, 2, 0x1a1010); // eyes, wide open
+  p.rect(c - 1, c + 4, 3, 1, 0xa86a50);
+  p.rect(c - 5, c + 6, 11, s - c - 7, 0x6a7a3a); // khaki jacket
+  // The marble, held up.
+  p.rect(c + 6, c + 6, 2, 2, SKIN);
+  p.ellipse(c + 7.5, c + 4.5, 1.8, 1.8, 0x4a90e0);
+  p.rect(c + 7, c + 3, 1, 1, 0xf4f1e8);
+  p.outline(OUTLINE);
+}
+
+export const KIDS = { teresa, chiara };
 export const drawFace = (p, kid, s = FACE_SIZE) => KIDS[kid](p, s);

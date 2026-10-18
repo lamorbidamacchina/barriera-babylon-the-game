@@ -19,7 +19,7 @@ Il gioco è un **Lemmings visto dall'alto**. Le ruspe vanno avanti da sole e chi
 
 - La mappa è una griglia di 30×13 caselle da 16 px, vista dall'alto: strade, isolati, il cantiere del Muro, il centro commerciale.
 - Le ruspe escono dal cancello del cantiere una alla volta (`interval` secondi) e vanno di casella in casella.
-- In ogni casella una ruspa segue il cartello, se c'è, altrimenti va dritta. Se la strada è chiusa gira a destra, poi a sinistra, poi torna indietro. La regola è sempre la stessa, così si impara.
+- In ogni casella una ruspa segue il cartello, se c'è, altrimenti va dritta. Nessun cartello fa fare inversione: se il cartello punta da dove la ruspa arriva, la ruspa lo ignora e va dritta. Sulle biglie di Chiara la ruspa slitta e torna indietro, qualunque cosa dica il cartello. Se la strada è chiusa gira a destra, poi a sinistra, poi torna indietro. La regola è sempre la stessa, così si impara.
 - Una ruspa che arriva all'ingresso secondario entra e conta.
 - **Vittoria**: `need` ruspe dentro su `count`. Il livello finisce appena si arriva a `need`.
 - **Sconfitta**: il tempo finisce prima, banner **ARRIVANO GLI OPERAI**.
@@ -39,7 +39,7 @@ Gli attrezzi sono nella barra in basso a sinistra, ognuno con il volto del bambi
 
 ## 4. Il drone guida (dal livello 2)
 
-Il drone segue un giro fisso. Ogni cartello su cui passa torna come da percorso ufficiale: i cartelli di Teresa spariscono e quelli ufficiali girati tornano com'erano. Prima di arrivare si sente il ronzio e si vede l'ombra, come in Il nodo nei ferri.
+Il drone fa sempre lo stesso giro, avanti e indietro in linea retta, ed è sempre visibile. Il suo giro è segnato sulla mappa con una linea a puntini, così si può aggirarlo. Ogni cartello su cui passa torna come da percorso ufficiale: i cartelli di Teresa spariscono e quelli ufficiali girati tornano com'erano. Quando succede, la casella lampeggia e Rosanna a volte lo fa notare. Le biglie non le tocca.
 
 ## 5. Controlli
 
@@ -53,7 +53,8 @@ Il drone segue un giro fisso. Ogni cartello su cui passa torna come da percorso 
 
 - In alto, l'HUD (28 px): `DENTRO 3/6`, `RUSPE 5/8` (quante sono uscite), il tempo e `II`.
 - La mappa: y 28–236.
-- In basso, la barra degli attrezzi (34 px): i bambini a sinistra, poi il nome dell'attrezzo scelto. Le battute di Rosanna compaiono al posto del nome, su due righe al massimo. L'angolo in basso a destra resta vuoto per i pulsanti audio e schermo intero.
+- In basso, la barra degli attrezzi (34 px): i bambini a sinistra, poi il nome dell'attrezzo scelto. L'angolo in basso a destra resta vuoto per i pulsanti audio e schermo intero.
+- Le battute di Rosanna compaiono su una striscia scura in cima alla mappa, 40 caratteri per riga e due righe al massimo. La prima volta che si gioca un livello Rosanna spiega il bambino nuovo (`tip`). La riga in cima alle mappe è sempre fatta di edifici.
 
 ## 7. Testi
 
@@ -73,7 +74,7 @@ I numeri sono di partenza e si tarano dopo le prove su iPad. Ogni livello ha una
 | # | Nome | Ambientazione | Nuovo bambino | Drone | Ruspe |
 |---|---|---|---|---|---|
 | 1 | CORSO GIULIO CESARE | un anello di strade, il corso in mezzo, l'ingresso secondario sul corso | Teresa x3 | — | 6 su 8, 90 s |
-| 2 | I CARTELLI DEL NAVIGATORE | cartelli ufficiali che portano al Muro | Chiara | 1 lento | |
+| 2 | I CARTELLI DEL NAVIGATORE | cartelli ufficiali che girano attorno al Muro; il centro commerciale in basso a sinistra | Chiara, Teresa x2 | 1, sulla strada in basso | 8 su 10, 90 s |
 | 3 | LA ROTONDA DELLA SFINGE | la rotonda di corso Romania | Gigi | 1 | |
 | 4 | L'INGRESSO SECONDARIO | due cancelli, due file di ruspe | Samir | 2 | |
 | 5 | TRA I PROFUMI E I JEANS | dentro il centro commerciale: corsie, camerini, il fast food | Ayoub | 2 | |
@@ -81,6 +82,8 @@ I numeri sono di partenza e si tarano dopo le prove su iPad. Ogni livello ha una
 Dopo la vittoria nel livello 5 compare sul pavimento la scritta blu di Teresa.
 
 Livello 1: senza cartelli le ruspe girano sull'anello esterno e non passano mai dal corso. Bastano due cartelli: uno all'incrocio a sinistra verso il corso e uno davanti all'ingresso verso il basso. Il terzo cartello serve a correggere un errore.
+
+Livello 2: i cartelli ufficiali fanno girare le ruspe attorno al Muro. La mossa ovvia è girare il cartello all'incrocio in basso, ma lì passa il drone, che lo rimette a posto in pochi secondi. Con le sole biglie entrano 6 ruspe su 8. La strada giusta aggira il drone: si gira il cartello sotto il cancello verso sinistra e quello vicino al centro commerciale nell'altro verso. Le biglie rimandano indietro le prime ruspe già finite nel giro.
 
 ## 9. Punteggio
 
@@ -99,6 +102,6 @@ Livello perso: nessun punteggio. `MAX_SCORE.ruspe` in `tools/leaderboard/Code.gs
 ## 11. Ordine di lavoro
 
 1. ~~Livello 1 giocabile: regole, mappa, Teresa, intro e risultati, record.~~ (18 ottobre)
-2. Livelli 2–5, uno alla volta, ognuno con il suo bambino, e il drone guida dal 2.
+2. ~~Livello 2: Chiara, il drone guida.~~ (18 ottobre) Livelli 3–5, uno alla volta, ognuno con il suo bambino.
 3. Effetti sonori dedicati: motore, cartello, biglie, schiuma, pernacchie, ruspa dentro.
 4. `MAX_SCORE.ruspe` definitivo, poi ripubblicazione dello script; tabella "Tasti" nel README.

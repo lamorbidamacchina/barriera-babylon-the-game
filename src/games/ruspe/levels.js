@@ -4,7 +4,10 @@
 // a block, drawn by sprites.js); count: bulldozers coming out of the
 // construction site; need: how many must get into the mall; interval:
 // seconds between two of them, firstOut: before the first; speed: cells per
-// second; time: seconds; tools: how many uses of each kid; solution: tool uses
+// second; time: seconds; tools: how many uses of each kid; drone: the guide
+// drone's patrol (path: cells it flies to in turn, in straight lines, then
+// back to the first; speed: cells per second); tip: Rosanna's hint on the
+// new kid, the first time the level is played; solution: tool uses
 // that win the level ({ at: seconds, tool, x, y }, the same cell twice turns
 // the sign twice), replayed by the tests; order: Rosanna's briefing; win: her
 // line on the results panel when the level is cleared.
@@ -33,6 +36,7 @@ export const LEVELS = [
     speed: 2,
     time: 90,
     tools: { teresa: 3 },
+    tip: 'Tocca una strada: cartello. Toccalo ancora: gira.',
     solution: [
       { at: 0, tool: 'teresa', x: 1, y: 7 },
       { at: 0, tool: 'teresa', x: 1, y: 7 },
@@ -42,14 +46,50 @@ export const LEVELS = [
     order: 'Le ruspe del Muro guidano da sole e seguono i cartelli. Teresa, cartelli nuovi: si va al centro commerciale.',
     win: 'Ruspe tra i profumi e i jeans. Geografia: dieci e lode.',
   },
+  {
+    name: 'I CARTELLI DEL NAVIGATORE',
+    map: [
+      '##############################',
+      '#TTTTTTTTT###KKKKKKK##########',
+      '#TTTTTTTTT###KKKCKKK##########',
+      '#TTTTTTTTT#.....v............#',
+      '#TTTTTTTTT#.####.###########.#',
+      '#TTTTTTTTT#.####.###########.#',
+      '###########.####.###########.#',
+      '#MMMMMMMMM#..................#',
+      '#MMMMMMMMM#.####.WWWWWWWWWWW.#',
+      '#MMMMMMMMM#.####.WWWWWWWWWWW.#',
+      '#MMMMMMMMM#.####.WWWWWWWWWWW.#',
+      '#A.........>....>............#',
+      '##############################',
+    ],
+    count: 10,
+    need: 8,
+    interval: 2,
+    firstOut: 2,
+    speed: 2,
+    time: 90,
+    tools: { teresa: 2, chiara: 2 },
+    drone: { path: [[13, 11], [24, 11]], speed: 1.5 },
+    // Round the drone: the sign under the gate to the left, the one by the
+    // mall back the other way; marbles turn back the first bulldozers.
+    solution: [
+      { at: 8, tool: 'teresa', x: 16, y: 3 },
+      { at: 8, tool: 'teresa', x: 11, y: 11 },
+      { at: 9, tool: 'chiara', x: 25, y: 11 },
+    ],
+    tip: 'Chiara: biglie in strada, le ruspe tornano indietro.',
+    order: 'I cartelli del navigatore portano al Muro. Girateli. E il drone guida li rimette a posto: Chiara, biglie pronte.',
+    win: 'Biglie, cartelli e niente Muro. Educazione stradale: ottimo.',
+  },
 ];
 
 // Rosanna during the round (the win lines are in each level).
 export const ROSANNA = {
-  first: 'Tocca una strada: cartello. Toccalo ancora: gira.',
   start: ['Classe, operazione cartelli!', 'Pennarelli carichi. Si comincia.', 'Silenzio, come una pipì sulla sabbia.'],
   in: ['Dentro! Una di meno per il Muro.', 'Ingresso secondario. Da manuale.', 'Ottimo. Avanti la prossima.'],
-  empty: ['Cartelli finiti, Teresa è senza.', 'Niente più cartelli. Si improvvisa.'],
+  drone: ['Drone guida! Rimette i cartelli a posto.', 'Il drone sistema i cartelli. Che zelo.'],
+  empty: ['Finito. Si improvvisa.', 'Munizioni finite. Ingegno, classe.'],
   record: ['Record di Barriera! Nome sul registro, in stampatello.', 'Dieci e lode. Il nome, per il registro di classe.'],
 };
 

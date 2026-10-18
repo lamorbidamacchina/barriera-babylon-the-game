@@ -42,6 +42,23 @@ describe('levels', () => {
     }
   });
 
+  it('fly the drone in straight lines over the map', () => {
+    for (const l of LEVELS.filter((l) => l.drone)) {
+      const { path } = l.drone;
+      path.forEach(([x, y], i) => {
+        const [nx, ny] = path[(i + 1) % path.length];
+        expect(x === nx || y === ny, l.name).toBe(true);
+        expect(x >= 0 && x < COLS && y >= 0 && y < ROWS, l.name).toBe(true);
+      });
+    }
+  });
+
+  it('have a tip for the new kid, and Rosanna\'s lines fit their strip', () => {
+    const say = 320 / 8; // SAY_W in the scene
+    for (const l of LEVELS) expect(wrappedLines(l.tip, say), l.tip).toBeLessThanOrEqual(2);
+    for (const line of [...ROSANNA.start, ...ROSANNA.in, ...ROSANNA.drone, ...ROSANNA.empty]) expect(wrappedLines(line, say), line).toBe(1);
+  });
+
   it('are lost with no tools and won with their solution', () => {
     for (const l of LEVELS) {
       expect(replay(l, []).result, l.name).toBe('time');
