@@ -50,6 +50,7 @@ Risoluzione interna 480×270, font Press Start 2P (in MAIUSCOLO usare `CAFFE'` i
 | mouse premuto / dito + trascina | taglia (Contrabbando) |
 | frecce (o WASD) / dito + trascina | muovi e traccia la linea (Muro Panic) |
 | mouse / dito + trascina, oppure Tab + frecce | sposta i gomitoli (Il nodo nei ferri) |
+| clic / tocco su una strada, oppure frecce + Spazio; 1–5 sceglie il bambino | usa l'attrezzo (Ruspe in fuga) |
 | P o Esc | pausa |
 | cifre, Backspace | codice della verifica OTP |
 | F | schermo intero |

@@ -1,6 +1,7 @@
 import { RECIPES } from '../games/contrabbando/recipes.js';
 import { LEVELS as MURO_LEVELS } from '../games/muro/levels.js';
 import { LEVELS as FERRI_LEVELS } from '../games/ferri/levels.js';
+import { LEVELS as RUSPE_LEVELS } from '../games/ruspe/levels.js';
 
 // The "menu del giorno" on Mei Li's chalkboard. Each entry is a minigame;
 // levels: how many it has, to tick the ones played to the end.
@@ -37,11 +38,13 @@ export const GAMES = [
   },
   {
     id: 'ruspe',
+    scene: 'RuspeInFuga',
     title: 'RUSPE IN FUGA',
     desc: 'Devia le ruspe dentro il centro commerciale.',
     portrait: 'barriera-96',
-    available: false,
-    mei: 'Ruspe in Auchan? Già successo. Cucina chiusa.',
+    available: true,
+    levels: RUSPE_LEVELS.length,
+    mei: 'Ruspe in centro commerciale? Già successo. Cucina chiusa.',
   },
 ];
 

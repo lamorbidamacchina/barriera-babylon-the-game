@@ -1,0 +1,265 @@
+// Ruspe in fuga sprites drawn on a Painter, without Phaser (so the preview
+// tool and the tests can use them): the street map seen from above, the
+// bulldozer, the signs, the kids of the tool bar. textures.js turns them into
+// textures.
+import { shaded } from '../../painter.js';
+import { rng } from '../../rng.js';
+import { TILE, COLS, ROWS, ROAD } from './rules.js';
+
+export const MAP_KEY = (level) => `ruspe-map-${level}`;
+export const RUSPA_KEY = 'ruspe-ruspa';
+export const RUSPA_SIZE = 16;
+export const SIGN_KEY = { official: 'ruspe-sign', mine: 'ruspe-sign-teresa' };
+export const SIGN_SIZE = 11;
+export const CURSOR_KEY = 'ruspe-cursor';
+export const FACE_SIZE = 20;
+export const faceKey = (kid) => `ruspe-face-${kid}`;
+
+const ASPHALT = 0x2b2f37;
+const ASPHALT_2 = 0x30343d;
+const LANE = 0x8f8a78;
+const CURB = 0x6a6a66;
+const CURB_LIGHT = 0x85857e;
+
+// ---------------------------------------------------------------- the map
+
+// The whole map of a level (rows: rules.js characters), TILE pixels a cell.
+export function drawMap(p, rows) {
+  const r = rng(rows.join('').length * 31 + 7);
+  const at = (x, y) => (x >= 0 && y >= 0 && x < COLS && y < ROWS ? rows[y][x] : '#');
+  const road = (x, y) => ROAD.has(at(x, y));
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const c = at(x, y);
+      const px = x * TILE;
+      const py = y * TILE;
+      if (road(x, y)) drawRoad(p, px, py, road(x - 1, y), road(x + 1, y), road(x, y - 1), road(x, y + 1));
+      else if (c === 'K') drawSite(p, px, py, r);
+      else if (c === 'M') drawMallRoof(p, px, py, r);
+      else if (c === 'T') drawPark(p, px, py, r);
+      else drawRoof(p, px, py, x, y, r);
+      if (!road(x, y)) drawCurbs(p, px, py, road(x - 1, y), road(x + 1, y), road(x, y - 1), road(x, y + 1));
+    }
+  }
+  // Big things drawn over their blocks.
+  for (const [ch, draw] of [
+    ['M', drawMallLogo],
+    ['K', drawSiteSign],
+  ]) {
+    const box = bounds(rows, ch);
+    if (box) draw(p, box);
+  }
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (at(x, y) === 'C') drawGate(p, x * TILE, y * TILE, road(x, y + 1) ? 'down' : road(x, y - 1) ? 'up' : 'side');
+      if (at(x, y) === 'A') drawEntrance(p, x * TILE, y * TILE, at(x, y + 1) === 'M' ? 'down' : at(x, y - 1) === 'M' ? 'up' : at(x - 1, y) === 'M' ? 'left' : 'right');
+    }
+  }
+}
+
+// The cells of a kind, as a pixel box (null when the map has none).
+function bounds(rows, ch) {
+  let x0 = COLS;
+  let y0 = ROWS;
+  let x1 = -1;
+  let y1 = -1;
+  rows.forEach((row, y) => [...row].forEach((c, x) => {
+    if (c !== ch) return;
+    x0 = Math.min(x0, x), y0 = Math.min(y0, y), x1 = Math.max(x1, x), y1 = Math.max(y1, y);
+  }));
+  return x1 < 0 ? null : { x: x0 * TILE, y: y0 * TILE, w: (x1 - x0 + 1) * TILE, h: (y1 - y0 + 1) * TILE };
+}
+
+// Asphalt with a dashed middle line along straight stretches.
+function drawRoad(p, px, py, l, rt, u, d) {
+  p.rect(px, py, TILE, TILE, (x, y) => ((x * 3 + y * 5) % 7 === 0 ? ASPHALT_2 : ASPHALT));
+  const horizontal = (l || rt) && !u && !d;
+  const vertical = (u || d) && !l && !rt;
+  if (horizontal) for (let x = 2; x < TILE; x += 8) p.rect(px + x, py + 7, 4, 1, LANE);
+  if (vertical) for (let y = 2; y < TILE; y += 8) p.rect(px + 7, py + y, 1, 4, LANE);
+}
+
+// A pavement edge on the sides of a block facing a street.
+function drawCurbs(p, px, py, l, rt, u, d) {
+  if (u) p.rect(px, py, TILE, 2, CURB).rect(px, py, TILE, 1, CURB_LIGHT);
+  if (d) p.rect(px, py + TILE - 2, TILE, 2, CURB).rect(px, py + TILE - 1, TILE, 1, 0x4a4a46);
+  if (l) p.rect(px, py, 2, TILE, CURB).rect(px, py, 1, TILE, CURB_LIGHT);
+  if (rt) p.rect(px + TILE - 2, py, 2, TILE, CURB).rect(px + TILE - 1, py, 1, TILE, 0x4a4a46);
+}
+
+// Barriera's condominiums from above: flat roofs in a few dull colours, one
+// colour per stretch of block, with skylights, aerials and the odd satellite
+// dish.
+const ROOFS = [0x4a4440, 0x55483c, 0x3f4650, 0x5a4a42, 0x4c4c48];
+function drawRoof(p, px, py, x, y, r) {
+  const base = ROOFS[(Math.floor(x / 3) * 7 + Math.floor(y / 2) * 3) % ROOFS.length];
+  p.rect(px, py, TILE, TILE, (xx, yy) => ((xx + yy) % 5 === 0 ? base + 0x050505 : base));
+  // Seams between buildings every three cells.
+  if (x % 3 === 0) p.rect(px, py, 1, TILE, 0x2a2622);
+  const k = r();
+  if (k < 0.25) p.rect(px + 4 + Math.floor(r() * 6), py + 4 + Math.floor(r() * 6), 4, 3, 0x6e7a88).rect(px + 4, py + 4, 1, 1, 0x9aa8b8); // skylight
+  else if (k < 0.4) p.ellipse(px + 8, py + 8, 2.5, 2.5, 0xb8b8b0).set(px + 9, py + 7, 0xe8e4d8); // dish
+  else if (k < 0.55) p.line(px + 3, py + 10, px + 9, py + 4, 0x8a8a80).line(px + 5, py + 4, px + 9, py + 8, 0x8a8a80); // aerial
+  else if (k < 0.62) p.rect(px + 9, py + 3, 3, 3, 0x2a2622).rect(px + 10, py + 4, 1, 1, 0x5a4630); // chimney
+}
+
+// The Muro construction site: churned earth, sand, the fence with yellow
+// and black stripes along its edges.
+function drawSite(p, px, py, r) {
+  p.rect(px, py, TILE, TILE, (x, y) => ((x * 7 + y * 3) % 9 === 0 ? 0x4a3a24 : (x + y) % 4 === 0 ? 0x5e4a2e : 0x56442a));
+  if (r() < 0.3) p.ellipse(px + 4 + r() * 8, py + 4 + r() * 8, 3, 2, 0x9a8250); // sand pile
+  if (r() < 0.2) p.rect(px + 3, py + 9, 8, 2, 0x8a8a80).rect(px + 3, py + 12, 8, 2, 0x8a8a80); // pipes
+}
+
+// The mall: a big flat roof, pale grey, with air conditioning boxes.
+function drawMallRoof(p, px, py, r) {
+  p.rect(px, py, TILE, TILE, (x, y) => (x % 8 === 0 || y % 8 === 0 ? 0x6e737a : 0x7d828a));
+  if (r() < 0.18) p.rect(px + 3, py + 3, 6, 5, 0x9aa0a8).rect(px + 3, py + 3, 6, 1, 0xb8bcc4).rect(px + 5, py + 5, 2, 2, 0x4a505a);
+}
+
+// A park: grass and round tree tops.
+function drawPark(p, px, py, r) {
+  p.rect(px, py, TILE, TILE, (x, y) => ((x * 5 + y * 3) % 7 === 0 ? 0x24402a : 0x2a4a30));
+  for (let i = 0; i < 2; i++) {
+    const cx = px + 3 + r() * 10;
+    const cy = py + 3 + r() * 10;
+    p.ellipse(cx, cy, 3.5, 3.5, shaded({ base: 0x3a6a3a, dark: 0x24482a, light: 0x5a8a4a }, cx, cy, 3.5, 3.5));
+  }
+}
+
+// The way out of the construction site: a red and white barrier, lifted,
+// and an orange warning light.
+function drawGate(p, px, py) {
+  for (let x = 0; x < TILE; x++) p.set(px + x, py, Math.floor(x / 3) % 2 ? 0xf4f1e8 : 0xe0443a);
+  p.rect(px, py + 1, 2, 3, 0x3a3f48);
+  p.rect(px + TILE - 3, py + 1, 3, 3, 0xff7a2f).set(px + TILE - 2, py + 2, 0xffb070);
+}
+
+// The back entrance of the mall: the loading bay, with yellow chevrons
+// pointing in. side: where the mall is.
+function drawEntrance(p, px, py, side) {
+  p.rect(px, py, TILE, TILE, 0x3a3428);
+  const yellow = 0xe8c06a;
+  for (let i = 0; i < 3; i++) {
+    const o = 3 + i * 4;
+    if (side === 'down') p.line(px + 3, py + o, px + 7, py + o + 3, yellow).line(px + 12, py + o, px + 8, py + o + 3, yellow);
+    if (side === 'up') p.line(px + 3, py + TILE - o, px + 7, py + TILE - o - 3, yellow).line(px + 12, py + TILE - o, px + 8, py + TILE - o - 3, yellow);
+    if (side === 'right') p.line(px + o, py + 3, px + o + 3, py + 7, yellow).line(px + o, py + 12, px + o + 3, py + 8, yellow);
+    if (side === 'left') p.line(px + TILE - o, py + 3, px + TILE - o - 3, py + 7, yellow).line(px + TILE - o, py + 12, px + TILE - o - 3, py + 8, yellow);
+  }
+}
+
+// The mall's own logo on the roof, a made-up one (no real brands): a fat red
+// pigeon, the "piccione zoppo" of the novel, with a green wing and one leg
+// tucked up.
+export const LOGO_W = 28;
+export const LOGO_H = 22;
+export function drawPigeon(p, x0 = 0, y0 = 0) {
+  const red = 0xe0443a;
+  const redDark = 0xa82a24;
+  const green = 0x3fbf5f;
+  // Body and head, facing right.
+  p.ellipse(x0 + 12, y0 + 11, 9, 6.5, (x, y) => (y > y0 + 13 ? redDark : red));
+  p.ellipse(x0 + 21, y0 + 6, 4, 4, red);
+  p.rect(x0 + 25, y0 + 6, 2, 1, 0xe8c06a); // beak
+  p.set(x0 + 22, y0 + 5, 0xf4f1e8);
+  // Tail.
+  p.poly([[x0 + 1, y0 + 6], [x0 + 5, y0 + 9], [x0 + 4, y0 + 13]], red);
+  // The green wing, a swoosh.
+  p.poly([[x0 + 6, y0 + 9], [x0 + 15, y0 + 7], [x0 + 18, y0 + 10], [x0 + 9, y0 + 13]], green);
+  p.line(x0 + 8, y0 + 12, x0 + 16, y0 + 9, 0x2a8a44);
+  // One leg down, the other tucked up: it limps.
+  p.rect(x0 + 13, y0 + 17, 1, 3, 0xe8c06a).rect(x0 + 12, y0 + 20, 3, 1, 0xe8c06a);
+  p.rect(x0 + 9, y0 + 17, 2, 1, 0xe8c06a);
+}
+
+function drawMallLogo(p, box) {
+  // A white panel the logo stands on, centred on the roof.
+  const x = box.x + Math.floor((box.w - LOGO_W - 6) / 2);
+  const y = box.y + Math.floor((box.h - LOGO_H - 4) / 2);
+  p.rect(x, y, LOGO_W + 6, LOGO_H + 4, 0xe9dcc0).rect(x, y + LOGO_H + 3, LOGO_W + 6, 1, 0x9a907a);
+  drawPigeon(p, x + 3, y + 2);
+}
+
+// The Muro project board, on the site: yellow, black stripes.
+function drawSiteSign(p, box) {
+  const x = box.x + 6;
+  const y = box.y + 4;
+  p.rect(x, y, 24, 10, 0xe8b020).rect(x, y + 10, 24, 1, 0x3a2a14);
+  for (let i = 0; i < 24; i += 4) p.rect(x + i, y, 2, 2, 0x1a1a1a);
+  p.rect(x + 3, y + 4, 18, 1, 0x1a1a1a).rect(x + 3, y + 7, 12, 1, 0x1a1a1a);
+  p.rect(x + 2, y + 11, 1, 3, 0x3a3f48).rect(x + 21, y + 11, 1, 3, 0x3a3f48);
+}
+
+// ---------------------------------------------------------------- things on the map
+
+// A Muro bulldozer from above, heading up (the scene turns it): yellow body
+// between two tracks, the cab with its dark window, the blade in front.
+export function drawRuspa(p, s = RUSPA_SIZE) {
+  const yellow = { base: 0xe8b020, dark: 0xb07a10, light: 0xffd860, hl: 0xfff2b0 };
+  // Tracks.
+  for (const x of [2, s - 5]) {
+    p.rect(x, 4, 3, s - 5, 0x2a2a2a);
+    for (let y = 5; y < s - 1; y += 2) p.rect(x, y, 3, 1, 0x4a4a48);
+  }
+  // Body.
+  p.rect(4, 5, s - 8, s - 7, shaded(yellow, s / 2, s / 2 + 1, s / 2 - 3, s / 2 - 3));
+  // Cab and window.
+  p.rect(5, 8, s - 10, 5, 0xc89418).rect(6, 9, s - 12, 2, 0x1a2a3a).rect(6, 9, 1, 1, 0x6e8aa8);
+  // Exhaust at the back.
+  p.rect(s - 6, s - 4, 1, 2, 0x3a3a3a);
+  // The blade, wide and grey.
+  p.rect(1, 1, s - 2, 3, 0x9aa0a8).rect(1, 1, s - 2, 1, 0xc8ccd4).rect(1, 3, s - 2, 1, 0x5a5e66);
+  p.rect(5, 4, 1, 1, 0x5a5e66).rect(s - 6, 4, 1, 1, 0x5a5e66);
+  p.outline(0x1a1208);
+}
+
+// A navigator sign pointing up (the scene turns it). The official ones are
+// the yellow road-works kind; Teresa's are white card with a pink marker
+// arrow, a little crooked.
+export function drawSign(p, kind = 'official', s = SIGN_SIZE) {
+  const mine = kind === 'mine';
+  const c = Math.floor(s / 2);
+  p.rect(0, 0, s, s, mine ? 0xf4f1e8 : 0xe8b020);
+  p.rect(0, s - 1, s, 1, mine ? 0xb8b0a0 : 0xb07a10);
+  const ink = mine ? 0xff4fa3 : 0x1a1a1a;
+  // Arrow: a head and a shaft.
+  for (let i = 0; i < 4; i++) p.rect(c - i, 2 + i, i * 2 + 1, 1, ink);
+  p.rect(c - 1 + (mine ? 1 : 0), 6, 2, s - 8, ink);
+  if (mine) p.rect(1, s - 3, 1, 1, 0xff4fa3).rect(2, s - 2, 1, 1, 0xff4fa3); // a scribble in the corner
+  p.outline(0x1a1208);
+}
+
+// The keyboard cursor and the hover marker: four corners.
+export function drawCursor(p, s = TILE) {
+  const c = 0xe8c06a;
+  for (const [x, y, dx, dy] of [[0, 0, 1, 1], [s - 1, 0, -1, 1], [0, s - 1, 1, -1], [s - 1, s - 1, -1, -1]]) {
+    p.rect(Math.min(x, x + dx * 3), y, 4, 1, c).rect(x, Math.min(y, y + dy * 3), 1, 4, c);
+  }
+}
+
+// ---------------------------------------------------------------- the kids
+
+const OUTLINE = 0x1a1410;
+const SKIN = 0xf0c8a0;
+
+// Teresa, 8: "silenziosa come un ninja e letale con il pennarello
+// indelebile". Black ninja headband, dark hair in a bun, the pink marker.
+function teresa(p, s) {
+  const c = s / 2;
+  p.ellipse(c, c - 3, 5.5, 3.5, 0x2a1a10); // hair
+  p.ellipse(c, c - 8, 2.5, 2, 0x2a1a10); // bun
+  p.ellipse(c, c + 1, 5, 5.5, shaded({ base: SKIN, dark: 0xd8a070, light: 0xf8dcc0 }, c, c + 1, 5, 5.5));
+  p.rect(c - 5, c - 3, 11, 2, 0x1a1a1a); // headband
+  p.rect(c + 5, c - 2, 2, 1, 0x1a1a1a).rect(c + 6, c - 1, 1, 2, 0x1a1a1a); // its knot
+  p.rect(c - 3, c + 1, 2, 1, 0x1a1010).rect(c + 2, c + 1, 2, 1, 0x1a1010); // eyes, narrowed
+  p.rect(c - 1, c + 4, 3, 1, 0xa86a50); // straight mouth: serious business
+  p.rect(c - 5, c + 6, 11, s - c - 7, 0x3a3f48); // black hoodie
+  // The marker, held up.
+  p.line(c - 8, c + 9, c - 5, c + 3, 0xff4fa3).line(c - 7, c + 9, c - 4, c + 3, 0xff4fa3);
+  p.set(c - 5, c + 2, 0xf4f1e8);
+  p.outline(OUTLINE);
+}
+
+export const KIDS = { teresa };
+export const drawFace = (p, kid, s = FACE_SIZE) => KIDS[kid](p, s);

@@ -16,6 +16,6 @@ describe('games', () => {
   });
 
   it('never ticks a game that is not out yet', () => {
-    expect(isComplete(game('ruspe'), { ruspe: { unlocked: 99 } })).toBe(false);
+    expect(isComplete({ id: 'nuovo', available: false }, { nuovo: { unlocked: 99 } })).toBe(false);
   });
 });

@@ -33,6 +33,7 @@ Audience is adult / young adult: the novel's crude jokes are fine (bodily humour
 - Fit the box: dialogue in an intro panel wraps at ~300px = ~37 characters per line at 8px, 3–4 lines max. Banners at 16px: ~25 characters. Check the real result in the game (`playtest` skill).
 - One joke per line. Prefer the novel's own lines, trimmed, over invented ones; when inventing, match the rhythm of a real line from the same character.
 - Several variants for anything that repeats (greetings, win/lose lines), picked at random, so returning players don't see the same line every time.
-- Place names are real and specific: corso Giulio Cesare, corso Vercelli, piazza Crispi, the Auchan of corso Giulio / corso Romania, via Brandizzo, the "Centrocampo". Use them for level names and settings.
+- Place names are real and specific: corso Giulio Cesare, corso Vercelli, piazza Crispi, the sphinx roundabout of corso Romania, via Brandizzo, the "Centrocampo". Use them for level names and settings.
+- **No real brands** in game text or art (legal caution, user's call, 2026-10-18): the novel's Auchan is "il centro commerciale", its McDonald's "il fast food". A made-up logo may hint at the real one, never copy it. Trim brand names from novel lines you reuse.
 
 When unsure whether something fits the novel, check the PDF; when it's a matter of taste (a new joke, a new character), propose two or three options to the user.
