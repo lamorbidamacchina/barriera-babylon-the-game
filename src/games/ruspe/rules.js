@@ -32,9 +32,13 @@ const turn = (dir, n) => (dir + n) % 4;
 export const ROAD = new Set(['.', 'C', 'A', ...Object.keys(ARROWS)]);
 
 // The tools, one Comitato Caos kid each, in tool bar order.
-export const TOOLS = ['teresa', 'chiara'];
+export const TOOLS = ['teresa', 'chiara', 'gigi'];
 // How long Chiara's marbles stay on the street, in seconds.
 export const MARBLES_TIME = 10;
+// Gigi's foam: how long it lasts. A bulldozer driving into it gets stuck
+// until it dries, then the stuck ones leave in a convoy, CONVOY seconds apart.
+export const FOAM_TIME = 8;
+export const CONVOY = 0.5;
 
 // Same range as the other games: a won level is worth a few hundred points.
 export const POINTS = { perBulldozer: 100, perToolLeft: 30, perSecondLeft: 5 };
@@ -99,6 +103,7 @@ export function createRound(level) {
     timeLeft: level.time,
     result: null,
     marbles: new Map(), // cell key → seconds left
+    foam: new Map(), // cell key → seconds left
     drone: level.drone ? { x: level.drone.path[0][0], y: level.drone.path[0][1], next: 1, frozen: 0 } : null,
     events: [], // what happened in the last step, for sounds and effects
     nextId: 1,
@@ -128,15 +133,21 @@ export function useTool(round, tool, x, y) {
       s.mine = true;
       return { ok: true, what: 'swap' };
     }
-    signs.set(key(x, y), { dir: ways[0], official: null, mine: true });
+    // A new sign points down the side street of a T-junction, the turn
+    // most often wanted; elsewhere, the first way clockwise from up.
+    const branch = ways.find((d) => !ways.includes(turn(d, 2)));
+    signs.set(key(x, y), { dir: branch ?? ways[0], official: null, mine: true });
     return { ok: true, what: 'sign' };
   }
-  if (tool === 'chiara') {
-    if (!map.isRoad(x, y) || map.at(x, y) === 'C' || map.at(x, y) === 'A' || round.marbles.has(key(x, y))) return { ok: false };
-    if (!tools.chiara) return { ok: false, empty: true };
-    tools.chiara--;
-    round.marbles.set(key(x, y), MARBLES_TIME);
-    return { ok: true, what: 'marbles' };
+  // Marbles and foam: a street cell, one of each per cell at a time.
+  const spread = { chiara: ['marbles', MARBLES_TIME], gigi: ['foam', FOAM_TIME] }[tool];
+  if (spread) {
+    const [what, time] = spread;
+    if (!map.isRoad(x, y) || map.at(x, y) === 'C' || map.at(x, y) === 'A' || round[what].has(key(x, y))) return { ok: false };
+    if (!tools[tool]) return { ok: false, empty: true };
+    tools[tool]--;
+    round[what].set(key(x, y), time);
+    return { ok: true, what };
   }
   return { ok: false };
 }
@@ -146,13 +157,29 @@ export function useTool(round, tool, x, y) {
 export function step(round, dt) {
   round.events = [];
   if (round.result) return round;
-  const { level, map, signs, marbles } = round;
+  const { level, map, signs, marbles, foam } = round;
   round.elapsed += dt;
   round.timeLeft = Math.max(0, round.timeLeft - dt);
 
   for (const [k, left] of marbles) {
     if (left <= dt) marbles.delete(k);
     else marbles.set(k, left - dt);
+  }
+  for (const [k, left] of foam) {
+    if (left > dt) {
+      foam.set(k, left - dt);
+      continue;
+    }
+    // Dry: out of the foam one at a time, first in first out.
+    foam.delete(k);
+    round.ruspe
+      .filter((r) => r.stuck !== undefined && key(r.x, r.y) === k)
+      .sort((a, b) => a.stuck - b.stuck)
+      .forEach((r, i) => {
+        r.wait = i * CONVOY;
+        r.dir = chooseDir(map, signs, r.x, r.y, r.dir, marbles); // the signs may have changed meanwhile
+        delete r.stuck;
+      });
   }
   if (round.drone) moveDrone(round, dt);
 
@@ -166,6 +193,11 @@ export function step(round, dt) {
   }
 
   for (const r of round.ruspe) {
+    if (r.stuck !== undefined) continue;
+    if (r.wait > 0) {
+      r.wait -= dt;
+      continue;
+    }
     r.t += level.speed * dt;
     while (r.t >= 1 && !r.in) {
       r.t -= 1;
@@ -175,6 +207,12 @@ export function step(round, dt) {
         r.in = true;
         round.inside++;
         round.events.push({ type: 'in', x: r.x, y: r.y });
+      } else if (foam.has(key(r.x, r.y))) {
+        // Stuck in the middle of the foam, facing where it was going.
+        r.t = 0;
+        r.stuck = round.elapsed;
+        round.events.push({ type: 'stuck', x: r.x, y: r.y });
+        break;
       } else {
         const d = chooseDir(map, signs, r.x, r.y, r.dir, marbles);
         if (marbles.has(key(r.x, r.y))) round.events.push({ type: 'skid', x: r.x, y: r.y });

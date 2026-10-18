@@ -39,8 +39,6 @@ export const LEVELS = [
     tip: 'Tocca una strada: cartello. Toccalo ancora: gira.',
     solution: [
       { at: 0, tool: 'teresa', x: 1, y: 7 },
-      { at: 0, tool: 'teresa', x: 1, y: 7 },
-      { at: 0, tool: 'teresa', x: 21, y: 7 },
       { at: 0, tool: 'teresa', x: 21, y: 7 },
     ],
     order: 'Le ruspe del Muro guidano da sole e seguono i cartelli. Teresa, cartelli nuovi: si va al centro commerciale.',
@@ -81,6 +79,46 @@ export const LEVELS = [
     tip: 'Chiara: biglie in strada, le ruspe tornano indietro.',
     order: 'I cartelli del navigatore portano al Muro. Girateli. E il drone guida li rimette a posto: Chiara, biglie pronte.',
     win: 'Biglie, cartelli e niente Muro. Educazione stradale: ottimo.',
+  },
+  {
+    name: 'LA ROTONDA DELLA SFINGE',
+    map: [
+      '##############################',
+      '#MMMMMMMMM#KKKCKKK############',
+      '#MMMMMMMMM####.###############',
+      '#MMMMMMMMM##.....#############',
+      '#MMMMMMMMM##.SSS.#############',
+      '#A...........SSS>............#',
+      '############.SSS.###########.#',
+      '#TTTTTTTTTT#.....WWWWWWWWWWW.#',
+      '#TTTTTTTTTT###.##WWWWWWWWWWW.#',
+      '#TTTTTTTTTT###.##WWWWWWWWWWW.#',
+      '#TTTTTTTTTT###.##WWWWWWWWWWW.#',
+      '#TTTTTTTTTT###...............#',
+      '##############################',
+    ],
+    count: 12,
+    need: 9,
+    interval: 2,
+    firstOut: 2,
+    speed: 2,
+    time: 100,
+    tools: { teresa: 2, gigi: 2 },
+    drone: { path: [[12, 3], [12, 7], [16, 7], [16, 3]], speed: 2 },
+    // The drone laps the roundabout with the traffic and wipes the sign to
+    // the mall every 8 s: two signs alone catch 7 bulldozers at best. Foam
+    // on the way out of the site holds them back, and they come out in a
+    // convoy that a sign catches whole (each sign works from 9 to 12 s and
+    // from 20 to 22 s).
+    solution: [
+      { at: 2, tool: 'gigi', x: 14, y: 2 },
+      { at: 10.5, tool: 'teresa', x: 12, y: 5 },
+      { at: 12, tool: 'gigi', x: 14, y: 2 },
+      { at: 21, tool: 'teresa', x: 12, y: 5 },
+    ],
+    tip: 'Gigi: schiuma. Le ruspe si fermano finché asciuga.',
+    order: 'Rotonda della sfinge, corso Romania. Il drone ci gira attorno come un avvoltoio. Gigi, schiuma: tempismo.',
+    win: 'Rotonda superata. La sfinge non ha fatto domande.',
   },
 ];
 

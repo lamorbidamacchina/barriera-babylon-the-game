@@ -2,7 +2,7 @@
 // tool and the tests can use them): the street map seen from above, the
 // bulldozer, the signs, the kids of the tool bar. textures.js turns them into
 // textures.
-import { shaded } from '../../painter.js';
+import { Painter, shaded } from '../../painter.js';
 import { rng } from '../../rng.js';
 import { TILE, COLS, ROWS, ROAD } from './rules.js';
 import { miniTextCentered } from '../../sprites/minifont.js';
@@ -17,6 +17,8 @@ export const FACE_SIZE = 20;
 export const faceKey = (kid) => `ruspe-face-${kid}`;
 export const MARBLES_KEY = 'ruspe-marbles';
 export const MARBLES_SIZE = 12;
+export const FOAM_KEY = 'ruspe-foam';
+export const FOAM_SIZE = 14;
 
 const ASPHALT = 0x2b2f37;
 const ASPHALT_2 = 0x30343d;
@@ -41,6 +43,7 @@ export function drawMap(p, rows) {
       else if (c === 'M') drawMallRoof(p, px, py, r);
       else if (c === 'T') drawPark(p, px, py, r);
       else if (c === 'W') drawMuro(p, px, py, x, y, r);
+      else if (c === 'S') drawPark(p, px, py, () => 0.99); // lawn, no trees: the sphinx goes on it
       else drawRoof(p, px, py, x, y, r);
       if (!road(x, y)) drawCurbs(p, px, py, road(x - 1, y), road(x + 1, y), road(x, y - 1), road(x, y + 1));
     }
@@ -50,6 +53,7 @@ export function drawMap(p, rows) {
     ['M', drawMallLogo],
     ['K', drawSiteSign],
     ['W', drawMuroStencil],
+    ['S', drawSphinx],
   ]) {
     const box = bounds(rows, ch);
     if (box) draw(p, box);
@@ -135,6 +139,25 @@ function drawMuro(p, px, py, x, y, r) {
 // MURO stencilled on its top, in ocra.
 function drawMuroStencil(p, box) {
   miniTextCentered(p, 'MURO', box.x + box.w / 2, box.y + Math.floor(box.h / 2) - 5, 0xc9963a, 2);
+}
+
+// The sphinx in the middle of the roundabout of corso Romania, from above:
+// a stone lion lying down, paws forward, the striped headdress of a pharaoh.
+function drawSphinx(p, box) {
+  const cx = box.x + Math.floor(box.w / 2);
+  const cy = box.y + Math.floor(box.h / 2);
+  const q = new Painter(34, 22);
+  const stone = { base: 0xc8b48a, dark: 0x9a8862, light: 0xe0d0a8, hl: 0xf0e4c4 };
+  q.rect(1, 15, 32, 6, 0x8a8a80).rect(1, 15, 32, 1, 0xa8a89e); // the plinth
+  q.ellipse(19, 11, 11, 5, shaded(stone, 19, 11, 11, 5)); // body
+  q.ellipse(30, 13, 3, 2, shaded(stone, 30, 13, 3, 2)); // tail curled
+  q.rect(1, 12, 9, 2, 0xb8a47a).rect(1, 15, 9, 0, 0xb8a47a); // front paws
+  q.ellipse(9, 7, 4.5, 5, shaded(stone, 9, 7, 4.5, 5)); // head
+  for (const y of [3, 5, 7, 9, 11]) q.rect(5, y, 2, 1, 0x3a5a9a).rect(12, y, 2, 1, 0x3a5a9a); // headdress
+  q.rect(5, 2, 9, 1, 0xd8a840);
+  q.rect(7, 6, 1, 1, 0x3a2a14).rect(10, 6, 1, 1, 0x3a2a14); // eyes
+  q.outline(0x3a3020);
+  q.px.forEach((c, i) => c !== null && p.set(cx - 17 + (i % 34), cy - 11 + Math.floor(i / 34), c));
 }
 
 // A park: grass and round tree tops.
@@ -262,6 +285,15 @@ export function drawMarbles(p, s = MARBLES_SIZE) {
   p.outline(0x0e0e14);
 }
 
+// Gigi's foam: cement whipped up like a mad meringue (flat cola and
+// liquorice powder), with dark specks of liquorice.
+export function drawFoam(p, s = FOAM_SIZE) {
+  const cream = { base: 0xf4ecd8, dark: 0xd8c8a8, light: 0xffffff };
+  for (const [x, y, r] of [[5, 8, 4], [9, 7, 4], [7, 4, 3.5], [10, 10, 3], [4, 11, 2.5]]) p.ellipse(x, y, r, r, shaded(cream, 7, 7, 6, 6));
+  for (const [x, y] of [[5, 6], [9, 9], [7, 10], [10, 5]]) p.rect(x, y, 1, 1, 0x3a2a24);
+  p.outline(0x6a5a48);
+}
+
 // The keyboard cursor and the hover marker: four corners.
 export function drawCursor(p, s = TILE) {
   const c = 0xe8c06a;
@@ -314,5 +346,26 @@ function chiara(p, s) {
   p.outline(OUTLINE);
 }
 
-export const KIDS = { teresa, chiara };
+// Gigi, 9, "il Chimico", the sceptic of the group: curly hair, lab goggles
+// pushed up on his forehead, a bottle of flat cola fizzing in his hand.
+function gigi(p, s) {
+  const c = s / 2;
+  p.ellipse(c, c - 4, 6, 4, 0x3a2414); // curls
+  for (const x of [-5, -2, 1, 4]) p.ellipse(c + x + 0.5, c - 7, 1.6, 1.6, 0x3a2414);
+  p.ellipse(c, c + 1, 5, 5.5, shaded({ base: 0xd8a070, dark: 0xa86a40, light: 0xe8b890 }, c, c + 1, 5, 5.5));
+  // The goggles on his forehead.
+  p.rect(c - 6, c - 3, 12, 1, 0x2a2a2a);
+  p.rect(c - 4, c - 4, 3, 3, 0x9ad0e8).rect(c + 1, c - 4, 3, 3, 0x9ad0e8);
+  p.rect(c - 4, c - 4, 1, 1, 0xf4f1e8).rect(c + 1, c - 4, 1, 1, 0xf4f1e8);
+  p.rect(c - 3, c + 1, 2, 1, 0x1a1010).rect(c + 2, c + 1, 2, 1, 0x1a1010); // eyes, half closed: sceptical
+  p.rect(c - 1, c + 4, 3, 1, 0x8a4a30).rect(c + 2, c + 3, 1, 1, 0x8a4a30); // a crooked smile
+  p.rect(c - 5, c + 6, 11, s - c - 7, 0xe8e4d8); // a lab coat, too big
+  // The bottle, fizzing.
+  p.rect(c + 5, c + 3, 3, 6, 0x4a2414).rect(c + 6, c + 1, 1, 2, 0x4a2414);
+  p.rect(c + 5, c + 5, 3, 1, 0xe0443a);
+  p.rect(c + 6, c - 1, 1, 1, 0xf4ecd8).rect(c + 7, c - 3, 1, 1, 0xf4ecd8);
+  p.outline(OUTLINE);
+}
+
+export const KIDS = { teresa, chiara, gigi };
 export const drawFace = (p, kid, s = FACE_SIZE) => KIDS[kid](p, s);

@@ -6,15 +6,17 @@ import { loadSave, writeSave } from '../save.js';
 import { refreshRecords, beatsRecord } from '../leaderboard.js';
 import { drawBarrieraRecord, askNickname } from '../records.js';
 import { LEVELS, ROSANNA, BAR } from '../games/ruspe/levels.js';
-import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, MARBLES_TIME } from '../games/ruspe/rules.js';
-import { createTextures, MAP_KEY, RUSPA_KEY, SIGN_KEY, CURSOR_KEY, MARBLES_KEY, faceKey } from '../games/ruspe/textures.js';
+import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, MARBLES_TIME, FOAM_TIME } from '../games/ruspe/rules.js';
+import { createTextures, MAP_KEY, RUSPA_KEY, SIGN_KEY, CURSOR_KEY, MARBLES_KEY, FOAM_KEY, faceKey } from '../games/ruspe/textures.js';
 
 const HUD_H = 28;
 const BAR_Y = FIELD.y + FIELD.h; // the tool bar, under the map
 const TOOL_W = 48;
 const SAY_W = 320; // Rosanna's lines: 40 characters a line
 const GAME_ID = 'ruspe'; // in the save and in the Barriera records
-const KIDS = { teresa: { name: 'TERESA', what: 'CARTELLO' }, chiara: { name: 'CHIARA', what: 'BIGLIE' } };
+const KIDS = { teresa: { name: 'TERESA', what: 'CARTELLO' }, chiara: { name: 'CHIARA', what: 'BIGLIE' }, gigi: { name: 'GIGI', what: 'SCHIUMA' } };
+// What Chiara and Gigi leave on the street: texture, and how long it lasts.
+const SPREAD = { marbles: { key: MARBLES_KEY, life: MARBLES_TIME }, foam: { key: FOAM_KEY, life: FOAM_TIME } };
 const pick = Phaser.Utils.Array.GetRandom;
 const DIRS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] };
 const cellCenter = (x, y) => ({ x: FIELD.x + x * TILE + TILE / 2, y: FIELD.y + y * TILE + TILE / 2 });
@@ -45,7 +47,7 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.round = createRound(this.lv);
     this.ruspaImgs = new Map(); // bulldozer id → image
     this.signImgs = new Map(); // cell key → image
-    this.marbleImgs = new Map(); // cell key → image
+    this.spreadImgs = { marbles: new Map(), foam: new Map() }; // cell key → image
     this.setupDrone();
     this.hover = this.add.image(0, 0, CURSOR_KEY).setOrigin(0).setDepth(20).setVisible(false);
     this.cursor = null; // the keyboard's cell, once the arrows are used
@@ -354,7 +356,7 @@ export default class RuspeInFuga extends Phaser.Scene {
     step(this.round, dt);
     for (const ev of this.round.events) this.onEvent(ev);
     this.drawRuspe(time);
-    this.drawMarbles(time);
+    this.drawSpread(time);
     this.drawDrone(time);
     if (Math.ceil(this.round.timeLeft) !== before || this.round.events.length) this.updateHud();
     if (this.round.result) this.endRound(this.round.result);
@@ -363,6 +365,7 @@ export default class RuspeInFuga extends Phaser.Scene {
   onEvent(ev) {
     if (ev.type === 'out') sfx.move();
     else if (ev.type === 'skid') sfx.swoosh();
+    else if (ev.type === 'stuck') sfx.tick();
     else if (ev.type === 'reset') {
       sfx.error();
       this.syncSigns();
@@ -380,23 +383,27 @@ export default class RuspeInFuga extends Phaser.Scene {
     }
   }
 
-  // Chiara's marbles where they still are; they blink in their last seconds.
-  drawMarbles(time) {
-    for (const [k, left] of this.round.marbles) {
-      let img = this.marbleImgs.get(k);
-      if (!img) {
-        const [x, y] = k.split(',').map(Number);
-        const c = cellCenter(x, y);
-        img = this.add.image(c.x, c.y, MARBLES_KEY).setDepth(7);
-        this.marbleImgs.set(k, img);
-        this.tweens.add({ targets: img, scale: { from: 1.8, to: 1 }, duration: 160, ease: 'Back.out' });
+  // Chiara's marbles and Gigi's foam where they still are; they blink in
+  // their last seconds.
+  drawSpread(time) {
+    for (const [what, { key, life }] of Object.entries(SPREAD)) {
+      const imgs = this.spreadImgs[what];
+      for (const [k, left] of this.round[what]) {
+        let img = imgs.get(k);
+        if (!img) {
+          const [x, y] = k.split(',').map(Number);
+          const c = cellCenter(x, y);
+          img = this.add.image(c.x, c.y, key).setDepth(7);
+          imgs.set(k, img);
+          this.tweens.add({ targets: img, scale: { from: 1.8, to: 1 }, duration: 160, ease: 'Back.out' });
+        }
+        img.setVisible(left > life * 0.25 || Math.floor(time / 150) % 2 === 0);
       }
-      img.setVisible(left > MARBLES_TIME * 0.25 || Math.floor(time / 150) % 2 === 0);
-    }
-    for (const [k, img] of this.marbleImgs) {
-      if (this.round.marbles.has(k)) continue;
-      img.destroy();
-      this.marbleImgs.delete(k);
+      for (const [k, img] of imgs) {
+        if (this.round[what].has(k)) continue;
+        img.destroy();
+        imgs.delete(k);
+      }
     }
   }
 
@@ -413,7 +420,9 @@ export default class RuspeInFuga extends Phaser.Scene {
       const pos = position(r);
       const c = cellCenter(pos.x, pos.y);
       const shake = Math.floor(time / 90 + r.id) % 2;
-      img.setPosition(Math.round(c.x), Math.round(c.y) + (r.dir % 2 ? shake : 0)).setAngle(r.dir * 90);
+      // Stuck in the foam they pile up: spread them a little to show how many.
+      const pile = r.stuck !== undefined ? (r.id % 3) - 1 : 0;
+      img.setPosition(Math.round(c.x) + pile * 3, Math.round(c.y) + pile * 2 + (r.dir % 2 && r.stuck === undefined ? shake : 0)).setAngle(r.dir * 90);
     }
     // Gone into the mall: they shrink through the door.
     for (const [id, img] of this.ruspaImgs) {

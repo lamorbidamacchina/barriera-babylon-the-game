@@ -33,7 +33,7 @@ Gli attrezzi sono nella barra in basso a sinistra, ognuno con il volto del bambi
 |---|---|---|---|---|
 | 1 | **Teresa** | cartello | Mette un cartello su una strada, oppure gira un cartello ufficiale (costa 1). Toccare di nuovo un proprio cartello lo gira gratis, e il cartello non punta mai verso il cantiere. | 1 |
 | 2 | **Chiara** | biglie | Le ruspe slittano e tornano indietro. Dura circa 10 s. | 2 |
-| 3 | **Gigi** | schiuma | Dimezza la velocità su una casella per circa 8 s, per i tempi. | 3 |
+| 3 | **Gigi** | schiuma | Il cemento montato a meringa: le ruspe che ci entrano restano ferme finché asciuga (8 s), poi ripartono in colonna, mezzo secondo l'una dall'altra. Serve per i tempi: si trattiene il gruppo mentre passa il drone e lo si fa passare tutto insieme. | 3 |
 | 4 | **Samir** | cassa | La cassa bluetooth con l'inno di pernacchie del Comitato. Agli incroci vicini le ruspe vanno verso la cassa. Dura circa 8 s. | 4 |
 | 5 | **Ayoub** | hacker | Il drone guida si ferma per circa 6 s. | 5 |
 
@@ -75,7 +75,7 @@ I numeri sono di partenza e si tarano dopo le prove su iPad. Ogni livello ha una
 |---|---|---|---|---|---|
 | 1 | CORSO GIULIO CESARE | un anello di strade, il corso in mezzo, l'ingresso secondario sul corso | Teresa x3 | — | 6 su 8, 90 s |
 | 2 | I CARTELLI DEL NAVIGATORE | cartelli ufficiali che girano attorno al Muro; il centro commerciale in basso a sinistra | Chiara, Teresa x2 | 1, sulla strada in basso | 8 su 10, 90 s |
-| 3 | LA ROTONDA DELLA SFINGE | la rotonda di corso Romania | Gigi | 1 | |
+| 3 | LA ROTONDA DELLA SFINGE | la rotonda di corso Romania, con la sfinge al centro | Gigi, Teresa x2 (niente biglie) | 1, gira sulla rotonda con il traffico | 9 su 12, 100 s |
 | 4 | L'INGRESSO SECONDARIO | due cancelli, due file di ruspe | Samir | 2 | |
 | 5 | TRA I PROFUMI E I JEANS | dentro il centro commerciale: corsie, camerini, il fast food | Ayoub | 2 | |
 
@@ -84,6 +84,10 @@ Dopo la vittoria nel livello 5 compare sul pavimento la scritta blu di Teresa.
 Livello 1: senza cartelli le ruspe girano sull'anello esterno e non passano mai dal corso. Bastano due cartelli: uno all'incrocio a sinistra verso il corso e uno davanti all'ingresso verso il basso. Il terzo cartello serve a correggere un errore.
 
 Livello 2: i cartelli ufficiali fanno girare le ruspe attorno al Muro. La mossa ovvia è girare il cartello all'incrocio in basso, ma lì passa il drone, che lo rimette a posto in pochi secondi. Con le sole biglie entrano 6 ruspe su 8. La strada giusta aggira il drone: si gira il cartello sotto il cancello verso sinistra e quello vicino al centro commerciale nell'altro verso. Le biglie rimandano indietro le prime ruspe già finite nel giro.
+
+Livello 3: il drone gira sulla rotonda insieme alle ruspe e ogni 8 s cancella il cartello verso il centro commerciale. Con i soli due cartelli entrano al massimo 7 ruspe. Con la schiuma all'uscita del cantiere le ruspe si fermano; quando la schiuma asciuga escono in colonna, e un cartello messo dopo il passaggio del drone le prende tutte. La soluzione salvata (schiuma a 2 s, cartello a 10,5 s, schiuma a 12 s, cartello a 21 s) vince anche spostando i cartelli di un paio di secondi. In questo livello niente biglie, così la novità è la schiuma.
+
+Una prima versione della schiuma rallentava le ruspe invece di fermarle. Non serviva a niente: si vinceva solo mettendo il cartello entro due decimi di secondo dal passaggio del drone. Da qui la schiuma che trattiene.
 
 ## 9. Punteggio
 
@@ -102,6 +106,6 @@ Livello perso: nessun punteggio. `MAX_SCORE.ruspe` in `tools/leaderboard/Code.gs
 ## 11. Ordine di lavoro
 
 1. ~~Livello 1 giocabile: regole, mappa, Teresa, intro e risultati, record.~~ (18 ottobre)
-2. ~~Livello 2: Chiara, il drone guida.~~ (18 ottobre) Livelli 3–5, uno alla volta, ognuno con il suo bambino.
+2. ~~Livello 2: Chiara, il drone guida.~~ ~~Livello 3: Gigi, la rotonda.~~ (18 ottobre) Livelli 4–5, uno alla volta, ognuno con il suo bambino.
 3. Effetti sonori dedicati: motore, cartello, biglie, schiuma, pernacchie, ruspa dentro.
 4. `MAX_SCORE.ruspe` definitivo, poi ripubblicazione dello script; tabella "Tasti" nel README.

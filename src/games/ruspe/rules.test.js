@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseMap, chooseDir, createRound, useTool, step, replay, score, openDirs, droneCell, MARBLES_TIME, UP, RIGHT, DOWN, LEFT, COLS } from './rules.js';
+import { parseMap, chooseDir, createRound, useTool, step, replay, score, openDirs, droneCell, MARBLES_TIME, FOAM_TIME, UP, RIGHT, DOWN, LEFT, COLS } from './rules.js';
 
 // A small test town, padded to the full width with blocks.
 const pad = (rows) => rows.map((r) => r.padEnd(COLS, '#'));
@@ -99,12 +99,12 @@ describe('Teresa', () => {
     const r = createRound(level());
     expect(useTool(r, 'teresa', 3, 1)).toMatchObject({ ok: true, what: 'sign' });
     expect(r.tools.teresa).toBe(1);
-    expect(r.signs.get('3,1').dir).toBe(RIGHT); // the first way out clockwise from up
+    expect(r.signs.get('3,1').dir).toBe(DOWN); // down the side street
     expect(useTool(r, 'teresa', 3, 1)).toMatchObject({ ok: true, free: true });
-    expect(r.signs.get('3,1').dir).toBe(DOWN);
+    expect(r.signs.get('3,1').dir).toBe(LEFT);
     useTool(r, 'teresa', 3, 1);
     useTool(r, 'teresa', 3, 1);
-    expect(r.signs.get('3,1').dir).toBe(RIGHT); // round the clock
+    expect(r.signs.get('3,1').dir).toBe(DOWN); // round the clock
     expect(r.tools.teresa).toBe(1);
   });
 
@@ -113,6 +113,12 @@ describe('Teresa', () => {
     expect(useTool(r, 'teresa', 2, 1)).toMatchObject({ ok: true, what: 'swap' });
     expect(r.signs.get('2,1')).toMatchObject({ dir: DOWN, official: RIGHT, mine: true });
     expect(r.tools.teresa).toBe(1);
+  });
+
+  it('starts a sign on a straight street pointing the first way clockwise from up', () => {
+    const r = createRound(level());
+    useTool(r, 'teresa', 2, 3); // left and right only
+    expect(r.signs.get('2,3').dir).toBe(RIGHT);
   });
 
   it('never points a sign back into the construction site', () => {
@@ -134,7 +140,7 @@ describe('Teresa', () => {
 
   it('sends the bulldozers where the sign points', () => {
     // Down at the first crossing: they loop below and never reach the mall.
-    const r = replay(level(), [{ at: 0, tool: 'teresa', x: 3, y: 1 }, { at: 0, tool: 'teresa', x: 3, y: 1 }]);
+    const r = replay(level(), [{ at: 0, tool: 'teresa', x: 3, y: 1 }]);
     expect(r.inside).toBe(0);
   });
 });
@@ -158,6 +164,31 @@ describe('Chiara', () => {
     useTool(r, 'chiara', 4, 1);
     run(r, 2);
     expect(r.inside).toBe(0);
+  });
+});
+
+describe('Gigi', () => {
+  it('puts foam on a street for a while, one use each', () => {
+    const r = createRound(level({ tools: { gigi: 1 }, count: 0 }));
+    expect(useTool(r, 'gigi', 5, 1).ok).toBe(false); // the mall
+    expect(useTool(r, 'gigi', 3, 1)).toMatchObject({ ok: true, what: 'foam' });
+    expect(useTool(r, 'gigi', 3, 1).ok).toBe(false); // already foamed
+    expect(r.tools.gigi).toBe(0);
+    run(r, FOAM_TIME + 0.5);
+    expect(r.foam.has('3,1')).toBe(false);
+  });
+
+  it('holds the bulldozers until it dries, then lets them go in a convoy', () => {
+    const r = createRound(level({ count: 3, interval: 0.5, need: 3, tools: { gigi: 1 } }));
+    useTool(r, 'gigi', 3, 1);
+    run(r, 2);
+    expect(r.ruspe.filter((q) => q.stuck !== undefined)).toHaveLength(3);
+    expect(r.ruspe.every((q) => q.x === 3 && q.y === 1)).toBe(true);
+    expect(r.inside).toBe(0);
+    run(r, FOAM_TIME - 2 + 0.1); // dry: the first one leaves at once...
+    expect(r.ruspe.filter((q) => q.wait > 0)).toHaveLength(2); // ...the others half a second apart
+    run(r, 2);
+    expect(r.inside).toBe(3);
   });
 });
 
