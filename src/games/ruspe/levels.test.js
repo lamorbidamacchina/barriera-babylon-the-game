@@ -55,7 +55,7 @@ describe('levels', () => {
 
   it('have a tip for the new kid, and Rosanna\'s lines fit their strip', () => {
     const say = 320 / 8; // SAY_W in the scene
-    for (const l of LEVELS) expect(wrappedLines(l.tip, say), l.tip).toBeLessThanOrEqual(2);
+    for (const line of [...LEVELS.map((l) => l.tip), ROSANNA.firstReset, ROSANNA.hopeless]) expect(wrappedLines(line, say), line).toBeLessThanOrEqual(2);
     for (const line of [...ROSANNA.start, ...ROSANNA.in, ...ROSANNA.drone, ...ROSANNA.empty]) expect(wrappedLines(line, say), line).toBe(1);
   });
 

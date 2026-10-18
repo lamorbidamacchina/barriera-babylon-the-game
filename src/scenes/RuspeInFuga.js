@@ -6,7 +6,7 @@ import { loadSave, writeSave } from '../save.js';
 import { refreshRecords, beatsRecord } from '../leaderboard.js';
 import { drawBarrieraRecord, askNickname } from '../records.js';
 import { LEVELS, ROSANNA, BAR } from '../games/ruspe/levels.js';
-import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, MARBLES_TIME, FOAM_TIME } from '../games/ruspe/rules.js';
+import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, forecast, patrolCells, MARBLES_TIME, FOAM_TIME } from '../games/ruspe/rules.js';
 import { createTextures, MAP_KEY, RUSPA_KEY, SIGN_KEY, CURSOR_KEY, MARBLES_KEY, FOAM_KEY, faceKey } from '../games/ruspe/textures.js';
 
 const HUD_H = 28;
@@ -48,6 +48,7 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.ruspaImgs = new Map(); // bulldozer id → image
     this.signImgs = new Map(); // cell key → image
     this.spreadImgs = { marbles: new Map(), foam: new Map() }; // cell key → image
+    this.resets = 0; // signs the drone has put back
     this.setupDrone();
     this.hover = this.add.image(0, 0, CURSOR_KEY).setOrigin(0).setDepth(20).setVisible(false);
     this.cursor = null; // the keyboard's cell, once the arrows are used
@@ -69,6 +70,9 @@ export default class RuspeInFuga extends Phaser.Scene {
     droneTexture(this);
     const g = this.add.graphics().setDepth(4);
     const { path } = this.lv.drone;
+    // Its zone, tinted: no sign there lasts.
+    g.fillStyle(N.droneLight, 0.2);
+    for (const [x, y] of patrolCells(path)) g.fillRect(FIELD.x + x * TILE, FIELD.y + y * TILE, TILE, TILE);
     g.fillStyle(N.droneLight, 0.35);
     path.forEach(([x, y], i) => {
       const [nx, ny] = path[(i + 1) % path.length];
@@ -97,6 +101,14 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.inText = text(this, 8, 10, '', { color: C.ocraLight }).setDepth(61);
     this.outText = text(this, 150, 10, '', { color: C.chalkDim }).setDepth(61);
     this.timeText = text(this, 420, 10, '', { color: C.white, origin: [1, 0] }).setDepth(61);
+    // Offered when the tools are used up and the bulldozers won't make it.
+    const rb = (this.retryBtn = this.add.rectangle(262, 4, 80, 20, N.night2).setOrigin(0).setDepth(61).setStrokeStyle(1, N.red));
+    this.retryText = text(this, 302, 10, 'RIPROVA', { color: C.red, origin: [0.5, 0] }).setDepth(62);
+    rb.setInteractive({ ...hitArea(80, 20, 4, 4), useHandCursor: true }).on('pointerdown', (p, x, y, e) => {
+      e.stopPropagation();
+      if (rb.visible && this.state === 'play') this.scene.restart({ level: this.level });
+    });
+    this.showRetry(false);
     // Pause button (mainly for touch).
     const pb = this.add.rectangle(452, 4, 22, 20, N.night2).setOrigin(0).setDepth(61).setStrokeStyle(1, N.ocra);
     text(this, 463, 10, 'II', { color: C.ocraLight, origin: [0.5, 0] }).setDepth(62);
@@ -105,6 +117,11 @@ export default class RuspeInFuga extends Phaser.Scene {
       if (this.state === 'play') this.pause();
     });
     this.updateHud();
+  }
+
+  showRetry(on) {
+    this.retryBtn.setVisible(on);
+    this.retryText.setVisible(on);
   }
 
   updateHud() {
@@ -269,6 +286,7 @@ export default class RuspeInFuga extends Phaser.Scene {
         if (!this.cursor) this.moveCursor(0, 0);
         else this.apply(this.cursor.x, this.cursor.y);
       } else if (['Escape', 'KeyP'].includes(e.code)) this.pause();
+      else if (e.code === 'KeyR' && this.retryBtn.visible) this.scene.restart({ level: this.level });
     } else if (this.state === 'pause') {
       if (['Escape', 'KeyP', 'Enter', 'Space'].includes(e.code)) this.resume();
     } else if (this.state === 'end' && this.endActions) {
@@ -325,6 +343,23 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.updateToolBar();
     const img = this.signImgs.get(`${x},${y}`);
     if (img) this.tweens.add({ targets: img, scale: { from: 1.8, to: 1 }, duration: 160, ease: 'Back.out' });
+    this.checkHopeless();
+  }
+
+  // With every tool used up the rest of the round is already written: play
+  // it ahead. If it's lost and nothing can change any more, end it now; if
+  // Teresa's own signs can still be turned, say so and offer a retry.
+  checkHopeless() {
+    if (Object.values(this.round.tools).some((n) => n > 0)) return;
+    const lost = forecast(this.round) !== 'win';
+    this.showRetry(lost);
+    if (!lost) return;
+    if (![...this.round.signs.values()].some((s) => s.mine)) {
+      this.endRound('hopeless');
+      return;
+    }
+    if (!this.warnedHopeless) this.say(ROSANNA.hopeless);
+    this.warnedHopeless = true;
   }
 
   // One image per sign on the map, turned to where it points.
@@ -372,7 +407,17 @@ export default class RuspeInFuga extends Phaser.Scene {
       const c = cellCenter(ev.x, ev.y);
       const flash = this.add.rectangle(c.x, c.y, TILE, TILE, N.droneLight, 0.5).setDepth(9);
       this.tweens.add({ targets: flash, alpha: 0, duration: 400, onComplete: () => flash.destroy() });
-      this.say(ROSANNA.drone, 0.5);
+      const x = Phaser.Math.Clamp(c.x, 36, WIDTH - 36);
+      if (this.lastNote?.active) {
+        // One at a time: notes on neighbouring cells would overlap.
+        this.tweens.killTweensOf(this.lastNote);
+        this.lastNote.destroy();
+      }
+      const note = (this.lastNote = text(this, x, c.y - 14, 'RIMESSO!', { color: C.droneLight, origin: 0.5 }).setDepth(56));
+      this.tweens.add({ targets: note, y: note.y - 12, alpha: 0, delay: 700, duration: 600, onComplete: () => note.destroy() });
+      // The first time, Rosanna says what to do about it.
+      this.say(this.resets++ ? ROSANNA.drone : ROSANNA.firstReset, this.resets > 1 ? 0.5 : 1);
+      this.checkHopeless(); // one of Teresa's signs fewer to turn
     }
     else if (ev.type === 'in') {
       sfx.coin();
@@ -438,6 +483,7 @@ export default class RuspeInFuga extends Phaser.Scene {
     if (this.state === 'end') return;
     this.state = 'end';
     this.hover.setVisible(false);
+    this.showRetry(false);
     this.bubble?.destroy();
     this.updateHud();
 
@@ -456,8 +502,8 @@ export default class RuspeInFuga extends Phaser.Scene {
 
     if (!win) {
       sfx.lose();
-      banner(this, 'ARRIVANO GLI OPERAI', C.red, 1000);
-      this.time.delayedCall(1100, () => results(false));
+      banner(this, result === 'hopeless' ? 'NON CE LA FANNO' : 'ARRIVANO GLI OPERAI', C.red, 1400);
+      this.time.delayedCall(1500, () => results(false));
       return;
     }
     sfx.win();
@@ -475,7 +521,7 @@ export default class RuspeInFuga extends Phaser.Scene {
     const P = { x: 40, y: 30, w: 400, h: 212 };
     panel(o.add(this.add.graphics()), P.x, P.y, P.w, P.h, { border: win ? N.ocra : N.red });
 
-    const title = win ? 'RUSPE DENTRO!' : 'ARRIVANO GLI OPERAI';
+    const title = win ? 'RUSPE DENTRO!' : result === 'hopeless' ? 'NIENTE DA FARE' : 'ARRIVANO GLI OPERAI';
     o.add(text(this, P.x + P.w / 2, P.y + 12, title, { size: 16, color: win ? C.ocraLight : C.red, origin: [0.5, 0] }));
     o.add(text(this, P.x + P.w / 2, P.y + 34, `${this.lv.name}   ${this.round.inside}/${this.lv.need} DENTRO`, { color: C.chalkDim, origin: [0.5, 0] }));
 

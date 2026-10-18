@@ -113,6 +113,16 @@ export function createRound(level) {
 // The cell the guide drone is over.
 export const droneCell = (d) => ({ x: Math.round(d.x), y: Math.round(d.y) });
 
+// Every cell the drone flies over on its patrol: no sign there lasts.
+export function patrolCells(path) {
+  const cells = new Set();
+  path.forEach(([x, y], i) => {
+    const [nx, ny] = path[(i + 1) % path.length];
+    for (let k = 0; k <= Math.abs(nx - x) + Math.abs(ny - y); k++) cells.add(key(x + Math.sign(nx - x) * k, y + Math.sign(ny - y) * k));
+  });
+  return [...cells].map((k) => k.split(',').map(Number));
+}
+
 // A tool used on cell (x, y). Returns what happened ({ ok: false } when the
 // tool can't go there), and takes one use of the tool when it counts.
 export function useTool(round, tool, x, y) {
@@ -274,6 +284,27 @@ export function score({ inside, tools, timeLeft }) {
     time: Math.floor(timeLeft) * POINTS.perSecondLeft,
   };
   return { ...s, total: s.ruspe + s.tools + s.time };
+}
+
+// A copy of a round that can be played on without touching the real one.
+export function cloneRound(round) {
+  return {
+    ...round,
+    signs: new Map([...round.signs].map(([k, s]) => [k, { ...s }])),
+    tools: { ...round.tools },
+    ruspe: round.ruspe.map((r) => ({ ...r })),
+    marbles: new Map(round.marbles),
+    foam: new Map(round.foam),
+    drone: round.drone && { ...round.drone },
+    events: [],
+  };
+}
+
+// How the round ends if nobody touches anything more: 'win' or 'time'.
+export function forecast(round, dt = 1 / 30) {
+  const r = cloneRound(round);
+  while (!r.result) step(r, dt);
+  return r.result;
 }
 
 // Plays a level with a list of tool uses ({ at: seconds, tool, x, y }), in

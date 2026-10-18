@@ -24,6 +24,9 @@ Il gioco è un **Lemmings visto dall'alto**. Le ruspe vanno avanti da sole e chi
 - **Vittoria**: `need` ruspe dentro su `count`. Il livello finisce appena si arriva a `need`.
 - **Sconfitta**: il tempo finisce prima, banner **ARRIVANO GLI OPERAI**.
 - Nessuna ruspa si perde: una ruspa sbagliata continua a girare per il quartiere finché qualcuno la rimette sulla strada giusta.
+- **Partita senza speranza** (provata sull'iPad il 18 ottobre: aspettare più di un minuto la fine era noioso). Quando gli attrezzi sono finiti il resto della partita è già scritto, perché le regole non hanno niente di casuale. Allora il gioco la gioca in anticipo in una copia (`forecast` in `rules.js`), dopo ogni tocco e dopo ogni cartello rimesso dal drone. Se è persa:
+  - se restano cartelli di Teresa da girare gratis, Rosanna lo dice e nell'HUD compare **RIPROVA** (anche il tasto R);
+  - se non si può più cambiare niente, la partita finisce subito con il banner **NON CE LA FANNO** e il titolo **NIENTE DA FARE**.
 
 ## 3. Attrezzi: un bambino ciascuno
 
@@ -39,7 +42,7 @@ Gli attrezzi sono nella barra in basso a sinistra, ognuno con il volto del bambi
 
 ## 4. Il drone guida (dal livello 2)
 
-Il drone fa sempre lo stesso giro, avanti e indietro in linea retta, ed è sempre visibile. Il suo giro è segnato sulla mappa con una linea a puntini, così si può aggirarlo. Ogni cartello su cui passa torna come da percorso ufficiale: i cartelli di Teresa spariscono e quelli ufficiali girati tornano com'erano. Quando succede, la casella lampeggia e Rosanna a volte lo fa notare. Le biglie non le tocca.
+Il drone fa sempre lo stesso giro, avanti e indietro in linea retta, ed è sempre visibile. Il suo giro è segnato sulla mappa: le caselle sono colorate di giallo chiaro e c'è una linea a puntini, così si può aggirarlo. Ogni cartello su cui passa torna come da percorso ufficiale: i cartelli di Teresa spariscono e quelli ufficiali girati tornano com'erano. Quando succede, la casella lampeggia e compare la scritta **RIMESSO!**. La prima volta Rosanna spiega cosa fare ("Il drone rimette i cartelli sul suo giro. Cambiate incrocio!"). Le biglie e la schiuma non le tocca.
 
 ## 5. Controlli
 

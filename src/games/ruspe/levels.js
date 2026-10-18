@@ -127,6 +127,8 @@ export const ROSANNA = {
   start: ['Classe, operazione cartelli!', 'Pennarelli carichi. Si comincia.', 'Silenzio, come una pipì sulla sabbia.'],
   in: ['Dentro! Una di meno per il Muro.', 'Ingresso secondario. Da manuale.', 'Ottimo. Avanti la prossima.'],
   drone: ['Drone guida! Rimette i cartelli a posto.', 'Il drone sistema i cartelli. Che zelo.'],
+  firstReset: 'Il drone rimette i cartelli sul suo giro. Cambiate incrocio!',
+  hopeless: 'Attrezzi finiti: così non entrano. Girate i cartelli o RIPROVA.',
   empty: ['Finito. Si improvvisa.', 'Munizioni finite. Ingegno, classe.'],
   record: ['Record di Barriera! Nome sul registro, in stampatello.', 'Dieci e lode. Il nome, per il registro di classe.'],
 };

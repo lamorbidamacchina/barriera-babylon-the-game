@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseMap, chooseDir, createRound, useTool, step, replay, score, openDirs, droneCell, MARBLES_TIME, FOAM_TIME, UP, RIGHT, DOWN, LEFT, COLS } from './rules.js';
+import { parseMap, chooseDir, createRound, useTool, step, replay, score, openDirs, droneCell, patrolCells, cloneRound, forecast, MARBLES_TIME, FOAM_TIME, UP, RIGHT, DOWN, LEFT, COLS } from './rules.js';
 
 // A small test town, padded to the full width with blocks.
 const pad = (rows) => rows.map((r) => r.padEnd(COLS, '#'));
@@ -224,6 +224,33 @@ describe('the guide drone', () => {
     useTool(q, 'teresa', 3, 1);
     for (let i = 0; i < 120; i++) resets.push(...step(q, 1 / 60).events.filter((e) => e.type === 'reset'));
     expect(resets).toEqual([{ type: 'reset', x: 3, y: 1 }]);
+  });
+});
+
+describe('forecast', () => {
+  it('tells how an untouched round ends, without playing the real one', () => {
+    const r = createRound(level());
+    expect(forecast(r)).toBe('win');
+    expect(r.elapsed).toBe(0);
+    useTool(r, 'teresa', 3, 1); // down, away from the mall
+    expect(forecast(r)).toBe('time');
+    expect(r.signs.get('3,1').dir).toBe(DOWN);
+  });
+
+  it('copies everything that changes during a round', () => {
+    const r = createRound(level({ need: 99, speed: 1, drone: { path: [[1, 1], [4, 1]], speed: 1 } }));
+    run(r, 1);
+    const c = cloneRound(r);
+    step(c, 0.5);
+    expect(r.ruspe[0].t).not.toBe(c.ruspe[0].t);
+    expect(r.drone.x).not.toBe(c.drone.x);
+  });
+});
+
+describe('patrolCells', () => {
+  it('lists every cell on the way, there and back', () => {
+    expect(patrolCells([[1, 1], [3, 1]]).sort()).toEqual([[1, 1], [2, 1], [3, 1]]);
+    expect(patrolCells([[0, 0], [0, 1], [1, 1], [1, 0]])).toHaveLength(4);
   });
 });
 
