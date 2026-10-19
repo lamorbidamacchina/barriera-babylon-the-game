@@ -30,8 +30,10 @@ describe('levels', () => {
         const roads = reachable(m, g.x, g.y);
         expect([...m.goals].some((k) => roads.has(k)), l.name).toBe(true);
       }
-      // No street running off the edge of the map.
-      for (let x = 0; x < COLS; x++) expect(m.isRoad(x, 0) || m.isRoad(x, ROWS - 1), l.name).toBe(false);
+      // No street running off the edge of the map (a gate may sit there).
+      const street = (x, y) => m.isRoad(x, y) && m.at(x, y) !== 'C';
+      for (let x = 0; x < COLS; x++) expect(street(x, 0) || street(x, ROWS - 1), l.name).toBe(false);
+      for (let y = 0; y < ROWS; y++) expect(street(0, y) || street(COLS - 1, y), l.name).toBe(false);
     }
   });
 

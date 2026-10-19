@@ -17,7 +17,8 @@ Il gioco è un **Lemmings visto dall'alto**. Le ruspe vanno avanti da sole e chi
 
 ## 2. Regole
 
-- La mappa è una griglia di 30×13 caselle da 16 px, vista dall'alto: strade, isolati, il cantiere del Muro, il centro commerciale.
+- La mappa è una griglia di 15×7 caselle da 32 px, vista dall'alto: strade, isolati, il cantiere del Muro, il centro commerciale. Su un iPhone in orizzontale una casella misura circa 44 punti, la misura di un dito. All'inizio le caselle erano da 16 px su una griglia di 30×13, ma il 19 ottobre sul telefono il gioco era ingiocabile: cartelli e incroci troppo piccoli.
+- Le regole avanzano sempre a passi fissi di 1/60 di secondo (`SIM_DT`), qualunque sia la velocità dello schermo. Il risultato dipende dal passo: con gli stessi tocchi un passo diverso può far entrare una ruspa in più o in meno. Così la partita vera, la previsione (`forecast`) e i test danno sempre lo stesso risultato.
 - Le ruspe escono dal cancello del cantiere una alla volta (`interval` secondi) e vanno di casella in casella.
 - In ogni casella una ruspa segue il cartello, se c'è, altrimenti va dritta. La ruspa va sempre dove punta la freccia, anche indietro: la freccia non mente mai. (Per un giorno i cartelli che puntavano all'indietro venivano ignorati, ma sull'iPad girare i cartelli sembrava non funzionare: due posizioni su tre mandavano le ruspe dritte.) Sulle biglie di Chiara la ruspa slitta e torna indietro, qualunque cosa dica il cartello. Se la strada è chiusa gira a destra, poi a sinistra, poi torna indietro. La regola è sempre la stessa, così si impara.
 - Una ruspa che arriva all'ingresso secondario entra e conta.
@@ -54,9 +55,9 @@ Il drone fa sempre lo stesso giro, avanti e indietro in linea retta, ed è sempr
 
 ## 6. Schermo (480×270)
 
-- In alto, l'HUD (28 px): `DENTRO 3/6`, `RUSPE 5/8` (quante sono uscite), il tempo e `II`.
-- La mappa: y 28–236.
-- In basso, la barra degli attrezzi (34 px): i bambini a sinistra, poi il nome dell'attrezzo scelto. L'angolo in basso a destra resta vuoto per i pulsanti audio e schermo intero.
+- In alto, l'HUD (22 px): `DENTRO 3/6`, `RUSPE 5/8` (quante sono uscite), il tempo e `II`.
+- La mappa: y 22–246. I cartelli sono disegnati sopra le ruspe, così una ruspa ferma su un incrocio non nasconde la freccia.
+- In basso, la barra degli attrezzi (24 px), i cui pulsanti accettano anche i tocchi un po' sopra la barra: i bambini a sinistra, poi il nome dell'attrezzo scelto. L'angolo in basso a destra resta vuoto per i pulsanti audio e schermo intero.
 - Le battute di Rosanna compaiono su una striscia scura in cima alla mappa, 40 caratteri per riga e due righe al massimo. La prima volta che si gioca un livello Rosanna spiega il bambino nuovo (`tip`). La riga in cima alle mappe è sempre fatta di edifici.
 
 ## 7. Testi
@@ -76,19 +77,19 @@ I numeri sono di partenza e si tarano dopo le prove su iPad. Ogni livello ha una
 
 | # | Nome | Ambientazione | Nuovo bambino | Drone | Ruspe |
 |---|---|---|---|---|---|
-| 1 | CORSO GIULIO CESARE | un anello di strade, il corso in mezzo, l'ingresso secondario sul corso | Teresa x3 | — | 6 su 8, 90 s |
-| 2 | I CARTELLI DEL NAVIGATORE | cartelli ufficiali che girano attorno al Muro; il centro commerciale in basso a sinistra | Chiara, Teresa x2 | 1, sulla strada in basso | 8 su 10, 90 s |
-| 3 | LA ROTONDA DELLA SFINGE | la rotonda di corso Romania, con la sfinge al centro | Gigi, Teresa x2 (niente biglie) | 1, gira sulla rotonda con il traffico | 9 su 12, 100 s |
+| 1 | CORSO GIULIO CESARE | un anello di strade, il corso in mezzo, l'ingresso secondario sul corso | Teresa x3 | — | 6 su 8, 80 s |
+| 2 | I CARTELLI DEL NAVIGATORE | cartelli ufficiali che girano attorno al Muro; il centro commerciale in basso a sinistra | Chiara, Teresa x2 | 1, sulla strada in basso | 8 su 10, 80 s |
+| 3 | LA ROTONDA DELLA SFINGE | la rotonda di corso Romania, con la sfinge al centro | Gigi x2, Teresa x1 (niente biglie) | 1, gira sulla rotonda con il traffico | 8 su 10, 90 s |
 | 4 | L'INGRESSO SECONDARIO | due cancelli, due file di ruspe | Samir | 2 | |
 | 5 | TRA I PROFUMI E I JEANS | dentro il centro commerciale: corsie, camerini, il fast food | Ayoub | 2 | |
 
 Dopo la vittoria nel livello 5 compare sul pavimento la scritta blu di Teresa.
 
-Livello 1: senza cartelli le ruspe girano sull'anello esterno e non passano mai dal corso. Bastano due cartelli: uno all'incrocio a sinistra verso il corso e uno davanti all'ingresso verso il basso. Il terzo cartello serve a correggere un errore.
+Livello 1: uscite dal cantiere, le ruspe girano a sinistra sul corso e poi per sempre sull'anello esterno. Bastano due cartelli: uno dove la strada del cantiere incontra il corso, verso destra, e uno davanti all'ingresso, verso il basso. Il terzo cartello serve a correggere un errore. Vince anche mettendo i cartelli dopo 8 s.
 
-Livello 2: i cartelli ufficiali fanno girare le ruspe attorno al Muro. La mossa ovvia è girare il cartello all'incrocio in basso, ma lì passa il drone, che lo rimette a posto in pochi secondi. Con le sole biglie entrano 6 ruspe su 8. La strada giusta aggira il drone: si gira il cartello sotto il cancello verso sinistra e quello vicino al centro commerciale nell'altro verso. Le biglie rimandano indietro le prime ruspe già finite nel giro.
+Livello 2: i cartelli ufficiali fanno girare le ruspe attorno al Muro. La mossa ovvia è girare il cartello all'incrocio in basso, ma lì passa il drone, che lo rimette a posto in pochi secondi. Con le sole biglie non entra nessuna ruspa. La strada giusta aggira il drone: si gira il cartello sotto il cancello verso sinistra e quello vicino al centro commerciale nell'altro verso. Le biglie rimandano indietro le prime ruspe già finite nel giro.
 
-Livello 3: il drone gira sulla rotonda insieme alle ruspe e ogni 8 s cancella il cartello verso il centro commerciale. Con i soli due cartelli entrano al massimo 7 ruspe. Con la schiuma all'uscita del cantiere le ruspe si fermano; quando la schiuma asciuga escono in colonna, e un cartello messo dopo il passaggio del drone le prende tutte. La soluzione salvata (schiuma a 2 s, cartello a 10,5 s, schiuma a 12 s, cartello a 21 s) vince anche spostando i cartelli di un paio di secondi. In questo livello niente biglie, così la novità è la schiuma.
+Livello 3: il drone gira sulla rotonda insieme alle ruspe e a ogni giro cancella il cartello verso il centro commerciale. C'è un cartello solo, e da solo ne prende al massimo 7. Con la schiuma all'uscita del cantiere le ruspe si fermano; quando la schiuma asciuga escono in colonna, e il cartello messo al momento giusto le prende tutte. Con la schiuma a 2 s (e di nuovo a 6 s, o anche no), il cartello vince messo tra 23 e 28 s. Sulla mappa piccola due cartelli bastavano anche senza schiuma, perché le ruspe perse tornano subito sulla rotonda: per questo il cartello è uno solo. In questo livello niente biglie, così la novità è la schiuma.
 
 Una prima versione della schiuma rallentava le ruspe invece di fermarle. Non serviva a niente: si vinceva solo mettendo il cartello entro due decimi di secondo dal passaggio del drone. Da qui la schiuma che trattiene.
 

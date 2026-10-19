@@ -4,11 +4,13 @@
 // the Comitato Caos to send them into the shopping mall. The scene calls
 // these; rules.test.js checks them.
 
-export const TILE = 16;
-export const COLS = 30;
-export const ROWS = 13;
-// Where the map sits on screen: under the HUD, above the tool bar.
-export const FIELD = { x: 0, y: 28, w: COLS * TILE, h: ROWS * TILE };
+// Cells of 32 px: about 44 points on an iPhone in landscape, the size of a
+// fingertip (with 16 px cells the game was unplayable on a phone).
+export const TILE = 32;
+export const COLS = 15;
+export const ROWS = 7;
+// Where the map sits on screen: under the 22 px HUD, above the 24 px tool bar.
+export const FIELD = { x: 0, y: 22, w: COLS * TILE, h: ROWS * TILE };
 
 // Directions, clockwise: turning right is +1, turning back is +2.
 export const UP = 0;
@@ -39,6 +41,12 @@ export const MARBLES_TIME = 10;
 // until it dries, then the stuck ones leave in a convoy, CONVOY seconds apart.
 export const FOAM_TIME = 8;
 export const CONVOY = 0.5;
+
+// The rules always move in steps of this many seconds, whatever the frame
+// rate: the outcome depends on the step (a sign placed a fraction of a
+// second apart can catch one bulldozer more or less), so the game, the
+// forecast and the tests must all use the same one.
+export const SIM_DT = 1 / 60;
 
 // Same range as the other games: a won level is worth a few hundred points.
 export const POINTS = { perBulldozer: 100, perToolLeft: 30, perSecondLeft: 5 };
@@ -300,16 +308,16 @@ export function cloneRound(round) {
 }
 
 // How the round ends if nobody touches anything more: 'win' or 'time'.
-export function forecast(round, dt = 1 / 30) {
+export function forecast(round) {
   const r = cloneRound(round);
-  while (!r.result) step(r, dt);
+  while (!r.result) step(r, SIM_DT);
   return r.result;
 }
 
 // Plays a level with a list of tool uses ({ at: seconds, tool, x, y }), in
 // fixed steps, to the end: for the tests (every level is winnable) and for
 // tuning.
-export function replay(level, moves, dt = 1 / 60) {
+export function replay(level, moves, dt = SIM_DT) {
   const round = createRound(level);
   const todo = [...moves].sort((a, b) => a.at - b.at);
   while (!round.result) {

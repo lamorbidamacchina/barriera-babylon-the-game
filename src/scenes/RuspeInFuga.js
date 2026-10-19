@@ -6,12 +6,12 @@ import { loadSave, writeSave } from '../save.js';
 import { refreshRecords, beatsRecord } from '../leaderboard.js';
 import { drawBarrieraRecord, askNickname } from '../records.js';
 import { LEVELS, ROSANNA, BAR } from '../games/ruspe/levels.js';
-import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, forecast, patrolCells, MARBLES_TIME, FOAM_TIME } from '../games/ruspe/rules.js';
+import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, forecast, patrolCells, SIM_DT, MARBLES_TIME, FOAM_TIME } from '../games/ruspe/rules.js';
 import { createTextures, MAP_KEY, RUSPA_KEY, signKey, CURSOR_KEY, MARBLES_KEY, FOAM_KEY, faceKey } from '../games/ruspe/textures.js';
 
-const HUD_H = 28;
+const HUD_H = FIELD.y;
 const BAR_Y = FIELD.y + FIELD.h; // the tool bar, under the map
-const TOOL_W = 48;
+const TOOL_W = 60;
 const SAY_W = 320; // Rosanna's lines: 40 characters a line
 const GAME_ID = 'ruspe'; // in the save and in the Barriera records
 const KIDS = { teresa: { name: 'TERESA', what: 'CARTELLO' }, chiara: { name: 'CHIARA', what: 'BIGLIE' }, gigi: { name: 'GIGI', what: 'SCHIUMA' } };
@@ -81,8 +81,8 @@ export default class RuspeInFuga extends Phaser.Scene {
       const n = Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y)) / 4;
       for (let k = 0; k <= n; k++) g.fillRect(Math.round(a.x + ((b.x - a.x) * k) / n) - 1, Math.round(a.y + ((b.y - a.y) * k) / n) - 1, 2, 2);
     });
-    this.droneShadow = this.add.ellipse(0, 0, 22, 7, N.black, 0.4).setDepth(14);
-    this.droneImg = this.add.image(0, 0, 'drone').setScale(2).setDepth(16);
+    this.droneShadow = this.add.ellipse(0, 0, 34, 10, N.black, 0.4).setDepth(14);
+    this.droneImg = this.add.image(0, 0, 'drone').setScale(3).setDepth(16);
     this.drawDrone(0);
   }
 
@@ -90,29 +90,29 @@ export default class RuspeInFuga extends Phaser.Scene {
     const d = this.round.drone;
     if (!d) return;
     const c = cellCenter(d.x, d.y);
-    this.droneShadow.setPosition(Math.round(c.x), Math.round(c.y) + 4);
-    this.droneImg.setPosition(Math.round(c.x), Math.round(c.y) - 10 + Math.round(Math.sin(time / 200) * 2));
+    this.droneShadow.setPosition(Math.round(c.x), Math.round(c.y) + 6);
+    this.droneImg.setPosition(Math.round(c.x), Math.round(c.y) - 14 + Math.round(Math.sin(time / 200) * 2));
   }
 
   // ---------------------------------------------------------------- HUD and tool bar
 
   drawHud() {
     this.add.rectangle(0, 0, WIDTH, HUD_H, N.black, 0.85).setOrigin(0).setDepth(60);
-    this.inText = text(this, 8, 10, '', { color: C.ocraLight }).setDepth(61);
-    this.outText = text(this, 150, 10, '', { color: C.chalkDim }).setDepth(61);
-    this.timeText = text(this, 420, 10, '', { color: C.white, origin: [1, 0] }).setDepth(61);
+    this.inText = text(this, 8, 7, '', { color: C.ocraLight }).setDepth(61);
+    this.outText = text(this, 150, 7, '', { color: C.chalkDim }).setDepth(61);
+    this.timeText = text(this, 420, 7, '', { color: C.white, origin: [1, 0] }).setDepth(61);
     // Offered when the tools are used up and the bulldozers won't make it.
-    const rb = (this.retryBtn = this.add.rectangle(262, 4, 80, 20, N.night2).setOrigin(0).setDepth(61).setStrokeStyle(1, N.red));
-    this.retryText = text(this, 302, 10, 'RIPROVA', { color: C.red, origin: [0.5, 0] }).setDepth(62);
-    rb.setInteractive({ ...hitArea(80, 20, 4, 4), useHandCursor: true }).on('pointerdown', (p, x, y, e) => {
+    const rb = (this.retryBtn = this.add.rectangle(262, 2, 80, 18, N.night2).setOrigin(0).setDepth(61).setStrokeStyle(1, N.red));
+    this.retryText = text(this, 302, 7, 'RIPROVA', { color: C.red, origin: [0.5, 0] }).setDepth(62);
+    rb.setInteractive({ ...hitArea(80, 18, 4, 2), useHandCursor: true }).on('pointerdown', (p, x, y, e) => {
       e.stopPropagation();
       if (rb.visible && this.state === 'play') this.scene.restart({ level: this.level });
     });
     this.showRetry(false);
     // Pause button (mainly for touch).
-    const pb = this.add.rectangle(452, 4, 22, 20, N.night2).setOrigin(0).setDepth(61).setStrokeStyle(1, N.ocra);
-    text(this, 463, 10, 'II', { color: C.ocraLight, origin: [0.5, 0] }).setDepth(62);
-    pb.setInteractive({ ...hitArea(22, 20, 4, 4), useHandCursor: true }).on('pointerdown', (p, x, y, e) => {
+    const pb = this.add.rectangle(446, 2, 30, 18, N.night2).setOrigin(0).setDepth(61).setStrokeStyle(1, N.ocra);
+    text(this, 461, 7, 'II', { color: C.ocraLight, origin: [0.5, 0] }).setDepth(62);
+    pb.setInteractive({ ...hitArea(30, 18, 4, 2), useHandCursor: true }).on('pointerdown', (p, x, y, e) => {
       e.stopPropagation();
       if (this.state === 'play') this.pause();
     });
@@ -140,18 +140,20 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.tool = this.toolIds[0];
     this.toolUi = this.toolIds.map((id, i) => {
       const x = 4 + i * (TOOL_W + 4);
-      const y = BAR_Y + 2;
-      const bg = this.add.rectangle(x, y, TOOL_W, HEIGHT - BAR_Y - 4, N.night2).setOrigin(0).setDepth(61);
-      this.add.image(x + 3, y + 5, faceKey(id)).setOrigin(0).setDepth(62);
-      const count = text(this, x + TOOL_W - 3, y + 18, '', { color: C.white, origin: [1, 0] }).setDepth(62);
-      text(this, x + TOOL_W - 3, y + 4, String(i + 1), { color: C.chalkDim, origin: [1, 0] }).setDepth(62);
-      bg.setInteractive({ ...hitArea(TOOL_W, HEIGHT - BAR_Y - 4, 2, 2), useHandCursor: true }).on('pointerdown', (p, lx, ly, e) => {
+      const y = BAR_Y + 1;
+      const h = HEIGHT - BAR_Y - 2;
+      const bg = this.add.rectangle(x, y, TOOL_W, h, N.night2).setOrigin(0).setDepth(61);
+      this.add.image(x + 2, y + 1, faceKey(id)).setOrigin(0).setDepth(62);
+      text(this, x + 26, y + 7, String(i + 1), { color: C.chalkDim }).setDepth(62);
+      const count = text(this, x + TOOL_W - 3, y + 7, '', { color: C.white, origin: [1, 0] }).setDepth(62);
+      // The bar is low: the buttons also take taps a little above it.
+      bg.setInteractive({ ...hitArea(TOOL_W, h, 2, 6), useHandCursor: true }).on('pointerdown', (p, lx, ly, e) => {
         e.stopPropagation();
         if (this.state === 'play' || this.state === 'ready') this.selectTool(id);
       });
       return { id, bg, count };
     });
-    this.toolName = text(this, 4 + this.toolIds.length * (TOOL_W + 4) + 4, BAR_Y + 13, '', { color: C.ocraLight }).setDepth(62);
+    this.toolName = text(this, 4 + this.toolIds.length * (TOOL_W + 4) + 4, BAR_Y + 8, '', { color: C.ocraLight }).setDepth(62);
     this.updateToolBar();
   }
 
@@ -369,7 +371,8 @@ export default class RuspeInFuga extends Phaser.Scene {
       if (!img) {
         const [x, y] = k.split(',').map(Number);
         const c = cellCenter(x, y);
-        img = this.add.image(c.x, c.y, signKey('official', s.dir)).setDepth(8);
+        // Above the bulldozers: a 28 px bulldozer on a crossing would hide the arrow.
+        img = this.add.image(c.x, c.y, signKey('official', s.dir)).setDepth(11);
         this.signImgs.set(k, img);
       }
       img.setTexture(signKey(s.mine ? 'mine' : 'official', s.dir));
@@ -388,12 +391,24 @@ export default class RuspeInFuga extends Phaser.Scene {
     const dt = Math.min(delta, 50) / 1000; // clamp: tab switches, iOS hiccups
     if (this.state !== 'play') return;
     const before = Math.ceil(this.round.timeLeft);
-    step(this.round, dt);
-    for (const ev of this.round.events) this.onEvent(ev);
+    // The rules in fixed steps, as many as the frame took: the round then
+    // plays out exactly as forecast() and the tests play it.
+    this.simTime = (this.simTime ?? 0) + dt;
+    const events = [];
+    while (this.simTime >= SIM_DT && !this.round.result) {
+      this.simTime -= SIM_DT;
+      step(this.round, SIM_DT);
+      events.push(...this.round.events);
+    }
+    for (const ev of events) {
+      if (this.state !== 'play') break;
+      this.onEvent(ev);
+    }
+    if (this.state !== 'play') return; // ended by an event (nothing left to do)
     this.drawRuspe(time);
     this.drawSpread(time);
     this.drawDrone(time);
-    if (Math.ceil(this.round.timeLeft) !== before || this.round.events.length) this.updateHud();
+    if (Math.ceil(this.round.timeLeft) !== before || events.length) this.updateHud();
     if (this.round.result) this.endRound(this.round.result);
   }
 
@@ -413,7 +428,7 @@ export default class RuspeInFuga extends Phaser.Scene {
         this.tweens.killTweensOf(this.lastNote);
         this.lastNote.destroy();
       }
-      const note = (this.lastNote = text(this, x, c.y - 14, 'RIMESSO!', { color: C.droneLight, origin: 0.5 }).setDepth(56));
+      const note = (this.lastNote = text(this, x, c.y - 22, 'RIMESSO!', { color: C.droneLight, origin: 0.5 }).setDepth(56));
       this.tweens.add({ targets: note, y: note.y - 12, alpha: 0, delay: 700, duration: 600, onComplete: () => note.destroy() });
       // The first time, Rosanna says what to do about it.
       this.say(this.resets++ ? ROSANNA.drone : ROSANNA.firstReset, this.resets > 1 ? 0.5 : 1);
@@ -422,7 +437,7 @@ export default class RuspeInFuga extends Phaser.Scene {
     else if (ev.type === 'in') {
       sfx.coin();
       const c = cellCenter(ev.x, ev.y);
-      const puff = this.add.circle(c.x, c.y, 6, N.paper, 0.6).setDepth(12);
+      const puff = this.add.circle(c.x, c.y, 12, N.paper, 0.6).setDepth(12);
       this.tweens.add({ targets: puff, scale: 2.5, alpha: 0, duration: 400, onComplete: () => puff.destroy() });
       this.say(ROSANNA.in, 0.35);
     }
@@ -467,7 +482,7 @@ export default class RuspeInFuga extends Phaser.Scene {
       const shake = Math.floor(time / 90 + r.id) % 2;
       // Stuck in the foam they pile up: spread them a little to show how many.
       const pile = r.stuck !== undefined ? (r.id % 3) - 1 : 0;
-      img.setPosition(Math.round(c.x) + pile * 3, Math.round(c.y) + pile * 2 + (r.dir % 2 && r.stuck === undefined ? shake : 0)).setAngle(r.dir * 90);
+      img.setPosition(Math.round(c.x) + pile * 5, Math.round(c.y) + pile * 4 + (r.dir % 2 && r.stuck === undefined ? shake : 0)).setAngle(r.dir * 90);
     }
     // Gone into the mall: they shrink through the door.
     for (const [id, img] of this.ruspaImgs) {
