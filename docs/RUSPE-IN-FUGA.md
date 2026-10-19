@@ -80,7 +80,7 @@ I numeri sono di partenza e si tarano dopo le prove su iPad. Ogni livello ha una
 | # | Nome | Ambientazione | Nuovo bambino | Drone | Ruspe |
 |---|---|---|---|---|---|
 | 1 | CORSO GIULIO CESARE | un anello di strade, il corso in mezzo, l'ingresso secondario sul corso | Teresa x3 | — | 6 su 8, 80 s |
-| 2 | I CARTELLI DEL NAVIGATORE | cartelli ufficiali che girano attorno al Muro; il centro commerciale in basso a sinistra | Chiara, Teresa x2 | 1, sulla strada in basso | 8 su 10, 80 s |
+| 2 | I CARTELLI DEL NAVIGATORE | cartelli ufficiali che girano attorno al Muro; il centro commerciale in basso a sinistra | Chiara, Teresa x3 | 1, sulla strada in basso | 8 su 10, 80 s |
 | 3 | LA ROTONDA DELLA SFINGE | la rotonda di corso Romania, con la sfinge al centro | Gigi x2, Teresa x1 (niente biglie) | 1, dorme sul cantiere e ogni tanto fa il giro della rotonda | 12 su 14, 75 s |
 | 4 | L'INGRESSO SECONDARIO | due cancelli, due file di ruspe | Samir | 2 | |
 | 5 | TRA I PROFUMI E I JEANS | dentro il centro commerciale: corsie, camerini, il fast food | Ayoub | 2 | |
@@ -89,7 +89,7 @@ Dopo la vittoria nel livello 5 compare sul pavimento la scritta blu di Teresa.
 
 Livello 1: uscite dal cantiere, le ruspe girano a sinistra sul corso e poi per sempre sull'anello esterno. Bastano due cartelli: uno dove la strada del cantiere incontra il corso, verso destra, e uno davanti all'ingresso, verso il basso. Il terzo cartello serve a correggere un errore. Vince anche mettendo i cartelli dopo 8 s.
 
-Livello 2: i cartelli ufficiali fanno girare le ruspe attorno al Muro. La mossa ovvia è girare il cartello all'incrocio in basso, ma lì passa il drone, che lo rimette a posto in pochi secondi. Con le sole biglie non entra nessuna ruspa. La strada giusta aggira il drone: si gira il cartello sotto il cancello verso sinistra e quello vicino al centro commerciale nell'altro verso. Le biglie rimandano indietro le prime ruspe già finite nel giro.
+Livello 2: i cartelli ufficiali fanno girare le ruspe attorno al Muro. La mossa ovvia è girare il cartello all'incrocio in basso, ma lì passa il drone, che lo rimette a posto in pochi secondi. Con le sole biglie non entra nessuna ruspa. La strada giusta aggira il drone: si gira il cartello sotto il cancello verso sinistra e quello vicino al centro commerciale nell'altro verso. Le biglie rimandano indietro le prime ruspe già finite nel giro. Teresa ha tre cartelli: con due, chi spendeva il primo sulla mossa ovvia non poteva più vincere (provato sull'iPad il 19 ottobre). Con tre la deviazione vince anche trovata a 25 s.
 
 Livello 3: le ruspe girano sulla rotonda e Teresa ha un cartello solo, all'uscita verso il centro commerciale. Il drone dorme sul cantiere e a 16 s fa il primo giro della rotonda: se il cartello non è cementato lo rimette a posto, e da lì non entra più nessuno (al massimo 6). Con la schiuma sul cartello mentre il drone dorme, tra 6 e 16 s, il cartello resta ed entrano tutte. Messa prima di 6 s la schiuma asciuga prima che il drone arrivi. La seconda schiuma è di scorta, per rimediare a un errore.
 

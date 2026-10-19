@@ -58,10 +58,12 @@ export const LEVELS = [
     firstOut: 2,
     speed: 1.5,
     time: 80,
-    tools: { teresa: 2, chiara: 2 },
+    tools: { teresa: 3, chiara: 2 },
     drone: { path: [[6, 5], [12, 5]], speed: 1.2 },
     // The obvious move, turning the sign at the bottom crossing, fails: the
-    // drone puts it back. Round the drone: the sign under the gate to the
+    // drone puts it back. Three signs, so that mistake isn't fatal (with
+    // two, after it nothing could win: seen on iPad); the detour still wins
+    // found as late as 25 s. Round the drone: the sign under the gate to the
     // left, the one by the mall the other way; marbles turn back the first
     // bulldozers already in the loop. Wins wherever it starts up to 10 s.
     solution: [
