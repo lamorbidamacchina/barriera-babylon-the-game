@@ -37,10 +37,11 @@ export const ROAD = new Set(['.', 'C', 'A', ...Object.keys(ARROWS)]);
 export const TOOLS = ['teresa', 'chiara', 'gigi'];
 // How long Chiara's marbles stay on the street, in seconds.
 export const MARBLES_TIME = 10;
-// Gigi's foam: how long it lasts. A bulldozer driving into it gets stuck
-// until it dries, then the stuck ones leave in a convoy, CONVOY seconds apart.
-export const FOAM_TIME = 8;
-export const CONVOY = 0.5;
+// Gigi's foam sets the sign on its cell in cement for FOAM_TIME seconds:
+// the guide drone can't put it back. Bulldozers drive over it as usual.
+// (It first slowed the bulldozers, then held them: either way a sign put
+// back right after the drone made it useless.)
+export const FOAM_TIME = 12;
 
 // The rules always move in steps of this many seconds, whatever the frame
 // rate: the outcome depends on the step (a sign placed a fraction of a
@@ -111,10 +112,20 @@ export function createRound(level) {
     result: null,
     marbles: new Map(), // cell key → seconds left
     foam: new Map(), // cell key → seconds left
-    drone: level.drone ? { x: level.drone.path[0][0], y: level.drone.path[0][1], next: 1, frozen: 0 } : null,
+    drone: level.drone ? newDrone(level.drone) : null,
     events: [], // what happened in the last step, for sounds and effects
     nextId: 1,
   };
+}
+
+// The guide drone at the start of its patrol. A drone with a nap (rest)
+// sleeps on path[0], its perch, until first, warns for WARN seconds, flies
+// one lap of its path back to the perch and sleeps again for rest seconds.
+// Without one it flies all the time.
+export const WARN = 3;
+function newDrone(cfg) {
+  const naps = cfg.rest !== undefined;
+  return { x: cfg.path[0][0], y: cfg.path[0][1], next: 1, frozen: 0, phase: naps ? 'rest' : 'fly', wait: naps ? cfg.first - WARN : 0 };
 }
 
 // The cell the guide drone is over.
@@ -178,25 +189,11 @@ export function step(round, dt) {
   round.elapsed += dt;
   round.timeLeft = Math.max(0, round.timeLeft - dt);
 
-  for (const [k, left] of marbles) {
-    if (left <= dt) marbles.delete(k);
-    else marbles.set(k, left - dt);
-  }
-  for (const [k, left] of foam) {
-    if (left > dt) {
-      foam.set(k, left - dt);
-      continue;
+  for (const cells of [marbles, foam]) {
+    for (const [k, left] of cells) {
+      if (left <= dt) cells.delete(k);
+      else cells.set(k, left - dt);
     }
-    // Dry: out of the foam one at a time, first in first out.
-    foam.delete(k);
-    round.ruspe
-      .filter((r) => r.stuck !== undefined && key(r.x, r.y) === k)
-      .sort((a, b) => a.stuck - b.stuck)
-      .forEach((r, i) => {
-        r.wait = i * CONVOY;
-        r.dir = chooseDir(map, signs, r.x, r.y, r.dir, marbles); // the signs may have changed meanwhile
-        delete r.stuck;
-      });
   }
   if (round.drone) moveDrone(round, dt);
 
@@ -210,11 +207,6 @@ export function step(round, dt) {
   }
 
   for (const r of round.ruspe) {
-    if (r.stuck !== undefined) continue;
-    if (r.wait > 0) {
-      r.wait -= dt;
-      continue;
-    }
     r.t += level.speed * dt;
     while (r.t >= 1 && !r.in) {
       r.t -= 1;
@@ -224,12 +216,6 @@ export function step(round, dt) {
         r.in = true;
         round.inside++;
         round.events.push({ type: 'in', x: r.x, y: r.y });
-      } else if (foam.has(key(r.x, r.y))) {
-        // Stuck in the middle of the foam, facing where it was going.
-        r.t = 0;
-        r.stuck = round.elapsed;
-        round.events.push({ type: 'stuck', x: r.x, y: r.y });
-        break;
       } else {
         const d = chooseDir(map, signs, r.x, r.y, r.dir, marbles);
         if (marbles.has(key(r.x, r.y))) round.events.push({ type: 'skid', x: r.x, y: r.y });
@@ -255,6 +241,19 @@ function moveDrone(round, dt) {
     d.frozen = Math.max(0, d.frozen - dt);
     return;
   }
+  // Napping, then waking up.
+  if (d.phase === 'rest' || d.phase === 'warn') {
+    d.wait -= dt;
+    if (d.wait > 0) return;
+    if (d.phase === 'rest') {
+      d.phase = 'warn';
+      d.wait += WARN;
+      round.events.push({ type: 'wake' });
+      return;
+    }
+    d.phase = 'fly';
+    round.events.push({ type: 'takeoff' });
+  }
   const before = droneCell(d);
   let go = speed * dt;
   while (go > 0) {
@@ -265,6 +264,13 @@ function moveDrone(round, dt) {
       d.y = ty;
       go -= dist;
       d.next = (d.next + 1) % path.length;
+      // Back on the perch after a lap: a drone that naps lands.
+      if (d.next === 1 && round.level.drone.rest !== undefined) {
+        d.phase = 'rest';
+        d.wait = round.level.drone.rest;
+        round.events.push({ type: 'land' });
+        break;
+      }
     } else {
       d.x += Math.sign(tx - d.x) * Math.min(go, Math.abs(tx - d.x));
       d.y += Math.sign(ty - d.y) * Math.min(go, Math.abs(ty - d.y));
@@ -275,6 +281,10 @@ function moveDrone(round, dt) {
   if (c.x === before.x && c.y === before.y) return;
   const s = round.signs.get(key(c.x, c.y));
   if (!s?.mine) return;
+  if (round.foam.has(key(c.x, c.y))) {
+    round.events.push({ type: 'cemented', x: c.x, y: c.y });
+    return;
+  }
   if (s.official === null) round.signs.delete(key(c.x, c.y));
   else Object.assign(s, { dir: s.official, mine: false });
   round.events.push({ type: 'reset', x: c.x, y: c.y });
@@ -291,6 +301,15 @@ export function score({ inside, tools, timeLeft }) {
     time: Math.floor(timeLeft) * POINTS.perSecondLeft,
   };
   return { ...s, total: s.ruspe + s.tools + s.time };
+}
+
+// Whether anything left in hand can still change where the bulldozers go.
+// Signs and marbles always can; foam only protects a sign, so it counts
+// while one of Teresa's signs is on the map.
+export function canStillAct(round) {
+  const { teresa = 0, chiara = 0, gigi = 0 } = round.tools;
+  const mineOnMap = [...round.signs.values()].some((s) => s.mine);
+  return teresa > 0 || chiara > 0 || (gigi > 0 && mineOnMap);
 }
 
 // A copy of a round that can be played on without touching the real one.

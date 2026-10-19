@@ -84,26 +84,25 @@ export const LEVELS = [
       '#TTTT.....#####',
       '###############',
     ],
-    count: 10,
-    need: 8,
-    interval: 1.5,
+    count: 14,
+    need: 12,
+    interval: 2,
     firstOut: 2,
     speed: 1.5,
-    time: 90,
+    time: 75,
     tools: { teresa: 1, gigi: 2 },
-    drone: { path: [[5, 1], [5, 5], [9, 5], [9, 1]], speed: 1.5 },
-    // The drone laps the roundabout with the traffic and wipes the sign to
-    // the mall at every lap: one sign alone catches 7 at best. Foam where
-    // they come out of the site holds them; when it dries they come out in
-    // a convoy, and one sign catches it. With foam at 2 s (and again at 6 s
-    // or not), the sign wins anywhere from 23 to 28 s.
+    // The drone naps on the construction site, then laps the roundabout and puts
+    // the sign to the mall back as the navigator wants it: with one sign,
+    // after its first lap nobody gets in (6 at most). Foam on the sign while
+    // the drone sleeps sets it in cement; foam put down at the start has
+    // dried by the time it flies. The second foam is a spare.
+    drone: { path: [[6, 0], [6, 1], [5, 1], [5, 5], [9, 5], [9, 1], [6, 1]], speed: 3, first: 16, rest: 10 },
     solution: [
-      { at: 2, tool: 'gigi', x: 7, y: 1 },
-      { at: 6, tool: 'gigi', x: 7, y: 1 },
-      { at: 25, tool: 'teresa', x: 5, y: 3 },
+      { at: 1, tool: 'teresa', x: 5, y: 3 },
+      { at: 12, tool: 'gigi', x: 5, y: 3 },
     ],
-    tip: 'Gigi: schiuma. Le ruspe si fermano finché asciuga.',
-    order: 'Rotonda della sfinge, corso Romania. Il drone ci gira attorno come un avvoltoio. Gigi, schiuma: tempismo.',
+    tip: 'Gigi: schiuma sul cartello. Il drone non lo sposta più.',
+    order: 'Rotonda della sfinge. Il drone fa il pisolino, poi gira e rimette i cartelli. Gigi: cementatelo prima.',
     win: 'Rotonda superata. La sfinge non ha fatto domande.',
   },
 ];
@@ -114,6 +113,8 @@ export const ROSANNA = {
   in: ['Dentro! Una di meno per il Muro.', 'Ingresso secondario. Da manuale.', 'Ottimo. Avanti la prossima.'],
   drone: ['Drone guida! Rimette i cartelli a posto.', 'Il drone sistema i cartelli. Che zelo.'],
   firstReset: 'Il drone rimette i cartelli sul suo giro. Cambiate incrocio!',
+  wake: ['Il drone si sveglia! Schiuma sul cartello, presto!', 'Ronzio: il drone sta per partire.'],
+  cemented: 'Cartello cementato. Il drone ci prova e non ci riesce.',
   hopeless: 'Attrezzi finiti: così non entrano. Girate i cartelli o RIPROVA.',
   empty: ['Finito. Si improvvisa.', 'Munizioni finite. Ingegno, classe.'],
   record: ['Record di Barriera! Nome sul registro, in stampatello.', 'Dieci e lode. Il nome, per il registro di classe.'],

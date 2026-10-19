@@ -6,7 +6,7 @@ import { loadSave, writeSave } from '../save.js';
 import { refreshRecords, beatsRecord } from '../leaderboard.js';
 import { drawBarrieraRecord, askNickname } from '../records.js';
 import { LEVELS, ROSANNA, BAR } from '../games/ruspe/levels.js';
-import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, forecast, patrolCells, SIM_DT, MARBLES_TIME, FOAM_TIME } from '../games/ruspe/rules.js';
+import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, forecast, canStillAct, patrolCells, SIM_DT, MARBLES_TIME, FOAM_TIME } from '../games/ruspe/rules.js';
 import { createTextures, MAP_KEY, RUSPA_KEY, signKey, CURSOR_KEY, MARBLES_KEY, FOAM_KEY, faceKey } from '../games/ruspe/textures.js';
 
 const HUD_H = FIELD.y;
@@ -49,6 +49,7 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.signImgs = new Map(); // cell key → image
     this.spreadImgs = { marbles: new Map(), foam: new Map() }; // cell key → image
     this.resets = 0; // signs the drone has put back
+    this.woke = 0; // times the napping drone has woken up
     this.setupDrone();
     this.hover = this.add.image(0, 0, CURSOR_KEY).setOrigin(0).setDepth(20).setVisible(false);
     this.cursor = null; // the keyboard's cell, once the arrows are used
@@ -86,12 +87,28 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.drawDrone(0);
   }
 
+  // Flying, it bobs over its shadow. Asleep on its perch it sits still,
+  // landed, with a Z floating up; waking, it shakes and its shadow blinks.
   drawDrone(time) {
     const d = this.round.drone;
     if (!d) return;
     const c = cellCenter(d.x, d.y);
-    this.droneShadow.setPosition(Math.round(c.x), Math.round(c.y) + 6);
-    this.droneImg.setPosition(Math.round(c.x), Math.round(c.y) - 14 + Math.round(Math.sin(time / 200) * 2));
+    const x = Math.round(c.x);
+    const y = Math.round(c.y);
+    if (d.phase === 'rest') {
+      this.droneImg.setPosition(x, y - 4);
+      this.droneShadow.setPosition(x, y + 6).setVisible(false);
+    } else if (d.phase === 'warn') {
+      this.droneImg.setPosition(x + (Math.floor(time / 60) % 2 ? 1 : -1), y - 6);
+      this.droneShadow.setPosition(x, y + 6).setVisible(Math.floor(time / 200) % 2 === 0);
+    } else {
+      this.droneImg.setPosition(x, y - 14 + Math.round(Math.sin(time / 200) * 2));
+      this.droneShadow.setPosition(x, y + 6).setVisible(true);
+    }
+    // The Z of its nap.
+    if (!this.zzz) this.zzz = text(this, 0, 0, 'Z', { color: C.droneLight }).setDepth(17);
+    const k = (time % 1600) / 1600;
+    this.zzz.setVisible(d.phase === 'rest').setPosition(x + 12 + Math.round(k * 6), y - 14 - Math.round(k * 12)).setAlpha(1 - k);
   }
 
   // ---------------------------------------------------------------- HUD and tool bar
@@ -348,11 +365,12 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.checkHopeless();
   }
 
-  // With every tool used up the rest of the round is already written: play
-  // it ahead. If it's lost and nothing can change any more, end it now; if
-  // Teresa's own signs can still be turned, say so and offer a retry.
+  // With nothing left in hand that can change the bulldozers' way, the rest
+  // of the round is already written: play it ahead. If it's lost and nothing
+  // can change any more, end it now; if Teresa's own signs can still be
+  // turned, say so and offer a retry.
   checkHopeless() {
-    if (Object.values(this.round.tools).some((n) => n > 0)) return;
+    if (canStillAct(this.round)) return;
     const lost = forecast(this.round) !== 'win';
     this.showRetry(lost);
     if (!lost) return;
@@ -415,21 +433,23 @@ export default class RuspeInFuga extends Phaser.Scene {
   onEvent(ev) {
     if (ev.type === 'out') sfx.move();
     else if (ev.type === 'skid') sfx.swoosh();
-    else if (ev.type === 'stuck') sfx.tick();
+    else if (ev.type === 'wake') {
+      sfx.drone();
+      this.say(this.woke++ ? ROSANNA.wake : ROSANNA.wake[0], this.woke > 1 ? 0.5 : 1);
+    } else if (ev.type === 'takeoff') sfx.drone();
+    else if (ev.type === 'cemented') {
+      sfx.tick();
+      this.floatNote(ev, 'CEMENTATO!', C.paper);
+      if (!this.cementedOnce) this.say(ROSANNA.cemented);
+      this.cementedOnce = true;
+    }
     else if (ev.type === 'reset') {
       sfx.error();
       this.syncSigns();
       const c = cellCenter(ev.x, ev.y);
       const flash = this.add.rectangle(c.x, c.y, TILE, TILE, N.droneLight, 0.5).setDepth(9);
       this.tweens.add({ targets: flash, alpha: 0, duration: 400, onComplete: () => flash.destroy() });
-      const x = Phaser.Math.Clamp(c.x, 36, WIDTH - 36);
-      if (this.lastNote?.active) {
-        // One at a time: notes on neighbouring cells would overlap.
-        this.tweens.killTweensOf(this.lastNote);
-        this.lastNote.destroy();
-      }
-      const note = (this.lastNote = text(this, x, c.y - 22, 'RIMESSO!', { color: C.droneLight, origin: 0.5 }).setDepth(56));
-      this.tweens.add({ targets: note, y: note.y - 12, alpha: 0, delay: 700, duration: 600, onComplete: () => note.destroy() });
+      this.floatNote(ev, 'RIMESSO!', C.droneLight);
       // The first time, Rosanna says what to do about it.
       this.say(this.resets++ ? ROSANNA.drone : ROSANNA.firstReset, this.resets > 1 ? 0.5 : 1);
       this.checkHopeless(); // one of Teresa's signs fewer to turn
@@ -441,6 +461,18 @@ export default class RuspeInFuga extends Phaser.Scene {
       this.tweens.add({ targets: puff, scale: 2.5, alpha: 0, duration: 400, onComplete: () => puff.destroy() });
       this.say(ROSANNA.in, 0.35);
     }
+  }
+
+  // A word floating up from a cell (what the drone did there).
+  floatNote({ x, y }, label, color) {
+    const c = cellCenter(x, y);
+    if (this.lastNote?.active) {
+      // One at a time: notes on neighbouring cells would overlap.
+      this.tweens.killTweensOf(this.lastNote);
+      this.lastNote.destroy();
+    }
+    const note = (this.lastNote = text(this, Phaser.Math.Clamp(c.x, 44, WIDTH - 44), c.y - 22, label, { color, origin: 0.5 }).setDepth(56));
+    this.tweens.add({ targets: note, y: note.y - 12, alpha: 0, delay: 700, duration: 600, onComplete: () => note.destroy() });
   }
 
   // Chiara's marbles and Gigi's foam where they still are; they blink in
@@ -480,9 +512,7 @@ export default class RuspeInFuga extends Phaser.Scene {
       const pos = position(r);
       const c = cellCenter(pos.x, pos.y);
       const shake = Math.floor(time / 90 + r.id) % 2;
-      // Stuck in the foam they pile up: spread them a little to show how many.
-      const pile = r.stuck !== undefined ? (r.id % 3) - 1 : 0;
-      img.setPosition(Math.round(c.x) + pile * 5, Math.round(c.y) + pile * 4 + (r.dir % 2 && r.stuck === undefined ? shake : 0)).setAngle(r.dir * 90);
+      img.setPosition(Math.round(c.x), Math.round(c.y) + (r.dir % 2 ? shake : 0)).setAngle(r.dir * 90);
     }
     // Gone into the mall: they shrink through the door.
     for (const [id, img] of this.ruspaImgs) {

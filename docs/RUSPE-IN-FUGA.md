@@ -37,13 +37,15 @@ Gli attrezzi sono nella barra in basso a sinistra, ognuno con il volto del bambi
 |---|---|---|---|---|
 | 1 | **Teresa** | cartello | Mette un cartello su una strada, oppure gira un cartello ufficiale (costa 1). Toccare di nuovo un proprio cartello lo gira gratis, e il cartello non punta mai verso il cantiere. | 1 |
 | 2 | **Chiara** | biglie | Le ruspe slittano e tornano indietro. Dura circa 10 s. | 2 |
-| 3 | **Gigi** | schiuma | Il cemento montato a meringa: le ruspe che ci entrano restano ferme finché asciuga (8 s), poi ripartono in colonna, mezzo secondo l'una dall'altra. Serve per i tempi: si trattiene il gruppo mentre passa il drone e lo si fa passare tutto insieme. | 3 |
+| 3 | **Gigi** | schiuma | Il cemento montato a meringa: il cartello sulla casella resta cementato per 12 s e il drone non lo può spostare (compare **CEMENTATO!**). Le ruspe ci passano sopra normalmente. | 3 |
 | 4 | **Samir** | cassa | La cassa bluetooth con l'inno di pernacchie del Comitato. Agli incroci vicini le ruspe vanno verso la cassa. Dura circa 8 s. | 4 |
 | 5 | **Ayoub** | hacker | Il drone guida si ferma per circa 6 s. | 5 |
 
 ## 4. Il drone guida (dal livello 2)
 
-Il drone fa sempre lo stesso giro, avanti e indietro in linea retta, ed è sempre visibile. Il suo giro è segnato sulla mappa: le caselle sono colorate di giallo chiaro e c'è una linea a puntini, così si può aggirarlo. Ogni cartello su cui passa torna come da percorso ufficiale: i cartelli di Teresa spariscono e quelli ufficiali girati tornano com'erano. Quando succede, la casella lampeggia e compare la scritta **RIMESSO!**. La prima volta Rosanna spiega cosa fare ("Il drone rimette i cartelli sul suo giro. Cambiate incrocio!"). Le biglie e la schiuma non le tocca.
+Il drone fa sempre lo stesso giro, avanti e indietro in linea retta, ed è sempre visibile. Il suo giro è segnato sulla mappa: le caselle sono colorate di giallo chiaro e c'è una linea a puntini, così si può aggirarlo. Ogni cartello su cui passa torna come da percorso ufficiale: i cartelli di Teresa spariscono e quelli ufficiali girati tornano com'erano. Quando succede, la casella lampeggia e compare la scritta **RIMESSO!**. La prima volta Rosanna spiega cosa fare ("Il drone rimette i cartelli sul suo giro. Cambiate incrocio!"). Le biglie e la schiuma non le tocca, e un cartello nella schiuma non lo sposta.
+
+Nel livello 2 il drone vola sempre. Dal livello 3 può anche fare il **pisolino**, come i droni del romanzo che "si concedono un pisolino digitale". Dorme sul suo trespolo con una Z che sale e non tocca niente. Qualche secondo prima di partire si sveglia: ronza, trema, la sua ombra lampeggia e la prima volta Rosanna avverte. Poi fa un giro e torna a dormire. Nel livello si scrivono `first` (quando parte la prima volta) e `rest` (quanto dorme tra un giro e l'altro).
 
 ## 5. Controlli
 
@@ -79,7 +81,7 @@ I numeri sono di partenza e si tarano dopo le prove su iPad. Ogni livello ha una
 |---|---|---|---|---|---|
 | 1 | CORSO GIULIO CESARE | un anello di strade, il corso in mezzo, l'ingresso secondario sul corso | Teresa x3 | — | 6 su 8, 80 s |
 | 2 | I CARTELLI DEL NAVIGATORE | cartelli ufficiali che girano attorno al Muro; il centro commerciale in basso a sinistra | Chiara, Teresa x2 | 1, sulla strada in basso | 8 su 10, 80 s |
-| 3 | LA ROTONDA DELLA SFINGE | la rotonda di corso Romania, con la sfinge al centro | Gigi x2, Teresa x1 (niente biglie) | 1, gira sulla rotonda con il traffico | 8 su 10, 90 s |
+| 3 | LA ROTONDA DELLA SFINGE | la rotonda di corso Romania, con la sfinge al centro | Gigi x2, Teresa x1 (niente biglie) | 1, dorme sul cantiere e ogni tanto fa il giro della rotonda | 12 su 14, 75 s |
 | 4 | L'INGRESSO SECONDARIO | due cancelli, due file di ruspe | Samir | 2 | |
 | 5 | TRA I PROFUMI E I JEANS | dentro il centro commerciale: corsie, camerini, il fast food | Ayoub | 2 | |
 
@@ -89,9 +91,9 @@ Livello 1: uscite dal cantiere, le ruspe girano a sinistra sul corso e poi per s
 
 Livello 2: i cartelli ufficiali fanno girare le ruspe attorno al Muro. La mossa ovvia è girare il cartello all'incrocio in basso, ma lì passa il drone, che lo rimette a posto in pochi secondi. Con le sole biglie non entra nessuna ruspa. La strada giusta aggira il drone: si gira il cartello sotto il cancello verso sinistra e quello vicino al centro commerciale nell'altro verso. Le biglie rimandano indietro le prime ruspe già finite nel giro.
 
-Livello 3: il drone gira sulla rotonda insieme alle ruspe e a ogni giro cancella il cartello verso il centro commerciale. C'è un cartello solo, e da solo ne prende al massimo 7. Con la schiuma all'uscita del cantiere le ruspe si fermano; quando la schiuma asciuga escono in colonna, e il cartello messo al momento giusto le prende tutte. Con la schiuma a 2 s (e di nuovo a 6 s, o anche no), il cartello vince messo tra 23 e 28 s. Sulla mappa piccola due cartelli bastavano anche senza schiuma, perché le ruspe perse tornano subito sulla rotonda: per questo il cartello è uno solo. In questo livello niente biglie, così la novità è la schiuma.
+Livello 3: le ruspe girano sulla rotonda e Teresa ha un cartello solo, all'uscita verso il centro commerciale. Il drone dorme sul cantiere e a 16 s fa il primo giro della rotonda: se il cartello non è cementato lo rimette a posto, e da lì non entra più nessuno (al massimo 6). Con la schiuma sul cartello mentre il drone dorme, tra 6 e 16 s, il cartello resta ed entrano tutte. Messa prima di 6 s la schiuma asciuga prima che il drone arrivi. La seconda schiuma è di scorta, per rimediare a un errore.
 
-Una prima versione della schiuma rallentava le ruspe invece di fermarle. Non serviva a niente: si vinceva solo mettendo il cartello entro due decimi di secondo dal passaggio del drone. Da qui la schiuma che trattiene.
+Storia della schiuma, per non rifare gli stessi errori. All'inizio rallentava le ruspe, poi le tratteneva e le faceva ripartire in colonna. In tutte e due le versioni non serviva a niente: un cartello si può sempre rimettere subito dopo il passaggio del drone, e sull'iPad il livello 3 si poteva vincere solo con un piano difficile da indovinare. Un cartello manda tutte le ruspe nella stessa direzione, da qualunque parte arrivino, quindi la schiuma conta solo se qualcosa cambia nel tempo, cioè il drone. Da qui la schiuma che cementa il cartello (19 ottobre).
 
 ## 9. Punteggio
 

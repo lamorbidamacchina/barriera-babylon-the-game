@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseMap, chooseDir, createRound, useTool, step, replay, score, openDirs, droneCell, patrolCells, cloneRound, forecast, MARBLES_TIME, FOAM_TIME, UP, RIGHT, DOWN, LEFT, COLS } from './rules.js';
+import { parseMap, chooseDir, createRound, useTool, step, replay, score, openDirs, droneCell, patrolCells, cloneRound, forecast, canStillAct, MARBLES_TIME, FOAM_TIME, UP, RIGHT, DOWN, LEFT, COLS } from './rules.js';
 
 // A small test town, padded to the full width with blocks.
 const pad = (rows) => rows.map((r) => r.padEnd(COLS, '#'));
@@ -178,17 +178,27 @@ describe('Gigi', () => {
     expect(r.foam.has('3,1')).toBe(false);
   });
 
-  it('holds the bulldozers until it dries, then lets them go in a convoy', () => {
-    const r = createRound(level({ count: 3, interval: 0.5, need: 3, tools: { gigi: 1 } }));
+  it('sets the sign in cement: the drone can\'t put it back while it lasts', () => {
+    const MAP = pad(['#######', '#C...A#', '#######', ...Array(10).fill('#')]);
+    const r = createRound(level({ map: MAP, count: 0, tools: { teresa: 1, gigi: 1 }, drone: { path: [[1, 1], [5, 1]], speed: 4 } }));
+    useTool(r, 'teresa', 3, 1);
     useTool(r, 'gigi', 3, 1);
-    run(r, 2);
-    expect(r.ruspe.filter((q) => q.stuck !== undefined)).toHaveLength(3);
-    expect(r.ruspe.every((q) => q.x === 3 && q.y === 1)).toBe(true);
-    expect(r.inside).toBe(0);
-    run(r, FOAM_TIME - 2 + 0.1); // dry: the first one leaves at once...
-    expect(r.ruspe.filter((q) => q.wait > 0)).toHaveLength(2); // ...the others half a second apart
-    run(r, 2);
-    expect(r.inside).toBe(3);
+    const events = [];
+    for (let i = 0; i < 60 * 3; i++) events.push(...step(r, 1 / 60).events.map((e) => e.type));
+    expect(r.signs.get('3,1').mine).toBe(true);
+    expect(events).toContain('cemented');
+    expect(events).not.toContain('reset');
+    run(r, FOAM_TIME); // dry: the next pass takes it
+    expect(r.signs.has('3,1')).toBe(false);
+  });
+
+  it('doesn\'t stop the bulldozers', () => {
+    const fast = createRound(level({ count: 1 }));
+    const foamed = createRound(level({ count: 1, tools: { gigi: 1 } }));
+    useTool(foamed, 'gigi', 3, 1);
+    run(fast, 0.6);
+    run(foamed, 0.6);
+    expect(foamed.ruspe[0]).toEqual(fast.ruspe[0]);
   });
 });
 
@@ -205,6 +215,36 @@ describe('the guide drone', () => {
     expect(droneCell(r.drone)).toEqual({ x: 5, y: 1 });
     run(r, 2);
     expect(droneCell(r.drone)).toEqual({ x: 1, y: 1 });
+  });
+
+  it('naps on its perch, warns, flies one lap and lands again', () => {
+    const r = createRound(level({ map: MAP, count: 0, drone: { path: [[1, 1], [5, 1]], speed: 4, first: 5, rest: 4 } }));
+    const events = [];
+    const go = (sec) => {
+      for (let i = 0; i < sec * 60; i++) events.push(...step(r, 1 / 60).events.map((e) => e.type));
+    };
+    go(1.9);
+    expect(r.drone.phase).toBe('rest');
+    go(0.2); // 2 s: WARN before taking off at 5
+    expect(r.drone.phase).toBe('warn');
+    expect(droneCell(r.drone)).toEqual({ x: 1, y: 1 });
+    go(3.1);
+    expect(r.drone.phase).toBe('fly');
+    go(2); // 8 cells there and back at 4 a second
+    expect(r.drone.phase).toBe('rest');
+    expect(droneCell(r.drone)).toEqual({ x: 1, y: 1 });
+    expect(events).toEqual(['wake', 'takeoff', 'land']);
+    go(4.1);
+    expect(r.drone.phase).toBe('warn');
+  });
+
+  it('leaves the signs alone while it sleeps', () => {
+    const r = createRound(level({ map: MAP, count: 0, tools: { teresa: 1 }, drone: { path: [[1, 1], [5, 1]], speed: 4, first: 10, rest: 10 } }));
+    useTool(r, 'teresa', 3, 1);
+    run(r, 5);
+    expect(r.signs.get('3,1').mine).toBe(true);
+    run(r, 7);
+    expect(r.signs.get('3,1').mine).toBe(false);
   });
 
   it('puts turned official signs back and takes Teresa\'s away', () => {
@@ -244,6 +284,17 @@ describe('forecast', () => {
     step(c, 0.5);
     expect(r.ruspe[0].t).not.toBe(c.ruspe[0].t);
     expect(r.drone.x).not.toBe(c.drone.x);
+  });
+});
+
+describe('canStillAct', () => {
+  it('counts foam only while one of Teresa\'s signs is there to protect', () => {
+    const r = createRound(level({ tools: { teresa: 1, gigi: 1 } }));
+    expect(canStillAct(r)).toBe(true);
+    useTool(r, 'teresa', 3, 1);
+    expect(canStillAct(r)).toBe(true); // foam for the sign
+    r.signs.delete('3,1'); // the drone took it
+    expect(canStillAct(r)).toBe(false);
   });
 });
 
