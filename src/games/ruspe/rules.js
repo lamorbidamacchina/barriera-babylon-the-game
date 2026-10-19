@@ -68,13 +68,12 @@ export function parseMap(rows) {
 }
 
 // Which way a bulldozer leaves cell (x, y), arriving with heading dir. On
-// Chiara's marbles it skids and goes back. Otherwise the sign's way if there
-// is one, unless the sign points back where it came from (no sign makes a
-// bulldozer turn round), and straight on without one. Blocked: right, then
-// left, then back.
+// Chiara's marbles it skids and goes back. Otherwise the way the sign
+// points, whatever it is, even back where it came from: the arrow never lies
+// (an exception for U-turns made turning signs look broken on iPad). No
+// sign: straight on. Blocked: right, then left, then back.
 export function chooseDir(map, signs, x, y, dir, marbles) {
-  const sign = signs.get(key(x, y))?.dir;
-  const want = marbles?.has(key(x, y)) ? turn(dir, 2) : sign !== undefined && sign !== turn(dir, 2) ? sign : dir;
+  const want = marbles?.has(key(x, y)) ? turn(dir, 2) : (signs.get(key(x, y))?.dir ?? dir);
   for (const n of [0, 1, 3, 2]) {
     const d = turn(want, n);
     if (map.isRoad(x + STEP[d][0], y + STEP[d][1])) return d;

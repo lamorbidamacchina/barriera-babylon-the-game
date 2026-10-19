@@ -47,9 +47,9 @@ describe('driving', () => {
     expect(chooseDir(m, new Map([['2,1', { dir: UP }]]), 2, 1, RIGHT)).toBe(RIGHT); // right of up
   });
 
-  it('never turns round for a sign', () => {
-    // Heading left onto a sign pointing right: straight on.
-    expect(chooseDir(m, new Map([['3,1', { dir: RIGHT }]]), 3, 1, LEFT)).toBe(LEFT);
+  it('does what the arrow says, even turning round', () => {
+    // Heading left onto a sign pointing right: back to the right.
+    expect(chooseDir(m, new Map([['3,1', { dir: RIGHT }]]), 3, 1, LEFT)).toBe(RIGHT);
   });
 
   it('skids on marbles and goes back, whatever the sign says', () => {

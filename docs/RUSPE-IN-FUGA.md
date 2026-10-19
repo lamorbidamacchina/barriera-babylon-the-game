@@ -19,7 +19,7 @@ Il gioco è un **Lemmings visto dall'alto**. Le ruspe vanno avanti da sole e chi
 
 - La mappa è una griglia di 30×13 caselle da 16 px, vista dall'alto: strade, isolati, il cantiere del Muro, il centro commerciale.
 - Le ruspe escono dal cancello del cantiere una alla volta (`interval` secondi) e vanno di casella in casella.
-- In ogni casella una ruspa segue il cartello, se c'è, altrimenti va dritta. Nessun cartello fa fare inversione: se il cartello punta da dove la ruspa arriva, la ruspa lo ignora e va dritta. Sulle biglie di Chiara la ruspa slitta e torna indietro, qualunque cosa dica il cartello. Se la strada è chiusa gira a destra, poi a sinistra, poi torna indietro. La regola è sempre la stessa, così si impara.
+- In ogni casella una ruspa segue il cartello, se c'è, altrimenti va dritta. La ruspa va sempre dove punta la freccia, anche indietro: la freccia non mente mai. (Per un giorno i cartelli che puntavano all'indietro venivano ignorati, ma sull'iPad girare i cartelli sembrava non funzionare: due posizioni su tre mandavano le ruspe dritte.) Sulle biglie di Chiara la ruspa slitta e torna indietro, qualunque cosa dica il cartello. Se la strada è chiusa gira a destra, poi a sinistra, poi torna indietro. La regola è sempre la stessa, così si impara.
 - Una ruspa che arriva all'ingresso secondario entra e conta.
 - **Vittoria**: `need` ruspe dentro su `count`. Il livello finisce appena si arriva a `need`.
 - **Sconfitta**: il tempo finisce prima, banner **ARRIVANO GLI OPERAI**.
