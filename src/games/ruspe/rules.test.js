@@ -99,26 +99,44 @@ describe('Teresa', () => {
     const r = createRound(level());
     expect(useTool(r, 'teresa', 3, 1)).toMatchObject({ ok: true, what: 'sign' });
     expect(r.tools.teresa).toBe(1);
-    expect(r.signs.get('3,1').dir).toBe(DOWN); // down the side street
+    const ways = [RIGHT, DOWN, LEFT]; // clockwise, the ways out of (3, 1)
+    const first = r.signs.get('3,1').dir;
+    expect(ways).toContain(first);
     expect(useTool(r, 'teresa', 3, 1)).toMatchObject({ ok: true, free: true });
-    expect(r.signs.get('3,1').dir).toBe(LEFT);
+    expect(r.signs.get('3,1').dir).toBe(ways[(ways.indexOf(first) + 1) % 3]);
     useTool(r, 'teresa', 3, 1);
     useTool(r, 'teresa', 3, 1);
-    expect(r.signs.get('3,1').dir).toBe(DOWN); // round the clock
+    expect(r.signs.get('3,1').dir).toBe(first); // round the clock
     expect(r.tools.teresa).toBe(1);
   });
 
-  it('turns an official sign for one use', () => {
-    const r = createRound(level({ map: pad(['#####', '#C>A#', '##.##', '##.##', ...Array(9).fill('#')]) }));
-    expect(useTool(r, 'teresa', 2, 1)).toMatchObject({ ok: true, what: 'swap' });
-    expect(r.signs.get('2,1')).toMatchObject({ dir: DOWN, official: RIGHT, mine: true });
-    expect(r.tools.teresa).toBe(1);
+  it('starts new signs a random way, the same for the same seed', () => {
+    const firstDir = (seed) => {
+      const r = createRound(level(), seed);
+      useTool(r, 'teresa', 3, 1);
+      return r.signs.get('3,1').dir;
+    };
+    const dirs = new Set(Array.from({ length: 30 }, (_, i) => firstDir(i + 1)));
+    expect(dirs.size).toBe(3);
+    expect(firstDir(42)).toBe(firstDir(42));
   });
 
-  it('starts a sign on a straight street pointing the first way clockwise from up', () => {
-    const r = createRound(level());
-    useTool(r, 'teresa', 2, 3); // left and right only
-    expect(r.signs.get('2,3').dir).toBe(RIGHT);
+  it('turns an official sign away from where it pointed, for one use', () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const r = createRound(level({ map: pad(['#####', '#C>A#', '##.##', '##.##', ...Array(9).fill('#')]) }), seed);
+      expect(useTool(r, 'teresa', 2, 1)).toMatchObject({ ok: true, what: 'swap' });
+      expect(r.signs.get('2,1')).toMatchObject({ official: RIGHT, mine: true });
+      expect(r.signs.get('2,1').dir).not.toBe(RIGHT);
+      expect(r.tools.teresa).toBe(1);
+    }
+  });
+
+  it('turns a sign to the asked way in a replay', () => {
+    for (let seed = 1; seed <= 10; seed++) {
+      const r = replay(level({ count: 0 }), [{ at: 0, tool: 'teresa', x: 3, y: 1, dir: LEFT }], { seed });
+      expect(r.signs.get('3,1').dir).toBe(LEFT);
+      expect(r.tools.teresa).toBe(1);
+    }
   });
 
   it('never points a sign back into the construction site', () => {
@@ -140,7 +158,7 @@ describe('Teresa', () => {
 
   it('sends the bulldozers where the sign points', () => {
     // Down at the first crossing: they loop below and never reach the mall.
-    const r = replay(level(), [{ at: 0, tool: 'teresa', x: 3, y: 1 }]);
+    const r = replay(level(), [{ at: 0, tool: 'teresa', x: 3, y: 1, dir: DOWN }]);
     expect(r.inside).toBe(0);
   });
 });

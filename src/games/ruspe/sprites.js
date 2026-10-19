@@ -20,7 +20,7 @@ export const faceKey = (kid) => `ruspe-face-${kid}`;
 export const MARBLES_KEY = 'ruspe-marbles';
 export const MARBLES_SIZE = 22;
 export const FOAM_KEY = 'ruspe-foam';
-export const FOAM_SIZE = 26;
+export const FOAM_SIZE = 32;
 
 const ASPHALT = 0x2b2f37;
 const ASPHALT_2 = 0x30343d;
@@ -360,12 +360,21 @@ export function drawMarbles(p, s = MARBLES_SIZE) {
 }
 
 // Gigi's foam: cement whipped up like a mad meringue (flat cola and
-// liquorice powder), with dark specks of liquorice.
+// liquorice powder), with dark specks of liquorice. It's drawn over the
+// sign it sets in cement, so it's a ring of blobs round the edge: the arrow
+// still shows through the middle.
 export function drawFoam(p, s = FOAM_SIZE) {
   const cream = { base: 0xf4ecd8, dark: 0xd8c8a8, light: 0xffffff, hl: 0xffffff };
   const c = s / 2;
-  for (const [x, y, r] of [[c - 5, c + 2, 7], [c + 4, c, 7], [c, c - 6, 6], [c + 6, c + 6, 5], [c - 7, c + 7, 4]]) p.ellipse(x, y, r, r, shaded(cream, c, c, c - 1, c - 1));
-  for (const [x, y] of [[c - 4, c - 2], [c + 3, c + 4], [c - 1, c + 6], [c + 5, c - 4], [c - 7, c + 3]]) p.rect(x, y, 2, 1, 0x3a2a24);
+  const R = c - 3.5; // the ring's radius: just outside the sign
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2 + 0.3;
+    const x = c + Math.cos(a) * R;
+    const y = c + Math.sin(a) * R;
+    const r = i % 3 === 0 ? 4 : 3;
+    p.ellipse(x, y, r, r, shaded(cream, x, y, r, r));
+  }
+  for (const a of [0.9, 2.6, 4.1, 5.5]) p.rect(Math.round(c + Math.cos(a) * R), Math.round(c + Math.sin(a) * R), 2, 1, 0x3a2a24);
   p.outline(0x6a5a48);
 }
 

@@ -64,9 +64,12 @@ describe('levels', () => {
   it('are lost with no tools and won with their solution', () => {
     for (const l of LEVELS) {
       expect(replay(l, []).result, l.name).toBe('time');
-      const r = replay(l, l.solution);
-      expect(r.result, l.name).toBe('win');
-      expect(r.timeLeft, l.name).toBeGreaterThan(l.time * 0.2); // with room to spare
+      // Whichever way the signs start: they're turned until they're right.
+      for (let seed = 1; seed <= 12; seed++) {
+        const r = replay(l, l.solution, { seed });
+        expect(r.result, `${l.name} seed ${seed}`).toBe('win');
+        expect(r.timeLeft, l.name).toBeGreaterThan(l.time * 0.2); // with room to spare
+      }
     }
   });
 

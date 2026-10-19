@@ -44,7 +44,7 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.state = 'intro';
     this.add.rectangle(0, 0, WIDTH, HEIGHT, N.night).setOrigin(0);
     this.add.image(FIELD.x, FIELD.y, MAP_KEY(this.level)).setOrigin(0);
-    this.round = createRound(this.lv);
+    this.round = createRound(this.lv, Math.floor(Math.random() * 1e9)); // signs start a different way each game
     this.ruspaImgs = new Map(); // bulldozer id → image
     this.signImgs = new Map(); // cell key → image
     this.spreadImgs = { marbles: new Map(), foam: new Map() }; // cell key → image
@@ -485,7 +485,8 @@ export default class RuspeInFuga extends Phaser.Scene {
         if (!img) {
           const [x, y] = k.split(',').map(Number);
           const c = cellCenter(x, y);
-          img = this.add.image(c.x, c.y, key).setDepth(7);
+          // Marbles on the asphalt, under the bulldozers; foam over the sign it cements.
+          img = this.add.image(c.x, c.y, key).setDepth(what === 'foam' ? 12 : 7);
           imgs.set(k, img);
           this.tweens.add({ targets: img, scale: { from: 1.8, to: 1 }, duration: 160, ease: 'Back.out' });
         }

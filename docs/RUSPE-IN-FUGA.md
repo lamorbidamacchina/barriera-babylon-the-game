@@ -35,9 +35,9 @@ Gli attrezzi sono nella barra in basso a sinistra, ognuno con il volto del bambi
 
 | # | Bambino | Attrezzo | Effetto | Livello |
 |---|---|---|---|---|
-| 1 | **Teresa** | cartello | Mette un cartello su una strada, oppure gira un cartello ufficiale (costa 1). Toccare di nuovo un proprio cartello lo gira gratis, e il cartello non punta mai verso il cantiere. | 1 |
+| 1 | **Teresa** | cartello | Mette un cartello su una strada, oppure gira un cartello ufficiale (costa 1). Il cartello nuovo punta in una direzione a caso, diversa a ogni partita, e un cartello ufficiale preso in mano cambia sempre direzione: poi lo si tocca (gratis) finché punta dove serve. Il cartello non punta mai verso il cantiere. All'inizio puntava già dalla parte giusta quasi sempre, e il gioco era troppo facile (19 ottobre). | 1 |
 | 2 | **Chiara** | biglie | Le ruspe slittano e tornano indietro. Dura circa 10 s. | 2 |
-| 3 | **Gigi** | schiuma | Il cemento montato a meringa: il cartello sulla casella resta cementato per 12 s e il drone non lo può spostare (compare **CEMENTATO!**). Le ruspe ci passano sopra normalmente. | 3 |
+| 3 | **Gigi** | schiuma | Il cemento montato a meringa: il cartello sulla casella resta cementato per 12 s e il drone non lo può spostare (compare **CEMENTATO!**). Le ruspe ci passano sopra normalmente. È disegnata sopra il cartello come un anello di schiuma, così la freccia si vede in mezzo. | 3 |
 | 4 | **Samir** | cassa | La cassa bluetooth con l'inno di pernacchie del Comitato. Agli incroci vicini le ruspe vanno verso la cassa. Dura circa 8 s. | 4 |
 | 5 | **Ayoub** | hacker | Il drone guida si ferma per circa 6 s. | 5 |
 

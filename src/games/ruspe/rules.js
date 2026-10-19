@@ -3,6 +3,7 @@
 // construction site and following whatever sign they find, and the tools of
 // the Comitato Caos to send them into the shopping mall. The scene calls
 // these; rules.test.js checks them.
+import { rng } from '../../rng.js';
 
 // Cells of 32 px: about 44 points on an iPhone in landscape, the size of a
 // fingertip (with 16 px cells the game was unplayable on a phone).
@@ -95,11 +96,14 @@ export const openDirs = (map, x, y) => [UP, RIGHT, DOWN, LEFT].filter((d) => map
 // Where a sign can point: any way out but back into the construction site.
 export const signDirs = (map, x, y) => openDirs(map, x, y).filter((d) => map.at(x + STEP[d][0], y + STEP[d][1]) !== 'C');
 
-// A fresh round of a level (levels.js).
-export function createRound(level) {
+// A fresh round of a level (levels.js). seed: where Teresa's new signs
+// start pointing (the game passes a random one, the tests a fixed one).
+export function createRound(level, seed = 1) {
   const map = parseMap(level.map);
   return {
     level,
+    seed,
+    placed: 0, // signs put down or turned for a use of Teresa so far
     map,
     signs: new Map([...map.signs].map(([k, s]) => [k, { ...s }])),
     tools: { ...level.tools },
@@ -156,15 +160,17 @@ export function useTool(round, tool, x, y) {
     }
     if (!tools.teresa) return { ok: false, empty: true };
     tools.teresa--;
+    // A new sign, or an official one taken over, points a random way: the
+    // player turns it (free) until it's right. An official sign never stays
+    // as it was.
+    const r = rng(round.seed + 7919 * round.placed++)();
     if (s) {
-      s.dir = ways[(ways.indexOf(s.dir) + 1) % ways.length];
+      const others = ways.filter((d) => d !== s.dir);
+      s.dir = others[Math.floor(r * others.length)] ?? s.dir;
       s.mine = true;
       return { ok: true, what: 'swap' };
     }
-    // A new sign points down the side street of a T-junction, the turn
-    // most often wanted; elsewhere, the first way clockwise from up.
-    const branch = ways.find((d) => !ways.includes(turn(d, 2)));
-    signs.set(key(x, y), { dir: branch ?? ways[0], official: null, mine: true });
+    signs.set(key(x, y), { dir: ways[Math.floor(r * ways.length)], official: null, mine: true });
     return { ok: true, what: 'sign' };
   }
   // Marbles and foam: a street cell, one of each per cell at a time.
@@ -335,14 +341,16 @@ export function forecast(round) {
 
 // Plays a level with a list of tool uses ({ at: seconds, tool, x, y }), in
 // fixed steps, to the end: for the tests (every level is winnable) and for
-// tuning.
-export function replay(level, moves, dt = SIM_DT) {
-  const round = createRound(level);
+// tuning. A sign move with dir is tapped until it points that way, as a
+// player would, whatever way it started.
+export function replay(level, moves, { dt = SIM_DT, seed = 1 } = {}) {
+  const round = createRound(level, seed);
   const todo = [...moves].sort((a, b) => a.at - b.at);
   while (!round.result) {
     while (todo.length && todo[0].at <= round.elapsed) {
       const m = todo.shift();
       useTool(round, m.tool, m.x, m.y);
+      for (let i = 0; m.dir !== undefined && i < 4 && round.signs.get(key(m.x, m.y))?.dir !== m.dir; i++) useTool(round, m.tool, m.x, m.y);
     }
     step(round, dt);
   }

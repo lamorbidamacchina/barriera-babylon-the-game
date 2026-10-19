@@ -1,3 +1,5 @@
+import { DOWN, LEFT, RIGHT } from './rules.js';
+
 // Levels of Ruspe in fuga (docs/RUSPE-IN-FUGA.md): a night of the Comitato
 // Caos sending the Muro bulldozers into the shopping mall.
 // map: COLS×ROWS characters (rules.js: roads, gates, signs; anything else is
@@ -8,8 +10,8 @@
 // drone's patrol (path: cells it flies to in turn, in straight lines, then
 // back to the first; speed: cells per second); tip: Rosanna's hint on the
 // new kid, the first time the level is played; solution: tool uses
-// that win the level ({ at: seconds, tool, x, y }, the same cell twice turns
-// the sign twice), replayed by the tests; order: Rosanna's briefing; win: her
+// that win the level ({ at: seconds, tool, x, y }; for a sign, dir: the way
+// it's turned to, since new signs start a random way), replayed by the tests; order: Rosanna's briefing; win: her
 // line on the results panel when the level is cleared.
 export const LEVELS = [
   {
@@ -34,9 +36,8 @@ export const LEVELS = [
     // Out of the site they turn left at the corso and loop round the outer
     // ring for ever. Right at the corso, then down into the mall.
     solution: [
-      { at: 0, tool: 'teresa', x: 5, y: 3 },
-      { at: 0, tool: 'teresa', x: 5, y: 3 },
-      { at: 0, tool: 'teresa', x: 9, y: 3 },
+      { at: 0, tool: 'teresa', x: 5, y: 3, dir: RIGHT },
+      { at: 0, tool: 'teresa', x: 9, y: 3, dir: DOWN },
     ],
     order: 'Le ruspe del Muro guidano da sole e seguono i cartelli. Teresa, cartelli nuovi: si va al centro commerciale.',
     win: 'Ruspe tra i profumi e i jeans. Geografia: dieci e lode.',
@@ -67,8 +68,8 @@ export const LEVELS = [
     // left, the one by the mall the other way; marbles turn back the first
     // bulldozers already in the loop. Wins wherever it starts up to 10 s.
     solution: [
-      { at: 8, tool: 'teresa', x: 10, y: 1 },
-      { at: 8, tool: 'teresa', x: 5, y: 5 },
+      { at: 8, tool: 'teresa', x: 10, y: 1, dir: LEFT },
+      { at: 8, tool: 'teresa', x: 5, y: 5, dir: LEFT },
       { at: 9, tool: 'chiara', x: 12, y: 5 },
     ],
     tip: 'Chiara: biglie in strada, le ruspe tornano indietro.',
@@ -100,7 +101,7 @@ export const LEVELS = [
     // dried by the time it flies. The second foam is a spare.
     drone: { path: [[6, 0], [6, 1], [5, 1], [5, 5], [9, 5], [9, 1], [6, 1]], speed: 3, first: 16, rest: 10 },
     solution: [
-      { at: 1, tool: 'teresa', x: 5, y: 3 },
+      { at: 1, tool: 'teresa', x: 5, y: 3, dir: LEFT },
       { at: 12, tool: 'gigi', x: 5, y: 3 },
     ],
     tip: 'Gigi: schiuma sul cartello. Il drone non lo sposta più.',
