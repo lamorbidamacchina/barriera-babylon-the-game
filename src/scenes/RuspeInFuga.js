@@ -6,17 +6,27 @@ import { loadSave, writeSave } from '../save.js';
 import { refreshRecords, beatsRecord } from '../leaderboard.js';
 import { drawBarrieraRecord, askNickname } from '../records.js';
 import { LEVELS, ROSANNA, BAR } from '../games/ruspe/levels.js';
-import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, forecast, canStillAct, patrolCells, SIM_DT, MARBLES_TIME, FOAM_TIME } from '../games/ruspe/rules.js';
-import { createTextures, MAP_KEY, RUSPA_KEY, signKey, CURSOR_KEY, MARBLES_KEY, FOAM_KEY, faceKey } from '../games/ruspe/textures.js';
+import { FIELD, TILE, COLS, ROWS, STEP, createRound, useTool, step, position, score, forecast, canStillAct, patrolCells, SIM_DT, MARBLES_TIME, FOAM_TIME, SPEAKER_TIME, SPEAKER_RANGE } from '../games/ruspe/rules.js';
+import { createTextures, MAP_KEY, RUSPA_KEY, signKey, CURSOR_KEY, MARBLES_KEY, FOAM_KEY, SPEAKER_KEY, faceKey } from '../games/ruspe/textures.js';
 
 const HUD_H = FIELD.y;
 const BAR_Y = FIELD.y + FIELD.h; // the tool bar, under the map
 const TOOL_W = 60;
 const SAY_W = 320; // Rosanna's lines: 40 characters a line
 const GAME_ID = 'ruspe'; // in the save and in the Barriera records
-const KIDS = { teresa: { name: 'TERESA', what: 'CARTELLO' }, chiara: { name: 'CHIARA', what: 'BIGLIE' }, gigi: { name: 'GIGI', what: 'SCHIUMA' } };
+const KIDS = {
+  teresa: { name: 'TERESA', what: 'CARTELLO' },
+  chiara: { name: 'CHIARA', what: 'BIGLIE' },
+  gigi: { name: 'GIGI', what: 'SCHIUMA' },
+  samir: { name: 'SAMIR', what: 'CASSA' },
+  ayoub: { name: 'AYOUB', what: 'HACKER' },
+};
 // What Chiara and Gigi leave on the street: texture, and how long it lasts.
-const SPREAD = { marbles: { key: MARBLES_KEY, life: MARBLES_TIME }, foam: { key: FOAM_KEY, life: FOAM_TIME } };
+const SPREAD = {
+  marbles: { key: MARBLES_KEY, life: MARBLES_TIME, depth: 7 }, // on the asphalt, under the bulldozers
+  foam: { key: FOAM_KEY, life: FOAM_TIME, depth: 12 }, // over the sign it cements
+  speakers: { key: SPEAKER_KEY, life: SPEAKER_TIME, depth: 12 },
+};
 const pick = Phaser.Utils.Array.GetRandom;
 const DIRS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], KeyW: [0, -1], KeyS: [0, 1], KeyA: [-1, 0], KeyD: [1, 0] };
 const cellCenter = (x, y) => ({ x: FIELD.x + x * TILE + TILE / 2, y: FIELD.y + y * TILE + TILE / 2 });
@@ -47,7 +57,8 @@ export default class RuspeInFuga extends Phaser.Scene {
     this.round = createRound(this.lv, Math.floor(Math.random() * 1e9)); // signs start a different way each game
     this.ruspaImgs = new Map(); // bulldozer id → image
     this.signImgs = new Map(); // cell key → image
-    this.spreadImgs = { marbles: new Map(), foam: new Map() }; // cell key → image
+    this.spreadImgs = { marbles: new Map(), foam: new Map(), speakers: new Map() }; // cell key → image
+    this.waveGfx = this.add.graphics().setDepth(11); // the speakers' sound waves
     this.resets = 0; // signs the drone has put back
     this.woke = 0; // times the napping drone has woken up
     this.setupDrone();
@@ -101,10 +112,16 @@ export default class RuspeInFuga extends Phaser.Scene {
     } else if (d.phase === 'warn') {
       this.droneImg.setPosition(x + (Math.floor(time / 60) % 2 ? 1 : -1), y - 6);
       this.droneShadow.setPosition(x, y + 6).setVisible(Math.floor(time / 200) % 2 === 0);
+    } else if (d.frozen > 0) {
+      // Hacked: hanging still, flickering green.
+      this.droneImg.setPosition(x, y - 14);
+      this.droneShadow.setPosition(x, y + 6).setVisible(true);
     } else {
       this.droneImg.setPosition(x, y - 14 + Math.round(Math.sin(time / 200) * 2));
       this.droneShadow.setPosition(x, y + 6).setVisible(true);
     }
+    if (d.frozen > 0 && Math.floor(time / 120) % 2) this.droneImg.setTint(0x6ae8a0);
+    else this.droneImg.clearTint();
     // The Z of its nap.
     if (!this.zzz) this.zzz = text(this, 0, 0, 'Z', { color: C.droneLight }).setDepth(17);
     const k = (time % 1600) / 1600;
@@ -354,10 +371,15 @@ export default class RuspeInFuga extends Phaser.Scene {
     if (!res.ok) {
       sfx.error();
       if (res.empty) this.say(ROSANNA.empty);
+      else if (this.tool === 'ayoub') this.say(ROSANNA.missedDrone);
       return;
     }
     if (res.free) sfx.move();
-    else sfx.confirm();
+    else if (res.what === 'speaker') sfx.anthem();
+    else if (res.what === 'hack') {
+      sfx.hack();
+      this.floatNote(this.round.drone && { x: Math.round(this.round.drone.x), y: Math.round(this.round.drone.y) }, 'HACKERATO!', '#9be36b');
+    } else sfx.confirm();
     this.syncSigns();
     this.updateToolBar();
     const img = this.signImgs.get(`${x},${y}`);
@@ -478,6 +500,16 @@ export default class RuspeInFuga extends Phaser.Scene {
   // Chiara's marbles and Gigi's foam where they still are; they blink in
   // their last seconds.
   drawSpread(time) {
+    // The speakers' music: rings going out as far as they're heard.
+    const g = this.waveGfx.clear();
+    for (const k of this.round.speakers.keys()) {
+      const [x, y] = k.split(',').map(Number);
+      const c = cellCenter(x, y);
+      for (let i = 0; i < 3; i++) {
+        const t = ((time / 900 + i / 3) % 1);
+        g.lineStyle(2, N.pink, 0.7 * (1 - t)).strokeCircle(c.x, c.y, 10 + t * SPEAKER_RANGE * TILE);
+      }
+    }
     for (const [what, { key, life }] of Object.entries(SPREAD)) {
       const imgs = this.spreadImgs[what];
       for (const [k, left] of this.round[what]) {
@@ -485,8 +517,7 @@ export default class RuspeInFuga extends Phaser.Scene {
         if (!img) {
           const [x, y] = k.split(',').map(Number);
           const c = cellCenter(x, y);
-          // Marbles on the asphalt, under the bulldozers; foam over the sign it cements.
-          img = this.add.image(c.x, c.y, key).setDepth(what === 'foam' ? 12 : 7);
+          img = this.add.image(c.x, c.y, key).setDepth(SPREAD[what].depth);
           imgs.set(k, img);
           this.tweens.add({ targets: img, scale: { from: 1.8, to: 1 }, duration: 160, ease: 'Back.out' });
         }
@@ -554,10 +585,24 @@ export default class RuspeInFuga extends Phaser.Scene {
     }
     sfx.win();
     banner(this, 'RUSPE DENTRO!', C.ocraLight, 1200);
-    this.time.delayedCall(1300, () => {
+    if (this.lv.inside) this.graffiti();
+    // In the mall, time to read Teresa's line on the floor.
+    this.time.delayedCall(this.lv.inside ? 3000 : 1300, () => {
       if (barriera) askNickname(this, { game: GAME_ID, level: this.level, points: s.ruspe, total, portrait: 'rosanna-96', line: pick(ROSANNA.record) }, results);
       else results(false);
     });
+  }
+
+  // The end of the night, in the mall: Teresa signs the floor in blue spray
+  // paint, as in the novel.
+  graffiti() {
+    const y = FIELD.y + 5 * TILE + TILE / 2;
+    const t = text(this, WIDTH / 2, y, 'OGGI TOCCA A NOI ENTRARE DA DIETRO', { color: '#3a6ae8', origin: 0.5, shadow: '#9ab8ff' }).setDepth(13).setAngle(-3).setAlpha(0);
+    this.tweens.add({ targets: t, alpha: 0.95, duration: 900 });
+    for (let i = 0; i < 12; i++) {
+      const drip = this.add.rectangle(t.x - t.width / 2 + 12 + i * 23, y + 5 + (i % 3), 1, 2 + (i * 7) % 5, 0x3a6ae8).setDepth(13).setAlpha(0);
+      this.tweens.add({ targets: drip, alpha: 0.9, delay: 600, duration: 500 });
+    }
   }
 
   showResults(result, s, total, record, barriera) {

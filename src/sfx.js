@@ -149,6 +149,19 @@ export const sfx = {
   lose() {
     [392, 370, 349, 330].forEach((f, i) => tone('square', f, f * 0.98, 0.22, i * 0.22, 0.45));
   },
+  // The Comitato Caos anthem out of Samir's speaker: three raspberries on a
+  // Balkan oom-pa beat.
+  anthem() {
+    [[0, 120], [0.16, 150], [0.32, 100]].forEach(([at, f]) => {
+      tone('sawtooth', f, f * 0.7, 0.14, at, 0.35);
+      noise(0.12, { at, freq: 300, q: 2, type: 'lowpass', vol: 0.5 });
+    });
+    [523, 659, 784].forEach((f, i) => tone('square', f, f, 0.08, 0.5 + i * 0.08, 0.3));
+  },
+  // Ayoub gets into the drone: a fast rising chirp of data.
+  hack() {
+    for (let i = 0; i < 6; i++) tone('square', 400 + i * 180, 900 + i * 180, 0.04, i * 0.05, 0.25);
+  },
   // Oom-pa-pa: one bar of a cheap waltz. Called on a timer while slow-mo lasts.
   waltzBar(step) {
     const roots = [196, 262, 220, 147];

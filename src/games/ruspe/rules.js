@@ -35,7 +35,7 @@ const turn = (dir, n) => (dir + n) % 4;
 export const ROAD = new Set(['.', 'C', 'A', ...Object.keys(ARROWS)]);
 
 // The tools, one Comitato Caos kid each, in tool bar order.
-export const TOOLS = ['teresa', 'chiara', 'gigi'];
+export const TOOLS = ['teresa', 'chiara', 'gigi', 'samir', 'ayoub'];
 // How long Chiara's marbles stay on the street, in seconds.
 export const MARBLES_TIME = 10;
 // Gigi's foam sets the sign on its cell in cement for FOAM_TIME seconds:
@@ -43,6 +43,15 @@ export const MARBLES_TIME = 10;
 // (It first slowed the bulldozers, then held them: either way a sign put
 // back right after the drone made it useless.)
 export const FOAM_TIME = 12;
+// Samir's bluetooth speaker plays the Comitato's anthem (farts on a Balkan
+// beat) for SPEAKER_TIME seconds: bulldozers within SPEAKER_RANGE cells
+// (counted along the grid) turn towards it, whatever the signs say, and the
+// drone can do nothing about it. It can go on the mall's entrance.
+export const SPEAKER_TIME = 8;
+export const SPEAKER_RANGE = 3;
+// Ayoub hacks the guide drone: tapped (on its cell or next to it), it hangs
+// in the air for FREEZE_TIME seconds and puts back no sign.
+export const FREEZE_TIME = 6;
 
 // The rules always move in steps of this many seconds, whatever the frame
 // rate: the outcome depends on the step (a sign placed a fraction of a
@@ -78,12 +87,42 @@ export function parseMap(rows) {
 }
 
 // Which way a bulldozer leaves cell (x, y), arriving with heading dir. On
-// Chiara's marbles it skids and goes back. Otherwise the way the sign
-// points, whatever it is, even back where it came from: the arrow never lies
-// (an exception for U-turns made turning signs look broken on iPad). No
-// sign: straight on. Blocked: right, then left, then back.
-export function chooseDir(map, signs, x, y, dir, marbles) {
-  const want = marbles?.has(key(x, y)) ? turn(dir, 2) : (signs.get(key(x, y))?.dir ?? dir);
+// Chiara's marbles it skids and goes back. Within earshot of Samir's
+// speaker it takes the way that gets it closer (straight on first, then
+// right, left, back). Otherwise the way the sign points, whatever it is,
+// even back where it came from: the arrow never lies (an exception for
+// U-turns made turning signs look broken on iPad). No sign: straight on.
+// Blocked: right, then left, then back.
+export function chooseDir(map, signs, x, y, dir, marbles, speakers) {
+  if (marbles?.has(key(x, y))) return firstOpen(map, x, y, turn(dir, 2), dir);
+  const lure = speakers && towardSpeaker(map, speakers, x, y, dir);
+  if (lure !== undefined) return lure;
+  return firstOpen(map, x, y, signs.get(key(x, y))?.dir ?? dir, dir);
+}
+
+// The nearest speaker in earshot, and the way out that gets closer to it.
+const dist = (x, y, k) => {
+  const [sx, sy] = k.split(',').map(Number);
+  return Math.abs(sx - x) + Math.abs(sy - y);
+};
+function towardSpeaker(map, speakers, x, y, dir) {
+  let near = null;
+  for (const k of speakers.keys()) {
+    const d = dist(x, y, k);
+    if (d <= SPEAKER_RANGE && (!near || d < near.d)) near = { k, d };
+  }
+  if (!near || near.d === 0) return undefined;
+  for (const n of [0, 1, 3, 2]) {
+    const d = turn(dir, n);
+    const nx = x + STEP[d][0];
+    const ny = y + STEP[d][1];
+    if (map.isRoad(nx, ny) && dist(nx, ny, near.k) < near.d) return d;
+  }
+  return undefined;
+}
+
+// The first open way among want, then right, left and back of it.
+function firstOpen(map, x, y, want, dir) {
   for (const n of [0, 1, 3, 2]) {
     const d = turn(want, n);
     if (map.isRoad(x + STEP[d][0], y + STEP[d][1])) return d;
@@ -116,6 +155,7 @@ export function createRound(level, seed = 1) {
     result: null,
     marbles: new Map(), // cell key → seconds left
     foam: new Map(), // cell key → seconds left
+    speakers: new Map(), // cell key → seconds left
     drone: level.drone ? newDrone(level.drone) : null,
     events: [], // what happened in the last step, for sounds and effects
     nextId: 1,
@@ -183,6 +223,21 @@ export function useTool(round, tool, x, y) {
     round[what].set(key(x, y), time);
     return { ok: true, what };
   }
+  if (tool === 'samir') {
+    if (!map.isRoad(x, y) || map.at(x, y) === 'C' || round.speakers.has(key(x, y))) return { ok: false };
+    if (!tools.samir) return { ok: false, empty: true };
+    tools.samir--;
+    round.speakers.set(key(x, y), SPEAKER_TIME);
+    return { ok: true, what: 'speaker' };
+  }
+  if (tool === 'ayoub') {
+    const d = round.drone;
+    if (!d || Math.abs(Math.round(d.x) - x) + Math.abs(Math.round(d.y) - y) > 1) return { ok: false };
+    if (!tools.ayoub) return { ok: false, empty: true };
+    tools.ayoub--;
+    d.frozen = FREEZE_TIME;
+    return { ok: true, what: 'hack' };
+  }
   return { ok: false };
 }
 
@@ -195,7 +250,7 @@ export function step(round, dt) {
   round.elapsed += dt;
   round.timeLeft = Math.max(0, round.timeLeft - dt);
 
-  for (const cells of [marbles, foam]) {
+  for (const cells of [marbles, foam, round.speakers]) {
     for (const [k, left] of cells) {
       if (left <= dt) cells.delete(k);
       else cells.set(k, left - dt);
@@ -206,7 +261,7 @@ export function step(round, dt) {
   // Out of the gates, taking turns when there are several.
   if (round.spawned < level.count && round.elapsed >= round.nextSpawn) {
     const g = map.gates[round.spawned % map.gates.length];
-    round.ruspe.push({ id: round.nextId++, x: g.x, y: g.y, dir: chooseDir(map, signs, g.x, g.y, g.dir, marbles), t: 0 });
+    round.ruspe.push({ id: round.nextId++, x: g.x, y: g.y, dir: chooseDir(map, signs, g.x, g.y, g.dir, marbles, round.speakers), t: 0 });
     round.spawned++;
     round.nextSpawn += level.interval;
     round.events.push({ type: 'out' });
@@ -223,7 +278,7 @@ export function step(round, dt) {
         round.inside++;
         round.events.push({ type: 'in', x: r.x, y: r.y });
       } else {
-        const d = chooseDir(map, signs, r.x, r.y, r.dir, marbles);
+        const d = chooseDir(map, signs, r.x, r.y, r.dir, marbles, round.speakers);
         if (marbles.has(key(r.x, r.y))) round.events.push({ type: 'skid', x: r.x, y: r.y });
         else if (d !== r.dir) round.events.push({ type: 'turn' });
         r.dir = d;
@@ -310,12 +365,13 @@ export function score({ inside, tools, timeLeft }) {
 }
 
 // Whether anything left in hand can still change where the bulldozers go.
-// Signs and marbles always can; foam only protects a sign, so it counts
-// while one of Teresa's signs is on the map.
+// Signs, marbles and the speaker always can; foam and Ayoub's hack only
+// keep a sign from the drone, so they count while one of Teresa's signs is
+// on the map.
 export function canStillAct(round) {
-  const { teresa = 0, chiara = 0, gigi = 0 } = round.tools;
+  const { teresa = 0, chiara = 0, gigi = 0, samir = 0, ayoub = 0 } = round.tools;
   const mineOnMap = [...round.signs.values()].some((s) => s.mine);
-  return teresa > 0 || chiara > 0 || (gigi > 0 && mineOnMap);
+  return teresa > 0 || chiara > 0 || samir > 0 || ((gigi > 0 || (ayoub > 0 && round.drone)) && mineOnMap);
 }
 
 // A copy of a round that can be played on without touching the real one.
@@ -327,6 +383,7 @@ export function cloneRound(round) {
     ruspe: round.ruspe.map((r) => ({ ...r })),
     marbles: new Map(round.marbles),
     foam: new Map(round.foam),
+    speakers: new Map(round.speakers),
     drone: round.drone && { ...round.drone },
     events: [],
   };

@@ -1,4 +1,4 @@
-import { DOWN, LEFT, RIGHT } from './rules.js';
+import { UP, DOWN, LEFT, RIGHT } from './rules.js';
 
 // Levels of Ruspe in fuga (docs/RUSPE-IN-FUGA.md): a night of the Comitato
 // Caos sending the Muro bulldozers into the shopping mall.
@@ -11,8 +11,9 @@ import { DOWN, LEFT, RIGHT } from './rules.js';
 // back to the first; speed: cells per second); tip: Rosanna's hint on the
 // new kid, the first time the level is played; solution: tool uses
 // that win the level ({ at: seconds, tool, x, y }; for a sign, dir: the way
-// it's turned to, since new signs start a random way), replayed by the tests; order: Rosanna's briefing; win: her
-// line on the results panel when the level is cleared.
+// it's turned to, since new signs start a random way), replayed by the
+// tests; inside: the map is the inside of the mall; order: Rosanna's
+// briefing; win: her line on the results panel when the level is cleared.
 export const LEVELS = [
   {
     name: 'CORSO GIULIO CESARE',
@@ -108,6 +109,74 @@ export const LEVELS = [
     order: 'Rotonda della sfinge. Il drone fa il pisolino, poi gira e rimette i cartelli. Gigi: cementatelo prima.',
     win: 'Rotonda superata. La sfinge non ha fatto domande.',
   },
+  {
+    name: "L'INGRESSO SECONDARIO",
+    map: [
+      '#KCK#######KCK#',
+      '#.............#',
+      '#.###WWWWW###.#',
+      '#.###WWWWW###.#',
+      '#.............#',
+      '####MMMAMMM####',
+      '###############',
+    ],
+    count: 12,
+    need: 10,
+    interval: 1.5,
+    firstOut: 2,
+    speed: 1.5,
+    time: 55,
+    tools: { teresa: 2, samir: 3 },
+    // Two gates; everyone circles the Muro, passing the mall on the bottom
+    // street, where the drone flies to and fro: two signs there catch 8 at
+    // best. Samir's speaker on the entrance pulls in whoever passes within
+    // earshot, and the drone can't touch it. Speakers at a and a + 10 s win
+    // for any a from 12 to 22; the third is a spare (one wasted early still
+    // leaves a win).
+    drone: { path: [[1, 4], [13, 4]], speed: 2 },
+    solution: [
+      { at: 14, tool: 'samir', x: 7, y: 5 },
+      { at: 24, tool: 'samir', x: 7, y: 5 },
+    ],
+    tip: "Samir: cassa sull'ingresso. Le ruspe seguono la musica.",
+    order: "Due cancelli, due file di ruspe, e il drone davanti all'ingresso. Samir, la cassa: inno del Comitato, volume massimo.",
+    win: 'Inno del Comitato, ruspe in fila. Educazione musicale: ottimo.',
+  },
+  {
+    name: 'TRA I PROFUMI E I JEANS',
+    inside: true, // inside the mall: floor tiles, shelves, the dig spot
+    map: [
+      '###############',
+      '#.............#',
+      '#.PPPPPAJJJJJ.#',
+      'C.............#',
+      '#.FFF.DDD.FFF.#',
+      '#.............#',
+      '###############',
+    ],
+    count: 12,
+    need: 10,
+    interval: 1.5,
+    firstOut: 2,
+    speed: 1.5,
+    time: 60,
+    tools: { teresa: 2, ayoub: 4 },
+    // In through the back door along the main aisle; the dig spot between
+    // the perfumes and the jeans. The store's drone laps it non-stop and a
+    // sign lasts seconds: signs alone catch 8 at best. Ayoub freezes the
+    // drone as it reaches the sign; a sign on the main aisle put down in the
+    // first 10 s then wins, even with one hack wasted.
+    drone: { path: [[5, 1], [9, 1], [9, 3], [5, 3]], speed: 2 },
+    solution: [
+      { at: 4, tool: 'teresa', x: 7, y: 3, dir: UP },
+      { at: 4.02, tool: 'ayoub', x: 7, y: 3 },
+      { at: 10.03, tool: 'ayoub', x: 7, y: 3 },
+      { at: 16.05, tool: 'ayoub', x: 7, y: 3 },
+    ],
+    tip: 'Ayoub: tocca il drone e si pianta. Il cartello resta.',
+    order: 'Dentro il centro commerciale. Il drone della sicurezza gira tra profumi e jeans. Ayoub, è tuo. Si scava lì in mezzo.',
+    win: 'Oggi tocca a noi entrare da dietro. Firmato: Teresa.',
+  },
 ];
 
 // Rosanna during the round (the win lines are in each level).
@@ -118,6 +187,7 @@ export const ROSANNA = {
   firstReset: 'Il drone rimette i cartelli sul suo giro. Cambiate incrocio!',
   wake: ['Il drone si sveglia! Schiuma sul cartello, presto!', 'Ronzio: il drone sta per partire.'],
   cemented: 'Cartello cementato. Il drone ci prova e non ci riesce.',
+  missedDrone: 'Ayoub, il drone! Tocca il drone, non la strada.',
   hopeless: 'Attrezzi finiti: così non entrano. Girate i cartelli o RIPROVA.',
   empty: ['Finito. Si improvvisa.', 'Munizioni finite. Ingegno, classe.'],
   record: ['Record di Barriera! Nome sul registro, in stampatello.', 'Dieci e lode. Il nome, per il registro di classe.'],

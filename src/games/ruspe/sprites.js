@@ -21,6 +21,8 @@ export const MARBLES_KEY = 'ruspe-marbles';
 export const MARBLES_SIZE = 22;
 export const FOAM_KEY = 'ruspe-foam';
 export const FOAM_SIZE = 32;
+export const SPEAKER_KEY = 'ruspe-speaker';
+export const SPEAKER_SIZE = 22;
 
 const ASPHALT = 0x2b2f37;
 const ASPHALT_2 = 0x30343d;
@@ -41,7 +43,9 @@ function stamp(p, q, x, y, k = 1) {
 // ---------------------------------------------------------------- the map
 
 // The whole map of a level (rows: rules.js characters), TILE pixels a cell.
-export function drawMap(p, rows) {
+// inside: the inside of the mall (level 5) instead of the streets.
+export function drawMap(p, rows, inside = false) {
+  if (inside) return drawMallInside(p, rows);
   const r = rng(rows.join('').length * 31 + 7);
   const at = (x, y) => (x >= 0 && y >= 0 && x < COLS && y < ROWS ? rows[y][x] : '#');
   const road = (x, y) => ROAD.has(at(x, y));
@@ -290,6 +294,131 @@ function drawSiteSign(p, box) {
   p.rect(x + 3, y + 16, 2, 5, 0x3a3f48).rect(x + w - 5, y + 16, 2, 5, 0x3a3f48);
 }
 
+// ---------------------------------------------------------------- inside the mall
+
+// The mall from the inside: shiny floor tiles where the bulldozers drive,
+// the perfume shelves (P), the jeans racks (J), the fitting rooms (F), the
+// fast food counter (D), the walls (#), the back door they come in by (C)
+// and the dig spot (A), right between the perfumes and the jeans.
+function drawMallInside(p, rows) {
+  const r = rng(77);
+  const at = (x, y) => (x >= 0 && y >= 0 && x < COLS && y < ROWS ? rows[y][x] : '#');
+  const floor = (x, y) => ROAD.has(at(x, y));
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const c = at(x, y);
+      const px = x * TILE;
+      const py = y * TILE;
+      if (floor(x, y)) drawFloor(p, px, py, x, y);
+      else if (c === 'P') drawPerfumes(p, px, py, r);
+      else if (c === 'J') drawJeans(p, px, py, r);
+      else if (c === 'F') drawFittingRoom(p, px, py, x);
+      else if (c === 'D') drawCounter(p, px, py);
+      else drawWall(p, px, py, floor(x, y + 1));
+    }
+  }
+  drawFastFoodLogo(p, bounds(rows, 'D'));
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (at(x, y) === 'C') drawBackDoor(p, x * TILE, y * TILE);
+      if (at(x, y) === 'A') drawDigSpot(p, x * TILE, y * TILE);
+    }
+  }
+}
+
+// Big pale floor tiles, a highlight on each, the grout lines.
+function drawFloor(p, px, py, x, y) {
+  const base = (x + y) % 2 ? 0xc8c2b4 : 0xd4cec0;
+  p.rect(px, py, TILE, TILE, (xx, yy) => ((xx * 7 + yy * 3) % 19 === 0 ? base - 0x080808 : base));
+  p.rect(px, py, TILE, 1, 0x9a9488).rect(px, py, 1, TILE, 0x9a9488);
+  p.rect(px + 4, py + 4, 6, 1, 0xece6d8).rect(px + 4, py + 5, 1, 3, 0xece6d8); // the shine
+}
+
+// The mall's walls: dark plaster, a baseboard on the side facing the floor.
+function drawWall(p, px, py, floorBelow) {
+  p.rect(px, py, TILE, TILE, (x, y) => ((x * 5 + y * 3) % 11 === 0 ? 0x3a3a44 : 0x34343e));
+  if (floorBelow) p.rect(px, py + TILE - 4, TILE, 4, 0x5a5a66).rect(px, py + TILE - 4, TILE, 1, 0x7a7a88);
+}
+
+// Perfume shelves from above: glass tops, rows of little bottles in pastel
+// colours with gold caps.
+function drawPerfumes(p, px, py, r) {
+  p.rect(px, py, TILE, TILE, 0x6a5a6a).rect(px + 1, py + 1, TILE - 2, TILE - 2, 0x8a7a8e);
+  const colors = [0xff9ac8, 0xb48cff, 0x9ad0e8, 0xf4e08a, 0xff7a9a];
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 4; col++) {
+      const bx = px + 3 + col * 7;
+      const by = py + 3 + row * 10;
+      p.rect(bx, by + 2, 5, 6, colors[Math.floor(r() * colors.length)]).rect(bx + 1, by + 3, 1, 3, 0xffffff);
+      p.rect(bx + 1, by, 3, 2, 0xe8c06a);
+    }
+  }
+}
+
+// Jeans racks: stacks of folded jeans in three blues, a price tag here and
+// there.
+function drawJeans(p, px, py, r) {
+  p.rect(px, py, TILE, TILE, 0x5a4a38).rect(px + 1, py + 1, TILE - 2, TILE - 2, 0x7a6448);
+  const blues = [0x3a5a9a, 0x4a72b8, 0x2a4070];
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 2; col++) {
+      const bx = px + 3 + col * 14;
+      const by = py + 3 + row * 9;
+      const c = blues[Math.floor(r() * blues.length)];
+      p.rect(bx, by, 12, 7, c).rect(bx, by + 3, 12, 1, c - 0x101010).rect(bx + 5, by, 1, 7, 0x8aa0c8);
+      if (r() < 0.25) p.rect(bx + 9, by + 1, 3, 2, 0xe0443a); // -50%
+    }
+  }
+}
+
+// Fitting rooms: cubicles with a red curtain half drawn.
+function drawFittingRoom(p, px, py, x) {
+  p.rect(px, py, TILE, TILE, 0x4a3a32).rect(px + 2, py + 2, TILE - 4, TILE - 6, 0x6a5a50);
+  p.rect(px, py, 2, TILE, 0x2a2018).rect(px + TILE - 2, py, 2, TILE, 0x2a2018);
+  const w = x % 2 ? 18 : 10;
+  for (let i = 0; i < w; i += 3) p.rect(px + 2 + i, py + TILE - 6, 2, 6, 0xc0303a).rect(px + 4 + i, py + TILE - 6, 1, 6, 0x8a1a24);
+  p.rect(px + 2, py + TILE - 7, TILE - 4, 1, 0xb0b6be); // the rail
+}
+
+// The fast food counter: red top, yellow trim, trays.
+function drawCounter(p, px, py) {
+  p.rect(px, py, TILE, TILE, 0xb02a24).rect(px, py, TILE, 3, 0xe8c040).rect(px, py + TILE - 3, TILE, 3, 0x7a1a14);
+  p.rect(px + 6, py + 8, 9, 7, 0xd8b070).rect(px + 18, py + 16, 9, 7, 0xd8b070);
+}
+
+// The fast food's own logo, a made-up one (no real brands): a yellow M
+// drawn as two bulldozer buckets side by side.
+function drawFastFoodLogo(p, box) {
+  if (!box) return;
+  const q = new Painter(30, 22);
+  q.rect(0, 0, 30, 22, 0xc0302a);
+  const y0 = 4;
+  for (const bx of [3, 15]) {
+    // a bucket, teeth down: the M's two humps
+    q.poly([[bx, y0 + 14], [bx, y0 + 3], [bx + 3, y0], [bx + 9, y0], [bx + 12, y0 + 3], [bx + 12, y0 + 14], [bx + 9, y0 + 14], [bx + 9, y0 + 5], [bx + 3, y0 + 5], [bx + 3, y0 + 14]], 0xf4c430);
+    for (let t = 0; t < 4; t++) q.rect(bx + t * 3, y0 + 14, 2, 2, 0xf4c430); // teeth
+  }
+  q.outline(0x5a1410);
+  stamp(p, q, box.x + Math.floor((box.w - 30) / 2), box.y + Math.floor((box.h - 22) / 2), 1);
+}
+
+// The back door the bulldozers come in by: the shutter rolled up, yellow
+// and black stripes on the frame.
+function drawBackDoor(p, px, py) {
+  drawFloor(p, px, py, 0, 0);
+  p.rect(px, py, 6, TILE, (x, y) => (Math.floor((x + y) / 3) % 2 ? 0x1a1a1a : 0xe8b020));
+  p.rect(px + 6, py, 2, TILE, 0x9aa0a8);
+}
+
+// The dig spot: tiles cracked and pushed up, a hole of earth in the middle.
+function drawDigSpot(p, px, py) {
+  drawFloor(p, px, py, 0, 1);
+  const c = HALF;
+  p.ellipse(px + c, py + c, 11, 9, 0x5e4a2e).ellipse(px + c, py + c + 1, 8, 6, 0x3a2a18).ellipse(px + c, py + c + 2, 4, 3, 0x1e140a);
+  for (const [x0, y0, x1, y1] of [[2, 4, 8, 10], [30, 6, 24, 11], [4, 28, 10, 22], [29, 27, 23, 22], [16, 1, 16, 6]]) p.line(px + x0, py + y0, px + x1, py + y1, 0x6a6458);
+  p.rect(px + 5, py + 13, 4, 3, 0xc8c2b4).rect(px + 24, py + 18, 3, 3, 0xd4cec0); // bits of tile
+}
+
 // ---------------------------------------------------------------- things on the map
 
 // A Muro bulldozer from above, heading up (the scene turns it): two wide
@@ -378,6 +507,17 @@ export function drawFoam(p, s = FOAM_SIZE) {
   p.outline(0x6a5a48);
 }
 
+// Samir's bluetooth speaker: a black box with two cones and a blue light.
+// The scene draws the sound waves round it.
+export function drawSpeaker(p, s = SPEAKER_SIZE) {
+  p.rect(2, 1, s - 4, s - 2, shaded({ base: 0x2a2a30, dark: 0x16161a, light: 0x44444c }, s / 2, s / 2, s / 2, s / 2));
+  for (const cy of [7, 15]) {
+    p.ellipse(s / 2, cy, 4.5, 3.5, 0x101014).ellipse(s / 2, cy, 2.5, 2, 0x5a5a66).rect(s / 2 - 1, cy - 1, 1, 1, 0x9a9aa6);
+  }
+  p.rect(s - 6, 3, 2, 2, 0x4a90e0);
+  p.outline(0x050508);
+}
+
 // The keyboard cursor and the hover marker: four thick corners.
 export function drawCursor(p, s = TILE) {
   const c = 0xe8c06a;
@@ -451,5 +591,38 @@ function gigi(p, s) {
   p.outline(OUTLINE);
 }
 
-export const KIDS = { teresa, chiara, gigi };
+// Samir, 8, the tallest, unscrews bolts "con la rapidità di un meccanico in
+// fuga dalla polizia" and read too many superhero comics: a red bandana,
+// headphones round his neck for the speaker, a wrench.
+function samir(p, s) {
+  const c = s / 2;
+  p.ellipse(c, c - 3, 5.5, 4, 0x1a1210); // short hair
+  p.ellipse(c, c + 1, 5, 5.5, shaded({ base: 0xc8905a, dark: 0x9a6a3a, light: 0xdca878 }, c, c + 1, 5, 5.5));
+  p.rect(c - 6, c - 4, 12, 2, 0xe0443a); // bandana
+  p.rect(c + 5, c - 3, 2, 3, 0xe0443a);
+  p.rect(c - 3, c + 1, 2, 1, 0x1a1010).rect(c + 2, c + 1, 2, 1, 0x1a1010);
+  p.rect(c - 2, c + 4, 4, 1, 0x7a4a30).rect(c + 2, c + 3, 1, 1, 0x7a4a30); // a grin
+  p.rect(c - 5, c + 6, 11, s - c - 7, 0x3a6ab8); // blue t-shirt
+  p.rect(c - 5, c + 6, 2, 2, 0x2a2a2a).rect(c + 4, c + 6, 2, 2, 0x2a2a2a).rect(c - 3, c + 6, 7, 1, 0x2a2a2a); // headphones
+  // The wrench.
+  p.line(c - 9, c + 9, c - 5, c + 5, 0xb0b6be).line(c - 8, c + 9, c - 4, c + 5, 0x8a9098);
+  p.rect(c - 6, c + 3, 3, 2, 0xb0b6be);
+  p.outline(OUTLINE);
+}
+
+// Ayoub, 9, the hacker: hood pulled over his eyes, the glow of a screen on
+// his chin, a phone in his hands.
+function ayoub(p, s) {
+  const c = s / 2;
+  const hood = { base: 0x3a5a3a, dark: 0x24402a, light: 0x4e7a4e };
+  p.ellipse(c, c, 7, 7.5, shaded(hood, c, c, 7, 7.5)); // the hood
+  p.ellipse(c, c + 2, 4.5, 4.5, 0x1a1a1a); // its shadow
+  p.rect(c - 3, c + 3, 7, 3, 0x8ad0a8); // the chin, lit green by the screen
+  p.rect(c - 2, c + 1, 2, 1, 0x9ae8b8).rect(c + 1, c + 1, 2, 1, 0x9ae8b8); // eyes catching the glow
+  p.rect(c - 5, c + 7, 11, s - c - 8, 0x3a5a3a); // hoodie
+  p.rect(c - 2, c + 6, 5, 4, 0x1a1a22).rect(c - 1, c + 7, 3, 2, 0x6ae8a0); // the phone
+  p.outline(OUTLINE);
+}
+
+export const KIDS = { teresa, chiara, gigi, samir, ayoub };
 export const drawFace = (p, kid, s = FACE_SIZE) => KIDS[kid](p, s);

@@ -26,7 +26,7 @@ var MAX_SCORE = {
   contrabbando: 20000, // ~15 per vegetable + combos + 5 per second left
   muro: 2000, // 5 per % of Muro, x2 for big cuts, + end bonuses
   ferri: 2000, // 30 per knot + 5 per second left + 50 per unused X + moves bonus
-  ruspe: 1000000,
+  ruspe: 2000, // 100 per bulldozer in (up to need) + 30 per tool left + 5 per second left
 };
 var MAX_LEVEL = 50;
 var MAX_WRITES_PER_DAY = 300; // all games together; real records are a few a day

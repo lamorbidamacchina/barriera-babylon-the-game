@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseMap, chooseDir, createRound, useTool, step, replay, score, openDirs, droneCell, patrolCells, cloneRound, forecast, canStillAct, MARBLES_TIME, FOAM_TIME, UP, RIGHT, DOWN, LEFT, COLS } from './rules.js';
+import { parseMap, chooseDir, createRound, useTool, step, replay, score, openDirs, droneCell, patrolCells, cloneRound, forecast, canStillAct, SPEAKER_TIME, FREEZE_TIME, MARBLES_TIME, FOAM_TIME, UP, RIGHT, DOWN, LEFT, COLS } from './rules.js';
 
 // A small test town, padded to the full width with blocks.
 const pad = (rows) => rows.map((r) => r.padEnd(COLS, '#'));
@@ -217,6 +217,47 @@ describe('Gigi', () => {
     run(fast, 0.6);
     run(foamed, 0.6);
     expect(foamed.ruspe[0]).toEqual(fast.ruspe[0]);
+  });
+});
+
+describe('Samir', () => {
+  // A crossroads: the mall down the side street, the way on straight ahead.
+  const MAP = pad(['#######', '#C...##', '###.###', '###A###', ...Array(9).fill('#')]);
+
+  it('pulls the bulldozers in earshot towards the speaker, over the signs', () => {
+    const m = parseMap(MAP);
+    const speakers = new Map([['3,3', 5]]);
+    expect(chooseDir(m, new Map(), 3, 1, RIGHT, null, speakers)).toBe(DOWN);
+    expect(chooseDir(m, new Map([['3,1', { dir: RIGHT }]]), 3, 1, RIGHT, null, speakers)).toBe(DOWN);
+    // Out of earshot: as usual.
+    expect(chooseDir(m, new Map(), 3, 1, RIGHT, null, new Map([['3,6', 5]]))).toBe(RIGHT);
+  });
+
+  it('can go on the mall entrance, and plays for a while', () => {
+    const r = createRound(level({ map: MAP, count: 3, interval: 1, need: 3, tools: { samir: 1 } }));
+    expect(useTool(r, 'samir', 1, 1).ok).toBe(false); // the gate
+    expect(useTool(r, 'samir', 3, 3)).toMatchObject({ ok: true, what: 'speaker' });
+    run(r, 4);
+    expect(r.result).toBe('win');
+    const q = createRound(level({ map: MAP, count: 0, tools: { samir: 1 } }));
+    useTool(q, 'samir', 3, 3);
+    run(q, SPEAKER_TIME + 0.2);
+    expect(q.speakers.size).toBe(0);
+  });
+});
+
+describe('Ayoub', () => {
+  it('freezes the drone when tapped on or next to it, and it puts back nothing', () => {
+    const MAP = pad(['#######', '#C...A#', '#######', ...Array(10).fill('#')]);
+    const r = createRound(level({ map: MAP, count: 0, tools: { teresa: 1, ayoub: 1 }, drone: { path: [[1, 1], [5, 1]], speed: 4 } }));
+    useTool(r, 'teresa', 3, 1);
+    expect(useTool(r, 'ayoub', 4, 1).ok).toBe(false); // two cells away
+    expect(useTool(r, 'ayoub', 2, 1)).toMatchObject({ ok: true, what: 'hack' });
+    run(r, FREEZE_TIME - 0.5);
+    expect(droneCell(r.drone)).toEqual({ x: 1, y: 1 });
+    expect(r.signs.get('3,1').mine).toBe(true);
+    run(r, 1);
+    expect(r.signs.has('3,1')).toBe(false);
   });
 });
 

@@ -38,8 +38,8 @@ Gli attrezzi sono nella barra in basso a sinistra, ognuno con il volto del bambi
 | 1 | **Teresa** | cartello | Mette un cartello su una strada, oppure gira un cartello ufficiale (costa 1). Il cartello nuovo punta in una direzione a caso, diversa a ogni partita, e un cartello ufficiale preso in mano cambia sempre direzione: poi lo si tocca (gratis) finché punta dove serve. Il cartello non punta mai verso il cantiere. All'inizio puntava già dalla parte giusta quasi sempre, e il gioco era troppo facile (19 ottobre). | 1 |
 | 2 | **Chiara** | biglie | Le ruspe slittano e tornano indietro. Dura circa 10 s. | 2 |
 | 3 | **Gigi** | schiuma | Il cemento montato a meringa: il cartello sulla casella resta cementato per 12 s e il drone non lo può spostare (compare **CEMENTATO!**). Le ruspe ci passano sopra normalmente. È disegnata sopra il cartello come un anello di schiuma, così la freccia si vede in mezzo. | 3 |
-| 4 | **Samir** | cassa | La cassa bluetooth con l'inno di pernacchie del Comitato. Agli incroci vicini le ruspe vanno verso la cassa. Dura circa 8 s. | 4 |
-| 5 | **Ayoub** | hacker | Il drone guida si ferma per circa 6 s. | 5 |
+| 4 | **Samir** | cassa | La cassa bluetooth con l'inno di pernacchie del Comitato, per 8 s. Le ruspe a 3 caselle o meno vanno verso la cassa, qualunque cosa dicano i cartelli, e il drone non ci può fare niente. Si può mettere sull'ingresso del centro commerciale. Intorno si vedono le onde rosa della musica. | 4 |
+| 5 | **Ayoub** | hacker | Si tocca il drone (la sua casella o una vicina): resta fermo per 6 s, lampeggia verde (**HACKERATO!**) e non rimette nessun cartello. Toccando una strada lontana dal drone Rosanna ricorda di toccare il drone. | 5 |
 
 ## 4. Il drone guida (dal livello 2)
 
@@ -82,16 +82,22 @@ I numeri sono di partenza e si tarano dopo le prove su iPad. Ogni livello ha una
 | 1 | CORSO GIULIO CESARE | un anello di strade, il corso in mezzo, l'ingresso secondario sul corso | Teresa x3 | — | 6 su 8, 80 s |
 | 2 | I CARTELLI DEL NAVIGATORE | cartelli ufficiali che girano attorno al Muro; il centro commerciale in basso a sinistra | Chiara, Teresa x3 | 1, sulla strada in basso | 8 su 10, 80 s |
 | 3 | LA ROTONDA DELLA SFINGE | la rotonda di corso Romania, con la sfinge al centro | Gigi x2, Teresa x1 (niente biglie) | 1, dorme sul cantiere e ogni tanto fa il giro della rotonda | 12 su 14, 75 s |
-| 4 | L'INGRESSO SECONDARIO | due cancelli, due file di ruspe | Samir | 2 | |
-| 5 | TRA I PROFUMI E I JEANS | dentro il centro commerciale: corsie, camerini, il fast food | Ayoub | 2 | |
+| 4 | L'INGRESSO SECONDARIO | due cancelli, le ruspe girano attorno al Muro e passano davanti all'ingresso sulla strada in basso | Samir x3, Teresa x2 | 1, avanti e indietro davanti all'ingresso | 10 su 12, 55 s |
+| 5 | TRA I PROFUMI E I JEANS | dentro il centro commerciale: profumi, jeans, camerini, il fast food; si scava tra profumi e jeans | Ayoub x4, Teresa x2 | 1, il drone della sicurezza gira attorno al punto dello scavo | 10 su 12, 60 s |
 
-Dopo la vittoria nel livello 5 compare sul pavimento la scritta blu di Teresa.
+Dopo la vittoria nel livello 5 compare sul pavimento la scritta blu di Teresa: "OGGI TOCCA A NOI ENTRARE DA DIETRO". Il pannello dei risultati aspetta qualche secondo in più, per lasciarla leggere.
+
+Il livello 5 si gioca dentro il centro commerciale (`inside: true`): pavimento a piastrelle, scaffali dei profumi (`P`), dei jeans (`J`), camerini (`F`), il bancone del fast food (`D`). Il fast food ha un logo inventato, una M gialla fatta di due benne di ruspa. Le ruspe entrano dalla porta sul retro (`C`, sul bordo sinistro) e scavano nel punto `A`.
 
 Livello 1: uscite dal cantiere, le ruspe girano a sinistra sul corso e poi per sempre sull'anello esterno. Bastano due cartelli: uno dove la strada del cantiere incontra il corso, verso destra, e uno davanti all'ingresso, verso il basso. Il terzo cartello serve a correggere un errore. Vince anche mettendo i cartelli dopo 8 s.
 
 Livello 2: i cartelli ufficiali fanno girare le ruspe attorno al Muro. La mossa ovvia è girare il cartello all'incrocio in basso, ma lì passa il drone, che lo rimette a posto in pochi secondi. Con le sole biglie non entra nessuna ruspa. La strada giusta aggira il drone: si gira il cartello sotto il cancello verso sinistra e quello vicino al centro commerciale nell'altro verso. Le biglie rimandano indietro le prime ruspe già finite nel giro. Teresa ha tre cartelli: con due, chi spendeva il primo sulla mossa ovvia non poteva più vincere (provato sull'iPad il 19 ottobre). Con tre la deviazione vince anche trovata a 25 s.
 
 Livello 3: le ruspe girano sulla rotonda e Teresa ha un cartello solo, all'uscita verso il centro commerciale. Il drone dorme sul cantiere e a 16 s fa il primo giro della rotonda: se il cartello non è cementato lo rimette a posto, e da lì non entra più nessuno (al massimo 6). Con la schiuma sul cartello mentre il drone dorme, tra 6 e 16 s, il cartello resta ed entrano tutte. Messa prima di 6 s la schiuma asciuga prima che il drone arrivi. La seconda schiuma è di scorta, per rimediare a un errore.
+
+Livello 4: tutte le ruspe girano attorno al Muro e passano davanti all'ingresso sulla strada in basso, dove il drone va avanti e indietro. Con i soli cartelli entrano al massimo 8 ruspe su 10. La cassa di Samir sull'ingresso le tira dentro: due casse, a un istante a e poi ad a + 10 s, vincono con a tra 12 e 22 s. La terza cassa è di scorta, e anche sprecandone una all'inizio si vince.
+
+Livello 5: le ruspe entrano lungo la corsia principale; il punto dello scavo si raggiunge da lì e dalla corsia in alto. Il drone della sicurezza ci gira attorno senza sosta e un cartello dura pochi secondi: da soli i cartelli ne fanno entrare al massimo 8. Con il cartello sulla corsia principale (verso l'alto) e Ayoub che blocca il drone ogni volta che sta per arrivarci, si vince mettendo il cartello in qualsiasi momento dei primi 10 s, anche sprecando un hack.
 
 Storia della schiuma, per non rifare gli stessi errori. All'inizio rallentava le ruspe, poi le tratteneva e le faceva ripartire in colonna. In tutte e due le versioni non serviva a niente: un cartello si può sempre rimettere subito dopo il passaggio del drone, e sull'iPad il livello 3 si poteva vincere solo con un piano difficile da indovinare. Un cartello manda tutte le ruspe nella stessa direzione, da qualunque parte arrivino, quindi la schiuma conta solo se qualcosa cambia nel tempo, cioè il drone. Da qui la schiuma che cementa il cartello (19 ottobre).
 
@@ -101,7 +107,7 @@ Storia della schiuma, per non rifare gli stessi errori. All'inizio rallentava le
 - \+ 30 per ogni uso di attrezzo avanzato
 - \+ 5 per ogni secondo rimasto
 
-Livello perso: nessun punteggio. `MAX_SCORE.ruspe` in `tools/leaderboard/Code.gs` è ancora il segnaposto (1.000.000). Va fissato quando i livelli sono finiti, poi lo script va ripubblicato.
+Livello perso: nessun punteggio. Il livello finisce appena si arriva a `need`, quindi il massimo è `need` × 100 + 30 per ogni attrezzo + 5 per ogni secondo: il più alto è il livello 3, circa 1.700. `MAX_SCORE.ruspe` in `tools/leaderboard/Code.gs` è 2000; dopo la modifica va ripubblicato lo script.
 
 ## 10. Fuori, per ora
 
@@ -112,6 +118,6 @@ Livello perso: nessun punteggio. `MAX_SCORE.ruspe` in `tools/leaderboard/Code.gs
 ## 11. Ordine di lavoro
 
 1. ~~Livello 1 giocabile: regole, mappa, Teresa, intro e risultati, record.~~ (18 ottobre)
-2. ~~Livello 2: Chiara, il drone guida.~~ ~~Livello 3: Gigi, la rotonda.~~ (18 ottobre) Livelli 4–5, uno alla volta, ognuno con il suo bambino.
+2. ~~Livello 2: Chiara, il drone guida.~~ ~~Livello 3: Gigi, la rotonda.~~ (18 ottobre) ~~Livelli 4–5: Samir, Ayoub, dentro il centro commerciale.~~ (22 ottobre)
 3. Effetti sonori dedicati: motore, cartello, biglie, schiuma, pernacchie, ruspa dentro.
-4. `MAX_SCORE.ruspe` definitivo, poi ripubblicazione dello script; tabella "Tasti" nel README.
+4. ~~`MAX_SCORE.ruspe` definitivo~~ (22 ottobre), poi ripubblicazione dello script; ~~tabella "Tasti" nel README~~.
