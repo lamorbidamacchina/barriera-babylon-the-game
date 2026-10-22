@@ -4,7 +4,14 @@ Una raccolta di minigiochi per browser in stile retro, ispirati al romanzo *Barr
 
 Il romanzo è ambientato in una Barriera di Milano (Torino) di un futuro molto vicino, tra droni, coprifuoco e un codice OTP con cui confermare ogni giorno la propria posizione. I clienti del Bar Stella di Mei Li e i bambini del Comitato Caos rispondono al cantiere del "Muro" con battute, sabotaggi e caos organizzato.
 
-Nel gioco si parte dal Bar Stella: Mei Li assegna i lavori e ogni lavoro è un minigioco. Il primo è *Il contrabbando di Zio Franco*: tagliare al volo la verdura giusta per le ricette di Mei Li, senza toccare i droni. Altri minigiochi sono in arrivo.
+Nel gioco si parte dal Bar Stella: Mei Li assegna i lavori e ogni lavoro è un minigioco.
+
+- *Il contrabbando di Zio Franco*: tagliare al volo la verdura giusta per le ricette di Mei Li, senza toccare i droni.
+- *Muro Panic*: il Comitato Caos traccia linee sul Muro e lo fa cadere a pezzi, scoprendo la Torino che nasconde.
+- *Il nodo nei ferri*: sciogliere il groviglio di lana di Don Remo senza tagliare niente; ogni nodo è una riga della sua sciarpa.
+- *Ruspe in fuga*: le ruspe del Muro guidano da sole e seguono i cartelli; i bambini del Comitato le mandano dentro il centro commerciale.
+
+Chi vince tutti i livelli dei quattro giochi vede il finale: Barriera sfila sotto la tettoia di piazza Crispi e le ruspe buttano giù il Muro.
 
 - Gioca online: [lamorbidamacchina.github.io/barriera-babylon-the-game](https://lamorbidamacchina.github.io/barriera-babylon-the-game/)
 - Il sito del romanzo, con il test "chi sei tu dentro Barriera?": [barrierababylon.it](https://barrierababylon.it)
@@ -32,12 +39,16 @@ I record di Barriera (miglior punteggio per livello, con il nickname) stanno in 
 ## Struttura
 
 - `src/main.js` — avvio Phaser, scaling a multipli interi, effetto CRT, tasti globali
-- `src/scenes/` — `Title` (gettone/start) → `Bar` (Mei Li) → `Menu` (lavagna) → minigiochi
-- `src/data/` — battute di Mei Li, elenco dei giochi
+- `src/scenes/` — `Title` (gettone/start) → `Bar` (Mei Li) → `Menu` (lavagna) → minigiochi (`Contrabbando`, `MuroPanic`, `NodoNeiFerri`, `RuspeInFuga`) e `Finale`
+- `src/games/<gioco>/` — regole (senza Phaser, con i test), livelli, sprite di ogni minigioco
+- `src/finale/` — i personaggi, piazza Crispi e il Muro del finale
+- `src/data/` — battute di Mei Li, elenco dei giochi, quando si sblocca il finale
 - `src/sfx.js` — effetti sonori chiptune sintetizzati (niente file audio)
 - `src/leaderboard.js` — record di Barriera online; `tools/leaderboard/Code.gs` — lo script del Google Sheet (vedi "Classifica")
 - `art/source/` — illustrazioni promozionali originali
 - `tools/pixelize.mjs` — le converte in ritratti pixel art (`npm run pixelize`)
+- `tools/sprites/` — fogli di anteprima degli sprite disegnati in codice (`npm run sprites -- tools/sprites/<gioco>.mjs out.png`)
+- `docs/` — i documenti di design (`IL-NODO-NEI-FERRI.md`, `RUSPE-IN-FUGA.md`, `FINALE.md`)
 
 Risoluzione interna 480×270, font Press Start 2P (in MAIUSCOLO usare `CAFFE'` invece di `CAFFÈ`).
 
@@ -52,6 +63,7 @@ Risoluzione interna 480×270, font Press Start 2P (in MAIUSCOLO usare `CAFFE'` i
 | mouse / dito + trascina, oppure Tab + frecce | sposta i gomitoli (Il nodo nei ferri) |
 | clic / tocco su una strada, oppure frecce + Spazio; 1–5 sceglie il bambino | usa l'attrezzo (Ruspe in fuga) |
 | P o Esc | pausa |
+| clic / tocco, Invio, Spazio, Esc | nel finale: passa alla parte successiva, alla fine torna al menu |
 | cifre, Backspace | codice della verifica OTP |
 | F | schermo intero |
 | M | audio on/off |
@@ -65,7 +77,14 @@ A collection of retro-style browser minigames, inspired by the novel *Barriera B
 
 The novel is set in Barriera di Milano, a neighbourhood of Turin, in the very near future: drones, a curfew, and an OTP code to confirm your position every day. The regulars of Mei Li's Bar Stella and the kids of the Comitato Caos answer the building site of the "Muro" (the Wall) with jokes, sabotage and organised chaos.
 
-The game starts at the Bar Stella: Mei Li hands out jobs, and each job is a minigame. The first one is *Il contrabbando di Zio Franco* (Uncle Franco's smuggling): slice the right vegetables in mid-air for Mei Li's recipes, without touching the drones. More minigames are on the way. The game itself is in Italian.
+The game starts at the Bar Stella: Mei Li hands out jobs, and each job is a minigame. The game itself is in Italian.
+
+- *Il contrabbando di Zio Franco* (Uncle Franco's smuggling): slice the right vegetables in mid-air for Mei Li's recipes, without touching the drones.
+- *Muro Panic*: the Comitato Caos draws lines across the Muro and knocks it down piece by piece, uncovering the Turin it hides.
+- *Il nodo nei ferri* (the knot in the needles): untangle Don Remo's wool without cutting anything; each knot undone is a stripe of his scarf.
+- *Ruspe in fuga* (runaway bulldozers): the Muro's bulldozers drive themselves and follow the signs; the Comitato kids send them into the shopping mall.
+
+Win every level of the four games to see the finale: Barriera marches under the canopy of Piazza Crispi and the bulldozers knock the Muro down.
 
 - Play online: [lamorbidamacchina.github.io/barriera-babylon-the-game](https://lamorbidamacchina.github.io/barriera-babylon-the-game/)
 - The novel's website, with the "who are you in Barriera?" quiz (in Italian): [barrierababylon.it](https://barrierababylon.it)
@@ -93,12 +112,16 @@ The Barriera records (best score per level, with the player's nickname) live in 
 ### Structure
 
 - `src/main.js` — Phaser startup, integer scaling, CRT effect, global keys
-- `src/scenes/` — `Title` (coin/start) → `Bar` (Mei Li) → `Menu` (chalkboard) → minigames
-- `src/data/` — Mei Li's lines, list of games
+- `src/scenes/` — `Title` (coin/start) → `Bar` (Mei Li) → `Menu` (chalkboard) → minigames (`Contrabbando`, `MuroPanic`, `NodoNeiFerri`, `RuspeInFuga`) and `Finale`
+- `src/games/<game>/` — each minigame's rules (no Phaser, with tests), levels and sprites
+- `src/finale/` — the finale's characters, Piazza Crispi and the Muro
+- `src/data/` — Mei Li's lines, list of games, when the finale unlocks
 - `src/sfx.js` — synthesised chiptune sound effects (no audio files)
 - `src/leaderboard.js` — online Barriera records; `tools/leaderboard/Code.gs` — the Google Sheet script (see "Leaderboard")
 - `art/source/` — original promotional illustrations
 - `tools/pixelize.mjs` — turns them into pixel-art portraits (`npm run pixelize`)
+- `tools/sprites/` — preview sheets of the sprites drawn in code (`npm run sprites -- tools/sprites/<game>.mjs out.png`)
+- `docs/` — design documents, in Italian (`IL-NODO-NEI-FERRI.md`, `RUSPE-IN-FUGA.md`, `FINALE.md`)
 
 Internal resolution 480×270, font Press Start 2P (in UPPERCASE text write `CAFFE'` instead of `CAFFÈ`: the font draws accented capitals like lowercase).
 
@@ -111,7 +134,9 @@ Internal resolution 480×270, font Press Start 2P (in UPPERCASE text write `CAFF
 | mouse held / finger + drag | slice (Contrabbando) |
 | arrows (or WASD) / finger + drag | move and draw the line (Muro Panic) |
 | mouse / finger + drag, or Tab + arrows | move the balls of wool (Il nodo nei ferri) |
+| click / tap on a street, or arrows + Space; 1–5 picks the kid | use the tool (Ruspe in fuga) |
 | P or Esc | pause |
+| click / tap, Enter, Space, Esc | in the finale: skip to the next part, at the end back to the menu |
 | digits, Backspace | OTP check code |
 | F | fullscreen |
 | M | sound on/off |
