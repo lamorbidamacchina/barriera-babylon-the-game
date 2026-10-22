@@ -51,3 +51,18 @@ export const GAMES = [
 // Every level of the game won at least once (each game saves under its id
 // how many levels it has unlocked: one more than the last one won).
 export const isComplete = (game, save) => !!game.levels && (save[game.id]?.unlocked ?? 0) >= game.levels;
+
+// Every game played to the end: the finale is unlocked.
+export const allComplete = (save) => GAMES.filter((g) => g.available).every((g) => isComplete(g, save));
+
+// The extra line on the chalkboard once everything is complete.
+export const FINALE = {
+  id: 'finale',
+  scene: 'Finale',
+  title: 'IL FINALE',
+  desc: '', // the last line before the divider: no room for one
+  portrait: 'barriera-96',
+  available: true,
+  caption: 'OMAGGIO',
+  mei: 'Tutto finito. Muro giù. Offre la casa, una volta sola.',
+};

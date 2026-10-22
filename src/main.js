@@ -15,6 +15,7 @@ import Contrabbando from './scenes/Contrabbando.js';
 import MuroPanic from './scenes/MuroPanic.js';
 import NodoNeiFerri from './scenes/NodoNeiFerri.js';
 import RuspeInFuga from './scenes/RuspeInFuga.js';
+import Finale from './scenes/Finale.js';
 
 const stageEl = document.getElementById('stage');
 const screenEl = document.getElementById('screen');
@@ -51,7 +52,7 @@ const game = new Phaser.Game({
   // would ignore every new touch until it recovers.
   input: { activePointers: 3 },
   scale: { mode: Phaser.Scale.NONE },
-  scene: [Boot, Title, Bar, Menu, Contrabbando, MuroPanic, NodoNeiFerri, RuspeInFuga],
+  scene: [Boot, Title, Bar, Menu, Contrabbando, MuroPanic, NodoNeiFerri, RuspeInFuga, Finale],
 });
 
 if (import.meta.env.DEV) window.game = game;

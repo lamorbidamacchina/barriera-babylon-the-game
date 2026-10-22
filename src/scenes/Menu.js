@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { WIDTH, HEIGHT, C, N } from '../config.js';
 import { text, blink, goTo, fadeIn } from '../ui.js';
 import { sfx } from '../sfx.js';
-import { GAMES, isComplete } from '../data/games.js';
+import { GAMES, FINALE, isComplete, allComplete } from '../data/games.js';
 import { loadSave } from '../save.js';
 import { refreshRecords } from '../leaderboard.js';
 
@@ -24,9 +24,14 @@ export default class Menu extends Phaser.Scene {
     refreshRecords();
     this.save = loadSave();
     this.index = 0;
+    // Everything complete: the finale joins the menu, and plays by itself
+    // the first time.
+    this.done = allComplete(this.save);
+    this.entries = this.done ? [...GAMES, FINALE] : GAMES;
+    if (this.done && !this.save.finaleSeen) this.time.delayedCall(700, () => goTo(this, 'Finale'));
 
     this.drawBoard();
-    this.rows = GAMES.map((game, i) => this.drawRow(game, i));
+    this.rows = this.entries.map((game, i) => this.drawRow(game, i));
     this.drawPicture();
     this.meiText = text(this, 32, 226, '', { color: C.chalkHi, wrap: WIDTH - 64, lineSpacing: 4 });
     this.select(0, false);
@@ -123,27 +128,27 @@ export default class Menu extends Phaser.Scene {
   }
 
   select(i, withSound = true) {
-    const next = Phaser.Math.Wrap(i, 0, GAMES.length);
+    const next = Phaser.Math.Wrap(i, 0, this.entries.length);
     if (next === this.index && withSound) return;
     this.index = next;
     if (withSound) sfx.move();
 
-    const game = GAMES[next];
+    const game = this.entries[next];
     this.rows.forEach((row, r) => {
       const on = r === next;
-      row.title.setColor(on ? C.chalkHi : GAMES[r].available ? C.chalk : C.chalkDim);
+      row.title.setColor(on ? C.chalkHi : this.entries[r].available ? C.chalk : C.chalkDim);
     });
     this.cursor.setY(this.rows[next].y);
     this.pic.setTexture(game.portrait);
     this.picShade.setVisible(!game.available);
     this.picStamp.setVisible(!game.available);
     const done = isComplete(game, this.save);
-    this.picCaption.setText(!game.available ? 'CHIUSO' : done ? 'COMPLETATO' : '1 GETTONE').setColor(done ? DONE_CSS : C.chalkHi);
+    this.picCaption.setText(game.caption ?? (!game.available ? 'CHIUSO' : done ? 'COMPLETATO' : '1 GETTONE')).setColor(done ? DONE_CSS : C.chalkHi);
     this.meiText.setText(`MEI LI: ${game.mei}`);
   }
 
   choose() {
-    const game = GAMES[this.index];
+    const game = this.entries[this.index];
     if (!game.available) {
       sfx.error();
       const row = this.rows[this.index];

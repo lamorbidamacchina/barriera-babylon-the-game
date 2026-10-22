@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { GAMES, isComplete } from './games.js';
+import { GAMES, isComplete, allComplete } from './games.js';
 
 const game = (id) => GAMES.find((g) => g.id === id);
 
@@ -17,5 +17,12 @@ describe('games', () => {
 
   it('never ticks a game that is not out yet', () => {
     expect(isComplete({ id: 'nuovo', available: false }, { nuovo: { unlocked: 99 } })).toBe(false);
+  });
+
+  it('unlocks the finale only when every game is complete', () => {
+    const all = Object.fromEntries(GAMES.map((g) => [g.id, { unlocked: g.levels, best: {} }]));
+    expect(allComplete(all)).toBe(true);
+    expect(allComplete({ ...all, ruspe: { unlocked: 1, best: {} } })).toBe(false);
+    expect(allComplete({})).toBe(false);
   });
 });

@@ -149,6 +149,15 @@ export const sfx = {
   lose() {
     [392, 370, 349, 330].forEach((f, i) => tone('square', f, f * 0.98, 0.22, i * 0.22, 0.45));
   },
+  // A footstep of the march: a soft thump on the concrete.
+  step(heavy = false) {
+    noise(0.07, { freq: heavy ? 180 : 260, q: 1, type: 'lowpass', vol: heavy ? 0.7 : 0.4 });
+  },
+  // A bulldozer's diesel, one throb.
+  engine() {
+    tone('sawtooth', 55, 48, 0.18, 0, 0.25);
+    noise(0.15, { freq: 120, type: 'lowpass', vol: 0.35 });
+  },
   // The Comitato Caos anthem out of Samir's speaker: three raspberries on a
   // Balkan oom-pa beat.
   anthem() {
